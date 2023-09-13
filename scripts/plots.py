@@ -767,7 +767,7 @@ for j in range(size):
             f"""
             Unadjusted integral: {unadjusted_integral:.2f}\n
             Adjusted integral: {adjusted_integral:.2f}
-            # """,
+            """,
             transform=axes.transAxes,
         )
 
