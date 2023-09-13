@@ -37,7 +37,7 @@ def load_site_data(
     """
     # Read data file
     n = site_num
-    file_path = _DATA_FOLDER / f"calibration_{n}SitesModel.csv"
+    file_path = data_folder / f"calibration_{n}SitesModel.csv"
     df = pd.read_csv(file_path)
 
     # Extract information
@@ -97,22 +97,22 @@ def load_site_data(
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
 
-    file_path_2 = _DATA_FOLDER / "gamma_vcov.csv"
+    file_path_2 = data_folder / "gamma_vcov.csv"
     df2 = pd.read_csv(file_path_2, header=None)
 
-    file_path_3 = _DATA_FOLDER / "theta_vcov.csv"
+    file_path_3 = data_folder / "theta_vcov.csv"
     df3 = pd.read_csv(file_path_3, header=None)
 
     gamma_vcov_array = df2.values
     theta_vcov_array = df3.values
 
-    file_path_data_theta = _DATA_FOLDER / "data_theta.geojson"
+    file_path_data_theta = data_folder / "data_theta.geojson"
     data_theta = gpd.read_file(file_path_data_theta)
 
-    file_path_data_gamma = _DATA_FOLDER / "data_gamma.geojson"
+    file_path_data_gamma = data_folder / "data_gamma.geojson"
     data_gamma = gpd.read_file(file_path_data_gamma)
 
-    file_path_id = _DATA_FOLDER / f"id_{n}.geojson"
+    file_path_id = data_folder / f"id_{n}.geojson"
     data_id = gpd.read_file(file_path_id)
 
     site_theta_2017 = gpd.overlay(data_id, data_theta, how="intersection")
