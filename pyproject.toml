@@ -6,10 +6,17 @@ build-backend = "setuptools.build_meta"
 name = "project-amazon"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.25.2", "scipy>=1.11.1"]
+dependencies = [
+    "numpy>=1.25.2",
+    "pandas>=2.1.0",
+    "casadi>=3.6.3",
+    "scipy>=1.11.1",
+    "matplotlib>=3.7.3",
+    "multiprocess>=0.70.15",
+]
 
 [project.optional-dependencies]
-notebooks = ["ipykernel", "pandas"]
+notebooks = ["ipykernel"]
 dev = ["black", "ruff", "pre-commit"]
 
 [tool.ruff]
