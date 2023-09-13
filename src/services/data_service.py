@@ -7,14 +7,14 @@ This module provides essential tools to handle data files related to this projec
 
 # Import Required Packages
 # ========================
-import os
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from services.file_service import get_path
 
 # Default Path to the data folder
-_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "calibration")
+_DATA_FOLDER = get_path("data", "calibration")
 
 
 def load_site_data(
@@ -37,8 +37,8 @@ def load_site_data(
     """
     # Read data file
     n = site_num
-    file = os.path.join(data_folder, f"calibration_{n}SitesModel.csv")
-    df = pd.read_csv(file)
+    file_path = get_path(_DATA_FOLDER, f"calibration_{n}SitesModel.csv")
+    df = pd.read_csv(file_path)
 
     # Extract information
     z_2017 = df[f"z_2017_{n}Sites"].to_numpy()
@@ -93,47 +93,40 @@ def load_site_data(
         ]
     )
 
-    # try:
-    #     # Old files do not provide thetaSD
-    #     thetaSD            = df[f'thetaSD_{n}Sites'].to_numpy()
-    # except (KeyError):
-    #     thetaSD = None
-
     # Normalize Z data
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
 
-    file2 = os.path.join(data_folder, "gamma_vcov.csv")
-    df2 = pd.read_csv(file2, header=None)
-    file3 = os.path.join(data_folder, "theta_vcov.csv")
-    df3 = pd.read_csv(file3, header=None)
+    file_path_2 = get_path(data_folder, "gamma_vcov.csv")
+    df2 = pd.read_csv(file_path_2, header=None)
+
+    file_path_3 = get_path(data_folder, "theta_vcov.csv")
+    df3 = pd.read_csv(file_path_3, header=None)
 
     gamma_vcov_array = df2.values
     theta_vcov_array = df3.values
 
-    file_data_theta = os.path.join(data_folder, "data_theta.geojson")
-    data_theta = gpd.read_file(file_data_theta)
+    file_path_data_theta = get_path(data_folder, "data_theta.geojson")
+    data_theta = gpd.read_file(file_path_data_theta)
 
-    file_data_gamma = os.path.join(data_folder, "data_gamma.geojson")
-    data_gamma = gpd.read_file(file_data_gamma)
+    file_path_data_gamma = get_path(data_folder, "data_gamma.geojson")
+    data_gamma = gpd.read_file(file_path_data_gamma)
 
-    file_id = os.path.join(data_folder, f"id_{n}.geojson")
-    data_id = gpd.read_file(file_id)
+    file_path_id = get_path(data_folder, f"id_{n}.geojson")
+    data_id = gpd.read_file(file_path_id)
 
     site_theta_2017 = gpd.overlay(data_id, data_theta, how="intersection")
     site_theta_2017_df = site_theta_2017.iloc[:, :-1]
     site_gamma_2017 = gpd.overlay(data_id, data_gamma, how="intersection")
     site_gamma_2017_df = site_gamma_2017.iloc[:, :-1]
 
-    print(f"Data successfully loaded from '{file}'")
+    print(f"Data successfully loaded from '{file_path}'")
     return (
         zbar_2017,
         gamma,
-        # gammaSD,
         z_2017,
         forestArea_2017_ha,
         theta,
-        # thetaSD,
         gamma_coe,
         gamma_coe_sd,
         theta_coe,
