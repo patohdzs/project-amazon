@@ -9,17 +9,10 @@ This module provides essential tools to handle data files related to this projec
 # ========================
 import os
 import pandas as pd
+from .file_service import get_path
 
 
-# Default Path to the data folder
-_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "calibration")
-
-
-def load_site_data(
-    site_num,
-    norm_fac=1.0,
-    data_folder=_DATA_FOLDER,
-):
+def load_site_data(site_num, norm_fac=1.0):
     """
     Load site data given the number of sites `site_num`.
     The normalization factor is used to scale `z_2017` and `zbar_2017` (multiplicative) data.
@@ -31,11 +24,14 @@ def load_site_data(
         - z_2017:
         - forestArea_2017_ha:
         - theta:
+        - thetaSD:
     """
     # Read data file
     n = site_num
-    file = os.path.join(data_folder, f"calibration_{n}SitesModel.csv")
-    df = pd.read_csv(file)
+    file_path = get_path(
+        "data", "calibration", f"{n}SitesModel", f"calibration_{n}SitesModel.csv"
+    )
+    df = pd.read_csv(file_path)
 
     # Extract information
     z_2017 = df[f"z_2017_{n}Sites"].to_numpy()
@@ -54,7 +50,7 @@ def load_site_data(
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
 
-    print(f"Data successfully loaded from '{file}'")
+    print(f"Data successfully loaded from '{file_path}'")
     return (
         zbar_2017,
         gamma,
