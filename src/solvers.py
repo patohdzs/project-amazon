@@ -21,15 +21,17 @@ import pandas as pd
 import numpy.ma as ma
 from scipy.stats import truncnorm
 
+from services.file_service import get_path
+from services.data_service import load_site_data
+
 # MCMC (HMC) sampling routines
 
-mcmc_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "src/mcmc")
+mcmc_path = get_path("src", "mcmc")
 if mcmc_path not in sys.path:
     sys.path.append(mcmc_path)
 
 # Data Hanlder (.data_handlers.load_site_data)
 sys.path.append(os.path.abspath("src"))
-from services.data_service import load_site_data
 
 
 # check if casadi is available; delay exception raise to the call
@@ -286,9 +288,9 @@ def solve_with_casadi(
     mode=1.0,
 ):
     if (mode == 1.0) or (mode == 2.0):
-        from mcmc_sampling_original import create_hmc_sampler
+        from mcmc.hmc import create_hmc_sampler
     elif mode == 3.0:
-        from mcmc_sampling_reflection import create_hmc_sampler
+        from mcmc.hmc_reflection import create_hmc_sampler
     """
     Main function to solve the bilievel optimization problem using casadi for the outer optimization problem.
 
