@@ -29,7 +29,7 @@ if mcmc_path not in sys.path:
 
 # Data Hanlder (.data_handlers.load_site_data)
 sys.path.append(os.path.abspath("src"))
-from data_handlers import load_site_data
+from services.data_handlers import load_site_data
 
 
 # check if casadi is available; delay exception raise to the call

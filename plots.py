@@ -16,7 +16,7 @@ import solvers
 from scipy.stats import truncnorm
 
 sys.path.append(os.path.abspath("src"))
-from data_handlers import load_site_data
+from services.data_handlers import load_site_data
 from scipy.integrate import quad
 
 
