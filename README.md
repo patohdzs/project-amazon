@@ -1,7 +1,13 @@
 # Project Amazon
 
-correct the standard deviation in data <br>
-To do: <br>
-need to check the version of code <br>
-check data <br>
-debug gams
+## Installation
+
+0. Clone git repository and move into `project-amazon/`
+1. Create a new virtual environment
+```
+python -m venv venv
+```
+2. Install dependencies
+```
+python -m pip install 
+```
