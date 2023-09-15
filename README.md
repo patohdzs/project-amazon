@@ -12,6 +12,10 @@ python -m venv venv
 python -m pip install -e '.[notebooks, dev]'
 ```
 
+3. Install pre-commit hooks (required for contributors)
+```
+pre-commit install
+```
 ## Contributing
 0. Open a new git branch
 ```
