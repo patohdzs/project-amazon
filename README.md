@@ -3,13 +3,14 @@
 ## Installation
 
 0. Clone git repository and move into `project-amazon/`
-1. Create a new virtual environment
+1. Create and activate a new virtual environment
 ```
 python -m venv venv
+source venv/bin/activate
 ```
 2. Install dependencies
 ```
-python -m pip install -e '.[notebooks, dev]'
+python -m pip install -e '.[all]'
 ```
 
 3. Install pre-commit hooks (required for contributors)
