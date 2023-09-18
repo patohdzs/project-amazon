@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
+from utils.text import decorate_text
 
 # MCMC (HMC) sampling routines
 mcmc_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "src/mcmc")
@@ -56,31 +57,6 @@ _DEBUG = False
 _GAMS_SYSTEM_LOADER = os.path.join(
     os.path.dirname(__file__), "_gams_system_directory.dat"
 )
-
-
-class TextColor:
-    """Class with text colors and font settings for printing"""
-
-    PURPLE = "\033[95m"
-    CYAN = "\033[96m"
-    DARKCYAN = "\033[36m"
-    BLUE = "\033[94m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-    END = "\033[0m"
-
-
-def decorate_text(text):
-    sep = "*" * 48
-    return f"""{TextColor.BOLD}{TextColor.DARKCYAN}\n\n
-    {sep}\n
-    \t{text}\n
-    {sep}\n
-    {TextColor.END}\n
-    """
 
 
 def get_gams_system_directory(
@@ -481,7 +457,6 @@ def solve_with_casadi(
     # Initialize error & iteration counter
     abs_error = np.infty
     percentage_error = np.infty
-    log_diff_error = np.infty
     cntr = 0
 
     # Loop until convergence
@@ -834,7 +809,7 @@ def solve_with_casadi(
 
         ## to do
         theta_coe_subset = uncertainty_post_samples[:, :8]
-        gamma_coe_subset=uncertainty_post_samples[:,8:]
+        gamma_coe_subset = uncertainty_post_samples[:, 8:]
         theta_vcov_array = np.cov(theta_coe_subset, rowvar=False)
         gamma_vcov_array = np.cov(gamma_coe_subset, rowvar=False)
 
@@ -858,7 +833,7 @@ def solve_with_casadi(
         )
         uncertain_SD_tracker.append(uncertain_post_SD.copy())
 
-        mass_matrix=0.9*mass_matrix+0.1*np.linalg.inv(block_matrix)
+        mass_matrix = 0.9 * mass_matrix + 0.1 * np.linalg.inv(block_matrix)
 
         print("updated mass matrix:", mass_matrix)
 
@@ -871,10 +846,8 @@ def solve_with_casadi(
             np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
         )
 
-
         abs_error_tracker.append(abs_error)
         percentage_error_tracker.append(percentage_error)
-
 
         print(
             decorate_text(
