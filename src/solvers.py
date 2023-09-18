@@ -141,20 +141,24 @@ def theta_fitted(theta_coe, theta_dataframe):
 
 
 def gamma_fitted(gamma_coe, gamma_dataframe):
-    gamma_data = gamma_dataframe
+    # Copy df
+    gamma_data = gamma_dataframe.copy()
+
+    # Compute fitted values
     gamma_data["fitted_value"] = np.exp(
         (gamma_data.iloc[:, 1:6] * gamma_coe).sum(axis=1)
     )
+
+    # Subset columns
     gamma_data = gamma_data[["id", "fitted_value"]]
 
-    # 2. Group by 'id' and 3. compute the weighted mean for each group
+    # Group by id and compute weighted mean for each group
     result = (
         gamma_data.groupby("id")["fitted_value"]
         .mean()
         .reset_index(name="gamma2017_Sites")
     )
-    gamma = result["gamma2017_Sites"].to_numpy()
-    return gamma
+    return result["gamma2017_Sites"].to_numpy()
 
 
 def log_density_function(
