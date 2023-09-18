@@ -155,7 +155,6 @@ def log_density_function(
     uncertain_vals_mean,
     block_matrix,
     N,
-    #  site_precisions,
     alpha,
     sol_val_X,
     sol_val_Ua,
@@ -175,10 +174,6 @@ def log_density_function(
     pf,
     site_theta_2017_df,
     site_gamma_2017_df,
-    two_param_uncertainty=True,
-    #  thetaSD=None,
-    #  gammaSD=None,
-    scale=0.0,
 ):
     """
     Define a function to evaluate log-density of the objective/posterior distribution.
@@ -211,14 +206,9 @@ def log_density_function(
         print("beta_vals contains complex numbers.", beta_vals)
         print("gamma", gamma_coe_vals, "theta", theta_coe_vals)
 
-    # if scale == 1.0:
-    #     uncertain_vals[:size] = uncertain_vals[:size]*thetaSD
-    #     uncertain_vals[size:] = uncertain_vals[size:]*gammaSD
-    # print("uncertain_vals used in log density:", uncertain_vals)
     x0_vals = beta_vals[size:].T.dot(forestArea_2017_ha) / norm_fac
     X_zero = np.sum(x0_vals) * np.ones(leng)
 
-    # shifted_X = zbar_2017 - sol.value(X)[0:size, :-1]
     shifted_X = sol_val_X[0:size, :-1].copy()
     for j in range(N):
         shifted_X[:, j] = zbar_2017 - shifted_X[:, j]
@@ -230,8 +220,7 @@ def log_density_function(
 
     z_shifted_X = sol_val_X[0:size, :].copy()
     scl = pa * beta_vals[:size] - pf * kappa
-    # print("scl",scl)
-    # print("z_shifted_X",z_shifted_X)
+
     for j in range(N + 1):
         z_shifted_X[:, j] *= scl
 
@@ -240,9 +229,7 @@ def log_density_function(
     term_3 = np.sum(ds_vect * np.sum(z_shifted_X, axis=0))
 
     obj_val = term_1 + term_2 + term_3
-    # if scale == 1.0:
-    #     uncertain_vals[:size] = uncertain_vals[:size]/thetaSD
-    #     uncertain_vals[size:] = uncertain_vals[size:]/gammaSD
+
     uncertain_vals_dev = uncertain_vals - uncertain_vals_mean
     norm_log_prob = -0.5 * np.dot(
         uncertain_vals_dev, np.linalg.inv(block_matrix).dot(uncertain_vals_dev)
@@ -640,7 +627,6 @@ def solve_with_casadi(
                 kappa=kappa,
                 pa=pa,
                 pf=pf,
-                two_param_uncertainty=two_param_uncertainty,
                 site_theta_2017_df=site_theta_2017_df,
                 site_gamma_2017_df=site_gamma_2017_df,
             )
@@ -1275,7 +1261,6 @@ def solve_with_gams(
                 kappa=kappa,
                 pa=pa,
                 pf=pf,
-                two_param_uncertainty=two_param_uncertainty,
             )
 
         # Create MCMC sampler & sample, then calculate diagnostics
