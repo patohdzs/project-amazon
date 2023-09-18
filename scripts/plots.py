@@ -2,26 +2,21 @@
 
 # Import Required Packages
 # ========================
-import os, sys
+import argparse
+import os
 import pickle
-import time
-import numpy as np
-import scipy.stats as stats
-import matplotlib.pyplot as plt
-import seaborn as sns
+import sys
 
-sns.set(font_scale=1.2)
-# Import the solvers
-import solvers
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from scipy.integrate import quad
 from scipy.stats import truncnorm
+from services.data_service import load_site_data
+from sklearn.neighbors import KernelDensity
 
 sys.path.append(os.path.abspath("src"))
-from services.data_service import load_site_data
-from scipy.integrate import quad
-
-
-########################################################################
-import argparse
+sns.set(font_scale=1.2)
 
 parser = argparse.ArgumentParser(description="parameter settings")
 parser.add_argument("--weight", type=float, default=0.25)
@@ -259,7 +254,7 @@ plt.close()
 # legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
 # fig.tight_layout()
 # plt.subplots_adjust(right=0.7)
-# fig.savefig(plotdir +'X.png', bbox_extra_artists=(legend,), bbox_inches='tight', dpi = 100)
+# fig.savefig(plotdir +'X.png',bbox_extra_artists=(legend,),bbox_inches='tight',dpi=100)
 # plt.close()
 
 # fig, axes = plt.subplots(1, 1, figsize = (8,6))
@@ -271,7 +266,7 @@ plt.close()
 # legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
 # fig.tight_layout()
 # plt.subplots_adjust(right=0.7)
-# fig.savefig(plotdir +'Ua.png', bbox_extra_artists=(legend,), bbox_inches='tight', dpi = 100)
+# fig.savefig(plotdir+'Ua.png',bbox_extra_artists=(legend,),bbox_inches='tight',dpi=100)
 # plt.close()
 
 # size = results['size']
@@ -279,44 +274,66 @@ plt.close()
 #     # for i in range(len(results['sol_val_Um_tracker'])):
 #         i = len(results['sol_val_Up_tracker'])-1
 #         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         plt.plot(results['sol_val_Um_tracker'][i][j,:], label=r"site_%d_iter_%d"%(j+1, i+1))
+#         plt.plot(results['sol_val_Um_tracker'][i][j,:],
+#                  label=r"site_%d_iter_%d"%(j+1,i+1))
 #         plt.xlabel("Iteration")
 #         plt.ylabel(r"$Um$")
 #         plt.title(r"Trace Plot of Um for site_%d_iter_%d"%(j+1, i+1))
-#         legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+#         legend = plt.legend(bbox_to_anchor=(1.05, 0.5),
+#                             loc="center left",
+#                             borderaxespad=0)
 #         fig.tight_layout()
 #         plt.subplots_adjust(right=0.7)
-#         fig.savefig(plotdir +'Um_site_%d_iter_%d.png'%(j+1, i+1), bbox_extra_artists=(legend,), bbox_inches='tight', dpi = 100)
+#         fig.savefig(plotdir +'Um_site_%d_iter_%d.png'%(j+1, i+1),
+#                     bbox_extra_artists=(legend,),
+#                     bbox_inches='tight', dpi = 100)
 #         plt.close()
 
-# # For Up
+# For Up
 # for j in range(size):
-#     # for i in range(len(results['sol_val_Up_tracker'])):
-#         i = len(results['sol_val_Up_tracker'])-1
+#     for i in range(len(results["sol_val_Up_tracker"])):
+# i = len(results['sol_val_Up_tracker'])-1
 #         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         plt.plot(results['sol_val_Up_tracker'][i][j,:], label=r"$Up_{site_%d, iter_%d}$"%(j+1, i))
+#         plt.plot(results['sol_val_Up_tracker'][i][j,:],
+#                  label=r"$Up_{site_%d, iter_%d}$"%(j+1, i))
 #         plt.xlabel("Iteration")
 #         plt.ylabel(r"$Up$")
 #         plt.title(r"Trace Plot of Up")
-#         legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+# legend = plt.legend(bbox_to_anchor=(1.05, 0.5),
+#                     loc="center left", borderaxespad=0)
 #         fig.tight_layout()
 #         plt.subplots_adjust(right=0.7)
-#         fig.savefig(plotdir + 'Up_site_%d_iter_%d.png'%(j+1, i), bbox_extra_artists=(legend,), bbox_inches='tight', dpi = 100)
+# fig.savefig(
+#     plotdir + "Up_site_%d_iter_%d.png" % (j + 1, i),
+#     bbox_extra_artists=(legend,),
+#     bbox_inches="tight",
+#     dpi=100,
+# )
 #         plt.close()
 
-# # For Z
+# For Z
 # for j in range(size):
-#     # for i in range(len(results['sol_val_Z_tracker'])):
+#     for i in range(len(results["sol_val_Z_tracker"])):
 #         i = len(results['sol_val_Z_tracker'])-1
 #         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         plt.plot(results['sol_val_Z_tracker'][i][j,:], label=r"$Z_{site_%d, iter_%d}$"%(j+1, i))
+#         plt.plot(
+#             results["sol_val_Z_tracker"][i][j, :],
+#             label=r"$Z_{site_%d, iter_%d}$" % (j + 1, i),
+#         )
 #         plt.xlabel("Iteration")
 #         plt.ylabel(r"$Z$")
 #         plt.title(r"Trace Plot of Z")
-#         legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+#         legend = plt.legend(
+#             bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+#         )
 #         fig.tight_layout()
 #         plt.subplots_adjust(right=0.7)
-#         fig.savefig(plotdir + 'Z_site_%d_iter_%d.png'%(j+1, i), bbox_extra_artists=(legend,), bbox_inches='tight', dpi = 100)
+#         fig.savefig(
+#             plotdir + "Z_site_%d_iter_%d.png" % (j + 1, i),
+#             bbox_extra_artists=(legend,),
+#             bbox_inches="tight",
+#             dpi=100,
+#         )
 #         plt.close()
 
 
@@ -454,8 +471,16 @@ for j in range(size):
 
     if mode == 2.0:
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(theta_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-        # sns.kdeplot(results['collected_ensembles'][i][:, j],  label="Adjusted", shade=True, clip=(0, None), color='red')
+        # sns.kdeplot(
+        #    theta_samples, label="Unadjusted", shade=True, clip=(0, None), color="blue"
+        # )
+        # sns.kdeplot(
+        #    results["collected_ensembles"][i][:, j],
+        #    label="Adjusted",
+        #    shade=True,
+        #    clip=(0, None),
+        #    color="red",
+        # )
         a, b = (0 - np.mean(theta_samples)) / np.std(theta_samples), np.inf
         unadjusted_dist = truncnorm(
             a, b, loc=np.mean(theta_samples), scale=np.std(theta_samples)
@@ -485,7 +510,10 @@ for j in range(size):
         axes.text(
             0.6,
             0.6,
-            f"Unadjusted integral: {unadjusted_integral:.2f}\nAdjusted integral: {adjusted_integral:.2f}",
+            f"""
+            Unadjusted integral: {unadjusted_integral:.2f}\n
+            Adjusted integral: {adjusted_integral:.2f}
+            """,
             transform=axes.transAxes,
         )
 
@@ -503,8 +531,16 @@ for j in range(size):
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-        # sns.kdeplot(results['collected_ensembles'][i][:, j+size],  label="Adjusted", shade=True, clip=(0, None), color='red')
+        # sns.kdeplot(
+        #    gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color="blue"
+        # )
+        # sns.kdeplot(
+        #    results["collected_ensembles"][i][:, j + size],
+        #    label="Adjusted",
+        #    shade=True,
+        #    clip=(0, None),
+        #    color="red",
+        # )
         a, b = (0 - np.mean(gamma_samples)) / np.std(gamma_samples), np.inf
         unadjusted_dist_gamma = truncnorm(
             a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples)
@@ -536,7 +572,8 @@ for j in range(size):
         axes.text(
             0.6,
             0.6,
-            f"Unadjusted integral: {unadjusted_integral:.2f}\nAdjusted integral: {adjusted_integral:.2f}",
+            f"""Unadjusted integral: {unadjusted_integral:.2f}\n
+            Adjusted integral: {adjusted_integral:.2f}""",
             transform=axes.transAxes,
         )
 
@@ -552,7 +589,10 @@ for j in range(size):
         plt.close()
     else:
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(theta_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
+        # sns.kdeplot(
+        #     theta_samples, label="Unadjusted", shade=True, clip=(0, None),
+        #     color="blue"
+        # )
         a, b = (0 - np.mean(theta_samples)) / np.std(theta_samples), np.inf
         unadjusted_dist = truncnorm(
             a, b, loc=np.mean(theta_samples), scale=np.std(theta_samples)
@@ -585,7 +625,10 @@ for j in range(size):
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
+        # sns.kdeplot(
+        #     gamma_samples, label="Unadjusted", shade=True, clip=(0, None),
+        #     color="blue"
+        # )
         a, b = (0 - np.mean(gamma_samples)) / np.std(gamma_samples), np.inf
         unadjusted_dist_gamma = truncnorm(
             a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples)
@@ -616,8 +659,17 @@ for j in range(size):
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(theta_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-        # sns.kdeplot(results['collected_ensembles'][i][:, j],  label="Adjusted", shade=True, clip=(0, None), color='red')
+        # sns.kdeplot(
+        #     theta_samples, label="Unadjusted", shade=True, clip=(0, None),
+        #    color="blue"
+        # )
+        # sns.kdeplot(
+        #     results["collected_ensembles"][i][:, j],
+        #     label="Adjusted",
+        #     shade=True,
+        #     clip=(0, None),
+        #     color="red",
+        # )
         a, b = (0 - np.mean(theta_samples)) / np.std(theta_samples), np.inf
         unadjusted_dist = truncnorm(
             a, b, loc=np.mean(theta_samples), scale=np.std(theta_samples)
@@ -647,7 +699,10 @@ for j in range(size):
         axes.text(
             0.6,
             0.6,
-            f"Unadjusted integral: {unadjusted_integral:.2f}\nAdjusted integral: {adjusted_integral:.2f}",
+            f"""
+            Unadjusted integral: {unadjusted_integral:.2f}\n
+            Adjusted integral: {adjusted_integral:.2f}
+            """,
             transform=axes.transAxes,
         )
 
@@ -667,8 +722,17 @@ for j in range(size):
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        # sns.kdeplot(gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-        # sns.kdeplot(results['collected_ensembles'][i][:, j+size],  label="Adjusted", shade=True, clip=(0, None), color='red')
+        # sns.kdeplot(
+        #     gamma_samples, label="Unadjusted", shade=True, clip=(0, None),
+        #     color="blue"
+        # )
+        # sns.kdeplot(
+        #     results["collected_ensembles"][i][:, j + size],
+        #     label="Adjusted",
+        #     shade=True,
+        #     clip=(0, None),
+        #     color="red",
+        # )
         a, b = (0 - np.mean(gamma_samples)) / np.std(gamma_samples), np.inf
         unadjusted_dist_gamma = truncnorm(
             a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples)
@@ -700,7 +764,10 @@ for j in range(size):
         axes.text(
             0.6,
             0.6,
-            f"Unadjusted integral: {unadjusted_integral:.2f}\nAdjusted integral: {adjusted_integral:.2f}",
+            f"""
+            Unadjusted integral: {unadjusted_integral:.2f}\n
+            Adjusted integral: {adjusted_integral:.2f}
+            """,
             transform=axes.transAxes,
         )
 
@@ -825,8 +892,6 @@ for j in range(size):
         plt.close()
 
     if mode == 3.0:
-        from sklearn.neighbors import KernelDensity
-
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         a, b = (0 - np.mean(theta_samples)) / np.std(theta_samples), np.inf
         unadjusted_dist = truncnorm(
@@ -871,67 +936,133 @@ for j in range(size):
         fig.savefig(plotdir + "theta_site_%d_inflated.png" % (j + 1), dpi=100)
         plt.close()
 
+    # size = results['size']
+    # np.random.seed(256)
+    # for j in range(size):
+    #     s = "collected_ensembles"
+    #     num_samples = len(
+    #         results[s][len(results[s]) - 1][:, j]
+    #     )
+    #     mu = theta[j]  # Assuming theta is your mean array
+    #     sigma = thetaSD[j]  # Assuming thetaSD is your standard deviation array
+    #     theta_samples = np.random.normal(mu, sigma, 50000)
 
-# size = results['size']
-# np.random.seed(256)
-# for j in range(size):
+    #     mu = gamma[j]  # Assuming gamma is your mean array
+    #     sigma = gammaSD[j]  # Assuming gammaSD is your standard deviation array
+    #     gamma_samples = np.random.normal(mu, sigma, 50000)
 
-#     num_samples = len(results['collected_ensembles'][len(results['collected_ensembles'])-1][:, j])
-#     mu = theta[j]  # Assuming theta is your mean array
-#     sigma = thetaSD[j]  # Assuming thetaSD is your standard deviation array
-#     theta_samples = np.random.normal(mu, sigma, 50000)
+    #     # Find min and max across all iterations for the same site
+    # min_theta = np.min(
+    #    [
+    #        np.min(results["collected_ensembles"][i][:, j])
+    #        for i in range(len(results["collected_ensembles"]))
+    #    ]
+    #    + [np.min(theta_samples)]
+    # )
+    # max_theta = np.max(
+    #    [
+    #        np.max(results["collected_ensembles"][i][:, j])
+    #        for i in range(len(results["collected_ensembles"]))
+    #    ]
+    #    + [np.max(theta_samples)]
+    # )
 
-#     mu = gamma[j]  # Assuming gamma is your mean array
-#     sigma = gammaSD[j]  # Assuming gammaSD is your standard deviation array
-#     gamma_samples = np.random.normal(mu, sigma, 50000)
+    # min_gamma = np.min(
+    #    [
+    #        np.min(results["collected_ensembles"][i][:, j + size])
+    #        for i in range(len(results["collected_ensembles"]))
+    #    ]
+    #    + [np.min(gamma_samples)]
+    # )
+    # max_gamma = np.max(
+    #    [
+    #        np.max(results["collected_ensembles"][i][:, j + size])
+    #        for i in range(len(results["collected_ensembles"]))
+    #    ]
+    #    + [np.max(gamma_samples)]
+    # )
 
-#     # Find min and max across all iterations for the same site
-#     min_theta = np.min([np.min(results['collected_ensembles'][i][:, j]) for i in range(len(results['collected_ensembles']))]+ [np.min(theta_samples)])
-#     max_theta = np.max([np.max(results['collected_ensembles'][i][:, j]) for i in range(len(results['collected_ensembles']))]+ [np.max(theta_samples)])
+    # for i in range(len(results["collected_ensembles"])):
+    #     i = len(results['sol_val_Z_tracker'])-1
+    #     # i = 0
+    #         # For theta parameters
+    #     fig, axes = plt.subplots(1, 1, figsize = (8,6))
+    # sns.histplot(theta_samples, bins=100, label="Unadjusted", kde=True, color="blue")
+    # sns.histplot(
+    #     results["collected_ensembles"][i][:, j],
+    #     bins=100,
+    #     label="Adjusted",
+    #     kde=True,
+    #     color="red",
+    # )
+    # sns.kdeplot(
+    #     theta_samples, label="Unadjusted", shade=True, clip=(0, None), color="blue"
+    # )
+    # sns.kdeplot(
+    #     results["collected_ensembles"][i][:, j],
+    #     label="Adjusted",
+    #     shade=True,
+    #     clip=(0, None),
+    #     color="red",
+    # )
+    #     plt.xlim([min_theta, max_theta])  # Set x-axis limits
 
-#     min_gamma = np.min([np.min(results['collected_ensembles'][i][:, j + size]) for i in range(len(results['collected_ensembles']))]+ [np.min(gamma_samples)])
-#     max_gamma = np.max([np.max(results['collected_ensembles'][i][:, j + size]) for i in range(len(results['collected_ensembles']))]+ [np.max(gamma_samples)])
+    #     plt.xlabel(r"$\theta_{site_%d}$"%(j+1))
+    #     plt.ylabel("Density")
+    #     plt.title(r"Density of $\theta_{site_%d}$ for iteration %d"%(j+1, i))
+    #     if j in [0,1]:
+    #         plt.ylim([0, 120])
+    #     plt.legend()
+    #     fig.savefig(plotdir + 'theta_site_%d_iter_%d.png'%(j+1, i), dpi = 100)
+    #     plt.close()
 
+    #     # For gamma parameters
+    #     fig, axes = plt.subplots(1, 1, figsize = (8,6))
+    # sns.kdeplot(
+    #     gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color="blue"
+    # )
+    # sns.kdeplot(
+    #     results["collected_ensembles"][i][:, j + size],
+    #     label="Adjusted",
+    #     shade=True,
+    #     clip=(0, None),
+    #     color="red",
+    # )
+    #     plt.xlim([min_gamma, max_gamma])  # Set x-axis limits
 
-#     # for i in range(len(results['collected_ensembles'])):
-#     i = len(results['sol_val_Z_tracker'])-1
-#     # i = 0
-#         # For theta parameters
-#     fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#     # sns.histplot(theta_samples, bins=100, label="Unadjusted", kde=True, color='blue')
-#     # sns.histplot(results['collected_ensembles'][i][:, j], bins=100, label="Adjusted", kde=True, color='red')
-#     sns.kdeplot(theta_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-#     sns.kdeplot(results['collected_ensembles'][i][:, j],  label="Adjusted", shade=True, clip=(0, None), color='red')
-#     plt.xlim([min_theta, max_theta])  # Set x-axis limits
+    #     plt.xlabel(r"$\gamma_{site_%d}$"%(j+1))
+    #     plt.ylabel("Density")
+    #     plt.title(r"Density of $\gamma_{site_%d}$ for iteration %d"%(j+1, i))
+    #     plt.legend()
+    #     fig.savefig(plotdir + 'gamma_site_%d_iter_%d.png'%(j+1, i), dpi = 100)
+    #     plt.close()
 
-#     plt.xlabel(r"$\theta_{site_%d}$"%(j+1))
-#     plt.ylabel("Density")
-#     plt.title(r"Density of $\theta_{site_%d}$ for iteration %d"%(j+1, i))
-#     if j in [0,1]:
-#         plt.ylim([0, 120])
-#     plt.legend()
-#     fig.savefig(plotdir + 'theta_site_%d_iter_%d.png'%(j+1, i), dpi = 100)
-#     plt.close()
-
-#     # For gamma parameters
-#     fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#     sns.kdeplot(gamma_samples, label="Unadjusted", shade=True, clip=(0, None), color='blue')
-#     sns.kdeplot(results['collected_ensembles'][i][:, j+size],  label="Adjusted", shade=True, clip=(0, None), color='red')
-#     plt.xlim([min_gamma, max_gamma])  # Set x-axis limits
-
-#     plt.xlabel(r"$\gamma_{site_%d}$"%(j+1))
-#     plt.ylabel("Density")
-#     plt.title(r"Density of $\gamma_{site_%d}$ for iteration %d"%(j+1, i))
-#     plt.legend()
-#     fig.savefig(plotdir + 'gamma_site_%d_iter_%d.png'%(j+1, i), dpi = 100)
-#     plt.close()
-
-#     if mode == 2.0:
-#         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         # sns.histplot(theta_samples, bins=100, label="Unadjusted", kde=True, color='blue')
-#         # sns.histplot(results['collected_ensembles'][i][:, j], bins=100, label="Adjusted", kde=True, color='red')
-#         sns.kdeplot(theta_samples[theta_samples>0], label="Unadjusted", shade=True, color='blue')
-#         sns.kdeplot(results['collected_ensembles'][i][:, j][results['collected_ensembles'][i][:, j]>0],  label="Adjusted", shade=True, color='red')
+    # if mode == 2.0:
+    #     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+    #     sns.histplot(
+    #         theta_samples, bins=100, label="Unadjusted", kde=True, color="blue"
+    #     )
+    #     sns.histplot(
+    #         results["collected_ensembles"][i][:, j],
+    #         bins=100,
+    #         label="Adjusted",
+    #         kde=True,
+    #         color="red",
+    #     )
+    #     sns.kdeplot(
+    #         theta_samples[theta_samples > 0],
+    #         label="Unadjusted",
+    #         shade=True,
+    #         color="blue",
+    #     )
+    #     sns.kdeplot(
+    #         results["collected_ensembles"][i][:, j][
+    #             results["collected_ensembles"][i][:, j] > 0
+    #         ],
+    #         label="Adjusted",
+    #         shade=True,
+    #         color="red",
+    #     )
 #         plt.xlim([min_theta, max_theta])  # Set x-axis limits
 
 #         plt.xlabel(r"$\theta_{site_%d}$"%(j+1))
@@ -940,18 +1071,21 @@ for j in range(size):
 #         if j in [0,1]:
 #             plt.ylim([0, 120])
 #         plt.legend()
-#         fig.savefig(plotdir + 'theta_site_%d_iter_%d_untruncated.png'%(j+1, i), dpi = 100)
+#         fig.savefig(plotdir+'theta_site_%d_iter_%d_untruncated.png'%(j+1, i),dpi=100)
 #         plt.close()
 
 #         # For gamma parameters
 #         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         sns.kdeplot(gamma_samples[gamma_samples>0], label="Unadjusted", shade=True, color='blue')
-#         sns.kdeplot(results['collected_ensembles'][i][:, j+size][results['collected_ensembles'][i][:, j+size]>0],  label="Adjusted", shade=True, color='red')
+#         sns.kdeplot(gamma_samples[gamma_samples>0], label="Unadjusted", shade=True,
+#                     color='blue')
+#         s = "collected_ensembles"
+#         sns.kdeplot(results[s][i][:, j+size][results[s][i][:, j+size]>0],
+#                     label="Adjusted", shade=True, color='red')
 #         plt.xlim([min_gamma, max_gamma])  # Set x-axis limits
 
 #         plt.xlabel(r"$\gamma_{site_%d}$"%(j+1))
 #         plt.ylabel("Density")
 #         plt.title(r"Density of $\gamma_{site_%d}$ for iteration %d"%(j+1, i))
 #         plt.legend()
-#         fig.savefig(plotdir + 'gamma_site_%d_iter_%d_untruncated.png'%(j+1, i), dpi = 100)
+#         fig.savefig(plotdir+'gamma_site_%d_iter_%d_untruncated.png'%(j+1, i), dpi=100)
 #         plt.close()
