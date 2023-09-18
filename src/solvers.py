@@ -355,7 +355,6 @@ def solve_with_casadi(
 
     # Theta Values
     theta_vals = theta
-    gamma.size + theta.size
 
     # Retrieve z data for selected site(s)
     site_z_vals = z_2017
@@ -835,9 +834,9 @@ def solve_with_casadi(
 
         ## to do
         theta_coe_subset = uncertainty_post_samples[:, :8]
-        uncertainty_post_samples[:, 8:]
+        gamma_coe_subset=uncertainty_post_samples[:,8:]
         theta_vcov_array = np.cov(theta_coe_subset, rowvar=False)
-        gamma_vcov_array = np.cov(gamma_vcov_array, rowvar=False)
+        gamma_vcov_array = np.cov(gamma_coe_subset, rowvar=False)
 
         # Construct the block matrix
         rows1, cols1 = theta_vcov_array.shape
@@ -859,7 +858,7 @@ def solve_with_casadi(
         )
         uncertain_SD_tracker.append(uncertain_post_SD.copy())
 
-        mass_matrix = np.linalg.inv(block_matrix)
+        mass_matrix=0.9*mass_matrix+0.1*np.linalg.inv(block_matrix)
 
         print("updated mass matrix:", mass_matrix)
 

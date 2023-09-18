@@ -1,6 +1,6 @@
-sitenumarray=(25)
-xiarray=(0.1 0.2 0.3)
-pfarray=(20.76)
+sitenumarray=(24 40)
+xiarray=(0.1 1.0 10.0)
+pfarray=(25)
 paarray=(44.75)
 thetaarray=(1.0)
 gammaarray=(1.0)
@@ -13,7 +13,7 @@ mass_matrix_weight_array=(0.0)
 symplectic_integrator_num_steps_array=(10 20)
 stepsize_array=(0.05)
 scale_array=(0.0)
-mode_array=(1.0 2.0)
+mode_array=(1.0)
 hmc_python_name="sampler.py"
 
 for sitenum in "${sitenumarray[@]}"; do
