@@ -109,28 +109,35 @@ def get_gams_system_directory(
 
 
 def theta_fitted(theta_coe, theta_dataframe):
-    theta_data = theta_dataframe
+    # Copy df
+    theta_data = theta_dataframe.copy()
+
+    # Compute fitted values
     theta_data["fitted_value"] = np.exp(
         (theta_data.iloc[:, 1:9] * theta_coe).sum(axis=1)
     )
+
+    # Subset and filter
     theta_data = theta_data[["id", "zbar_2017_muni", "fitted_value"]]
-    aux_price_2017 = 44.9736197781184
     theta_data = theta_data[theta_data["zbar_2017_muni"].notna()]
 
-    def weighted_mean(group):
-        d = (
-            group["fitted_value"] / aux_price_2017
-        )  # assuming aux.price.2017 is a constant
-        w = group["zbar_2017_muni"]
-        return np.average(d, weights=w)
+    # Weighted average function
+    aux_price_2017 = 44.9736197781184
 
+    def weighted_mean(group):
+        return np.average(
+            group["fitted_value"] / aux_price_2017, weights=group["zbar_2017_muni"]
+        )
+
+    # Take weighted average
     result = (
         theta_data.groupby("id")
         .apply(weighted_mean)
         .reset_index(name="theta2017_Sites")
     )
-    theta = result["theta2017_Sites"].to_numpy()
-    return theta
+
+    # Return as numpy array
+    return result["theta2017_Sites"].to_numpy()
 
 
 def gamma_fitted(gamma_coe, gamma_dataframe):
@@ -608,7 +615,6 @@ def solve_with_casadi(
                 uncertain_vals=uncertain_vals,
                 uncertain_vals_mean=uncertain_vals_mean,
                 block_matrix=block_matrix,
-                scale=0.0,
                 alpha=alpha,
                 N=N,
                 sol_val_X=sol_val_X,
