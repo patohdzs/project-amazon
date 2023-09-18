@@ -14,7 +14,7 @@ import pandas as pd
 from services.file_service import get_path
 
 # Default Path to the data folder
-_DATA_FOLDER = get_path("data", "calibration")
+_DATA_FOLDER = get_path("data", "hmc")
 
 
 def load_site_data(
