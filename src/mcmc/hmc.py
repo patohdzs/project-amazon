@@ -245,6 +245,7 @@ class HMCSampler(Sampler):
             std = np.sqrt(A)
 
         elif isinstance(A, np.ndarray):
+            # print("goes here 1")
             n = A.shape[0]
             assert A.ndim==2 and A.shape==(n, n), "The matrix must by square of 2dimensions"
 
@@ -268,6 +269,7 @@ class HMCSampler(Sampler):
                             std = np.insert(std, i, 0.0, axis=axis)
 
         elif sparse.issparse(A):
+            # print("goes here 2")
             n = A.shape[0]
             assert A.ndim==2 and A.shape==(n, n), "The matrix must by square of 2dimensions"
 
@@ -289,6 +291,7 @@ class HMCSampler(Sampler):
 
                 # Check the matrix is positive semi definite:
                 if np.all(LU.perm_r==np.arange(valid_inds.size)) and np.all(LU.U.diagonal()>0):
+                    # print("goes here 3")
                     std_reduced = LU.L.dot(sparse.diags(LU.U.diagonal()**0.5))
                     if not lower:
                        std_reduced = std_reduced.T
@@ -309,9 +312,13 @@ class HMCSampler(Sampler):
                 else:
                     print("Failed to use efficient LU factorization for sparse matrices;")
                     print("Trying dense!")
+                    # print("A",A)
                     std = sqrtm(A.toarray())
+                    # std = np.real(std)
+                    # print("std1",std)
                     # std = factorize_spsd_matrix(A.toarray(), shape=shape, lower=lower)
                     std = sparse.csc_matrix(std)
+                    # print("std2",std)
 
         else:
             print("A must be scalar, numpy array,scipy sparse matrix ")
@@ -379,8 +386,8 @@ class HMCSampler(Sampler):
         if sparse is not None:
             self._MASS_MATRIX     = csc_matrix(mass_matrix)
             self._MASS_MATRIX_INV = sparse.linalg.inv(self._MASS_MATRIX)
-            print("it goes here")
-            print("self._MASS_MATRIX_INV",self._MASS_MATRIX_INV)
+            # print("it goes here")
+            # print("self._MASS_MATRIX_INV",self._MASS_MATRIX_INV)
             
         else:
             self._MASS_MATRIX = np.asarray(mass_matrix)
@@ -1087,8 +1094,11 @@ class HMCSampler(Sampler):
             ## Proposal step :propose (momentum, state) pair
             # Generate a momentum proposal
             current_momentum = self.generate_white_noise(size=state_space_dimension)
+            # print("momentum before 1",current_momentum)
+            # print("self._MASS_MATRIX_SQRT",self._MASS_MATRIX_SQRT)
             current_momentum = self.mass_matrix_sqrt_matvec(current_momentum)
-
+            # print("current_state",current_state)
+            # print("momentum before 2",current_momentum)
             # Advance the current state and momentum to propose a new pair:
             proposed_momentum, proposed_state = self.apply_symplectic_integration(
                 momentum=current_momentum,
@@ -1098,7 +1108,7 @@ class HMCSampler(Sampler):
                 randomize_step_size=randomize_step_size,
                 symplectic_integrator=symplectic_integrator,
             )
-
+            # print("proposed momentum after chain",proposed_momentum)
             for i in range(current_state.size):
                 if proposed_state[i] >=0:
                     site_count_positive[i]+=1
@@ -1134,11 +1144,11 @@ class HMCSampler(Sampler):
 
                 energy_loss = proposal_energy - current_energy
                 
-                print("proposed_momentum",proposed_momentum,"current_momentum",current_momentum)
-                print("proposed_state",proposed_state,"current_state",current_state)
-                # print("current_momentum",np.max(proposed_momentum),"current_momentum",np.max(current_momentum))
-                print("energy_loss",energy_loss,"proposal_energy",proposal_energy,"current_energy",current_energy,
-                         "proposal_kinetic_energy",proposal_kinetic_energy,"proposal_potential_energy",proposal_potential_energy)
+                # print("proposed_momentum",proposed_momentum,"current_momentum",current_momentum)
+                # print("proposed_state",proposed_state,"current_state",current_state)
+                # # print("current_momentum",np.max(proposed_momentum),"current_momentum",np.max(current_momentum))
+                # print("energy_loss",energy_loss,"proposal_energy",proposal_energy,"current_energy",current_energy,
+                #          "proposal_kinetic_energy",proposal_kinetic_energy,"proposal_potential_energy",proposal_potential_energy)
                 # print("current_kinetic_energy",self.kinetic_energy(current_momentum),"current_potential_energy",self.potential_energy(current_state))
                 
                 _loss_thresh = 0.05*current_energy
