@@ -165,24 +165,24 @@ def log_density_function(
     uncertain_vals,
     uncertain_vals_mean,
     block_matrix,
-    N,
-    alpha,
+    N,  # Number of control intervals
+    alpha,  # Mean reversion coefficient
     sol_val_X,
     sol_val_Ua,
     sol_val_Up,
     zbar_2017,
     forestArea_2017_ha,
-    norm_fac,
+    norm_fac,  # Normalization factor
     alpha_p_Adym,
     Bdym,
     leng,
-    T,
-    ds_vect,
-    zeta,
-    xi,
-    kappa,
-    pa,
-    pf,
+    T,  # Time horizon
+    ds_vect,  # Time discounting vector
+    zeta,  # Adjustment costs parameter
+    xi,  # Penalty on KL divergence
+    kappa,  # Effect of cattle farming on emissions
+    pa,  # Price of cattle output
+    pf,  # Shadow price of carbon emissions
     site_theta_2017_df,
     site_gamma_2017_df,
 ):
@@ -196,14 +196,17 @@ def log_density_function(
     Note that the log-density is the logarithm of the target density discarding any
     normalization factor
     """
-
-    # Two parameter uncertainty (both theta and gamma)
+    # Flatten time-discounting vector
     ds_vect = np.asarray(ds_vect).flatten()
+
+    # Flatten uncertain values
     uncertain_vals = np.asarray(uncertain_vals).flatten()
 
+    # Unpacking uncertain values
     theta_coe_vals = uncertain_vals[:8]
     gamma_coe_vals = uncertain_vals[8:]
 
+    # Computing fitted values for theta and gamma
     theta_fit = theta_fitted(
         theta_coe=theta_coe_vals, theta_dataframe=site_theta_2017_df
     )
@@ -213,6 +216,8 @@ def log_density_function(
 
     size = theta_fit.size
     beta_vals = np.concatenate((theta_fit, gamma_fit))
+
+    # Check for complex-valued uncertain_vals
     if np.iscomplexobj(beta_vals):
         print("beta_vals contains complex numbers.", beta_vals)
         print("gamma", gamma_coe_vals, "theta", theta_coe_vals)
@@ -235,16 +240,24 @@ def log_density_function(
     for j in range(N + 1):
         z_shifted_X[:, j] *= scl
 
+    # Adjustment costs
     term_1 = -np.sum(ds_vect[0:T] * sol_val_Ua) * zeta / 2
+
+    # Value of emissions absorbed
     term_2 = np.sum(ds_vect[0:T] * (X_dym[1:] - X_dym[0:-1])) * pf
+
+    # Value of cattle output minus cost of emissions
     term_3 = np.sum(ds_vect * np.sum(z_shifted_X, axis=0))
 
+    # Overall objective value
     obj_val = term_1 + term_2 + term_3
 
     uncertain_vals_dev = uncertain_vals - uncertain_vals_mean
     norm_log_prob = -0.5 * np.dot(
         uncertain_vals_dev, np.linalg.inv(block_matrix).dot(uncertain_vals_dev)
     )
+
+    # Computing log-density (proportional to g star)
     log_density_val = -1.0 / xi * obj_val + norm_log_prob
     log_density_val = float(log_density_val)
 
@@ -613,7 +626,7 @@ def solve_with_casadi(
         # sys.exit("Exiting because of some condition.")
         ## Start Sampling
         # Update signature of log density evaluator
-        # TODO: refactor... should not define function inside other function
+        # TODO: refactor using partial
         def log_density(uncertain_vals):
             return log_density_function(
                 uncertain_vals=uncertain_vals,
@@ -1026,7 +1039,7 @@ def solve_with_gams(
         uncertain_vals_old = vals.copy()
 
     # Householder to track sampled gamma values
-    # uncertain_vals_tracker       = np.empty((uncertain_vals.size, sample_size+1))
+    # uncertain_vals_tracker = np.empty((uncertain_vals.size, sample_size+1))
     # uncertain_vals_tracker[:, 0] = uncertain_vals.copy()
     uncertain_vals_tracker = [uncertain_vals.copy()]
     uncertain_SD_tracker = [np.concatenate((thetaSD, gammaSD)).copy()]
