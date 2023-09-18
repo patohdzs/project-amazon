@@ -2,10 +2,11 @@
 .vscode/
 .DS_Store
 
-Casadi_Results/
-
 # Data
 data/
+output/
+plot/
+Casadi_Results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
