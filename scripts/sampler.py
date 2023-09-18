@@ -6,7 +6,7 @@ import argparse
 import os
 
 # Import the solvers
-import src.solvers as solvers
+import solvers
 
 parser = argparse.ArgumentParser(description="parameter settings")
 parser.add_argument("--weight", type=float, default=0.25)
