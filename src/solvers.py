@@ -870,20 +870,17 @@ def solve_with_casadi(
         percentage_error = np.max(
             np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
         )
-        log_diff_error = np.max(
-            np.abs(np.log(uncertain_vals_old) - np.log(uncertain_vals))
-        )
+
 
         abs_error_tracker.append(abs_error)
         percentage_error_tracker.append(percentage_error)
-        log_diff_error_tracker.append(log_diff_error)
+
 
         print(
             decorate_text(
                 f"""
                 Iteration [{cntr+1:4d}]: Absolte Error = {abs_error},
-                Percentage Error = {percentage_error},
-                Log Difference Error = {log_diff_error}
+                Percentage Error = {percentage_error}
                 """
             )
         )
