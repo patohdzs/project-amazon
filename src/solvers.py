@@ -394,7 +394,7 @@ def solve_with_casadi(
     # mass_matrix = 100*np.concatenate((theta_coe_sd, gamma_coe_sd))
     # mass_matrix=100*np.block([[theta_vcov_array, zeros_top_right],
     #                         [zeros_bottom_left, 10000*gamma_vcov_array]])
-    mass_matrix = 10000*np.diag(1/np.concatenate((theta_coe_sd, gamma_coe_sd))**2)
+    mass_matrix = 10000 * np.diag(1 / np.concatenate((theta_coe_sd, gamma_coe_sd)) ** 2)
     # L = sqrtm(mass_matrix)
 
     # print("mass_matrix used",mass_matrix)
@@ -481,7 +481,6 @@ def solve_with_casadi(
     # Initialize error & iteration counter
     abs_error = np.infty
     percentage_error = np.infty
-    log_diff_error = np.infty
     cntr = 0
 
     # Loop until convergence
@@ -834,7 +833,7 @@ def solve_with_casadi(
 
         ## to do
         theta_coe_subset = uncertainty_post_samples[:, :8]
-        gamma_coe_subset=uncertainty_post_samples[:,8:]
+        gamma_coe_subset = uncertainty_post_samples[:, 8:]
         theta_vcov_array = np.cov(theta_coe_subset, rowvar=False)
         gamma_vcov_array = np.cov(gamma_coe_subset, rowvar=False)
 
@@ -857,9 +856,6 @@ def solve_with_casadi(
             uncertain_post_SD,
         )
         uncertain_SD_tracker.append(uncertain_post_SD.copy())
-
-        mass_matrix=mass_matrix
-
         print("updated mass matrix:", mass_matrix)
 
         mass_matrix_tracker.append(mass_matrix.copy())
@@ -871,10 +867,8 @@ def solve_with_casadi(
             np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
         )
 
-
         abs_error_tracker.append(abs_error)
         percentage_error_tracker.append(percentage_error)
-
 
         print(
             decorate_text(
