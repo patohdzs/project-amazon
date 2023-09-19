@@ -285,9 +285,9 @@ def solve_with_casadi(
     tol=0.001,
     T=200,
     N=200,
-    sample_size=10,
+    sample_size=1000,
     mode_as_solution=False,  # If true, use the modeas solution for gamma
-    final_sample_size=25_000,  # number of samples to collect after convergence
+    final_sample_size=5_000,  # number of samples to collect after convergence
     two_param_uncertainty=True,
     weight=0.25,  # <-- Not sure how this linear combination weighting helps!
     output_dir="Casadi_Results",
@@ -379,7 +379,7 @@ def solve_with_casadi(
     uncertain_vals_tracker = [uncertain_vals.copy()]
     uncertain_SD_tracker = [block_matrix.copy()]
 
-    mass_matrix = np.linalg.inv(block_matrix)
+    mass_matrix = 10000 * np.diag(1 / np.concatenate((theta_coe_sd, gamma_coe_sd)) ** 2)
     mass_matrix_tracker = [mass_matrix.copy()]
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
@@ -681,9 +681,6 @@ def solve_with_casadi(
             uncertain_post_SD,
         )
         uncertain_SD_tracker.append(uncertain_post_SD.copy())
-
-        mass_matrix = 0.9 * mass_matrix + 0.1 * np.linalg.inv(block_matrix)
-
         print("updated mass matrix:", mass_matrix)
 
         mass_matrix_tracker.append(mass_matrix.copy())
