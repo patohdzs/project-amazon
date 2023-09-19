@@ -285,7 +285,6 @@ def solve_with_casadi(
     tol=0.001,
     T=200,
     N=200,
-    # sample_size = 1000, # simulations before convergence (to evaluate the mean)
     sample_size=10,
     mode_as_solution=False,  # If true, use the modeas solution for gamma
     final_sample_size=25_000,  # number of samples to collect after convergence
@@ -318,11 +317,9 @@ def solve_with_casadi(
     (
         zbar_2017,
         gamma,
-        # gammaSD,
         z_2017,
         forestArea_2017_ha,
         theta,
-        # thetaSD,
         gamma_coe,
         gamma_coe_sd,
         theta_coe,
@@ -379,28 +376,11 @@ def solve_with_casadi(
     uncertain_vals_old = vals.copy()
 
     # Householder to track sampled gamma values
-    # uncertain_vals_tracker       = np.empty((uncertain_vals.size, sample_size+1))
-    # uncertain_vals_tracker[:, 0] = uncertain_vals.copy()
     uncertain_vals_tracker = [uncertain_vals.copy()]
     uncertain_SD_tracker = [block_matrix.copy()]
 
-    # mass_matrix = 100*np.concatenate((theta_coe_sd, gamma_coe_sd))
-    # mass_matrix=100*np.block([[theta_vcov_array, zeros_top_right],
-    #                         [zeros_bottom_left, 10000*gamma_vcov_array]])
     mass_matrix = np.linalg.inv(block_matrix)
-    # L = sqrtm(mass_matrix)
-
-    # print("mass_matrix used",mass_matrix)
-    # sys.exit("Exiting because of some condition.")
-    # if scale == 0.0:
-    # mass_matrix_theta = 1/(thetaSD**2)
-    # mass_matrix_gamma = 1/(gammaSD**2)
-    # else:
-    #     mass_matrix_theta = np.ones(thetaSD.shape)
-    #     mass_matrix_gamma = np.ones(gammaSD.shape)
-    # mass_matrix = np.concatenate((mass_matrix_theta, mass_matrix_gamma))
     mass_matrix_tracker = [mass_matrix.copy()]
-    # print("mass_matrix initialization:",mass_matrix)
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
@@ -414,8 +394,7 @@ def solve_with_casadi(
     sol_val_Up_tracker = []
     sol_val_Um_tracker = []
     sol_val_Z_tracker = []
-    # count_Ratio_tracker= []
-    # site_count_Ratio_tracker=[]
+
     # Update this parameter (leng) once figured out where it is coming from
     leng = 200
     arr = np.cumsum(
@@ -481,26 +460,6 @@ def solve_with_casadi(
         print(decorate_text(f"Optimization Iteration[{cntr+1}/{max_iter}]"))
 
         print("uncertain_vals used in optimation: ", uncertain_vals)
-        # if not two_param_uncertainty:
-        # # One parameter (gamma) uncertainty
-        #     # Update x0
-        #     x0_vals = uncertain_vals * forestArea_2017_ha / norm_fac
-        #     # Construct Matrix A from new uncertain_vals
-        #     A[: -2, :]        = 0.0
-        #     Ax[0: size] = - alpha * uncertain_vals[0: size]
-        #     Ax[-1]            = alpha * np.sum(uncertain_vals * zbar_2017)
-        #     Ax[-2]            = - alpha
-        #     A[-2, :]          = Ax
-        #     A[-1, :]          = 0.0
-        #     A = casadi.sparsify(A)
-
-        #     # Construct Matrix D from new uncertain_vals
-        #     D[:, :]  = 0.0
-        #     D[-2, :] = -uncertain_vals
-        #     D = casadi.sparsify(D)
-
-        # else:
-        # Two parameter uncertainty (both theta and gamma)
 
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
@@ -555,19 +514,6 @@ def solve_with_casadi(
 
         opti.subject_to(Ua == casadi.sum1(Up + Um) ** 2)
 
-        # if not two_param_uncertainty:
-        #     # One parameter (gamma) uncertainty
-
-        #     # Set teh optimization problem
-        #     term1 = casadi.sum2(ds_vect[0:N, :].T * Ua * zeta / 2)
-        #     term2 = -casadi.sum2(ds_vect[0:N, :].T * (pf * (X[-2, 1:] - X[-2, 0:-1])))
-        #     term3 = -casadi.sum2(
-        #         ds_vect.T * casadi.sum1((pa * theta_vals - pf * kappa) * X[0:size, :])
-        #     )
-
-        # else:
-        # Two parameter uncertainty (both theta and gamma)
-
         term1 = casadi.sum2(ds_vect[0:N, :].T * Ua * zeta / 2)
         term2 = -casadi.sum2(ds_vect[0:N, :].T * (pf * (X[-2, 1:] - X[-2, 0:-1])))
         term3 = -casadi.sum2(
@@ -608,7 +554,6 @@ def solve_with_casadi(
         sol = opti.solve()
         print(f"Done; time taken {time.time()-start_time} seconds...")
 
-        # if _DEBUG:
         print("sol.value(X)", sol.value(X))
         print("sol.value(Ua)", sol.value(Ua))
         print("sol.value(Up)", sol.value(Up))
@@ -654,44 +599,6 @@ def solve_with_casadi(
             site_gamma_2017_df=site_gamma_2017_df,
         )
 
-        # test_vec = np.random.randn(13)
-        # log_density(test_vec)
-        # # # log_density=log_density(uncertain_vals)
-        # print("log_density",log_density(uncertain_vals))
-
-        # test_np=np.array([-1.15559607e+02 ,-6.41873731e-01,
-        # 1.16079385e+02,-6.09304912e+01,
-        # 1.28848350e+02, -6.59771297e+01 , 2.72129643e+00 , 1.22676741e-01,
-        # -8.70907810e+00 , 4.36212152e-01 ,-4.55517312e+00 , 3.20114284e+00,
-        # -1.63461641e+00+1e-5])
-        # print("log_density_proposed",log_density(test_np))
-        # test_np2=np.array([-1.15559607e+02,-6.41873731e-01,1.16079385e+02,
-        # -6.09304912e+01,
-        # 1.28848350e+02, -6.59771297e+01 , 2.72129643e+00 , 1.22676741e-01,
-        # -8.70907810e+00 , 4.36212152e-01 ,-4.55517312e+00 , 3.20114284e+00,
-        # -1.63461641e+00])
-        # print("log_density_proposed_2",log_density(test_np2))
-
-        # test_np=np.array([-8.70907810e+00,4.36212152e-01,-4.55517312e+00,
-        # 3.20114284e+00,
-        # -1.63461641e+00+1e-5])
-        # test_np2=np.array([-8.70907810e+00,4.36212152e-01 ,-4.55517312e+00,
-        # 3.20114284e+00,
-        # -1.63461641e+00])
-        # print("log_density_proposed",gamma_fitted(gamma_coe=test_np,
-        #     id_dataframe=sfdata_id,
-        #     gamma_dataframe=sfdata_gamma)  )
-        # print("log_density_proposed2",gamma_fitted(gamma_coe=test_np2,
-        #     id_dataframe=sfdata_id,
-        #     gamma_dataframe=sfdata_gamma)  )
-
-        # sys.exit("Exiting because of some condition.")
-
-        # Create MCMC sampler & sample, then calculate diagnostics
-        # if mode in [1.0, 3.0]:
-        #     constraint_test_mode = lambda x: True if np.all(x >= 0) else False
-        # elif mode == 2.0:
-
         print("Starting HMC sampling...")
         sampler = create_hmc_sampler(
             size=size_coe,
@@ -705,30 +612,11 @@ def solve_with_casadi(
             mass_matrix=mass_matrix,
         )
 
-        # print("start sampling_results")
-        # if scale == 1.0:
-        # # Update to get the mode as well as the sample
-        #     sampling_results = sampler.start_MCMC_sampling(
-        #         sample_size=sample_size,
-        #         initial_state=uncertain_vals_adj,
-        #         verbose=True,
-        #     )
-        # else:
         sampling_results = sampler.start_MCMC_sampling(
             sample_size=sample_size,
             initial_state=uncertain_vals,
             verbose=True,
         )
-
-        # count_positive=sampling_results['count_positive']
-        # count_Ratio=count_positive/2100
-        # print("positive_ratio",count_Ratio)
-        # count_Ratio_tracker.append(count_Ratio)
-
-        # site_count_positive=sampling_results['site_count_positive']
-        # site_count_Ratio=site_count_positive/2100
-        # print("site positive ratio",site_count_Ratio)
-        # site_count_Ratio_tracker.append(site_count_Ratio)
 
         uncertainty_post_samples = np.asarray(sampling_results["collected_ensemble"])
         uncertainty_map_estimate = sampling_results["map_estimate"]
@@ -758,46 +646,7 @@ def solve_with_casadi(
                 "uncertain values from this iteration: ",
                 np.mean(uncertainty_post_samples, axis=0),
             )
-            # if scale == 1.0:
-            #     uncertainty_post_samples[:, :size] *= thetaSD
-            #     uncertainty_post_samples[:, size:] *= gammaSD
-            #     print("scale back uncertain values from this iteration: ",
-            #            np.mean(uncertainty_post_samples, axis=0))
 
-            # if mode == 2.0: # drop negative values
-
-            #     means = np.mean(uncertainty_post_samples, axis=0)
-            #     stds = np.std(uncertainty_post_samples, axis=0)
-            #     print(uncertainty_post_samples.shape)
-            #     lower_bound = np.zeros(means.shape)
-            #     upper_bound = np.inf * np.ones(means.shape)
-            #     a, b = (lower_bound - means) / stds, (upper_bound - means) / stds
-            #     trunc_normal_means = []
-            #     trunc_normal_stds = []
-            #     for i in range(uncertainty_post_samples.shape[1]):
-            #         distribution = truncnorm(a[i], b[i], loc=means[i], scale=stds[i])
-            #         trunc_mean = distribution.mean()
-            #         trunc_normal_means.append(trunc_mean)
-            #         trunc_std = distribution.std()
-            #         trunc_normal_stds.append(trunc_std)
-
-            #     trunc_normal_means = np.array(trunc_normal_means)
-            #     uncertain_vals = (weight
-            #                       * trunc_normal_means + (1-weight)
-            #                       * uncertain_vals_old)
-            #     trunc_normal_stds = np.array(trunc_normal_stds)
-
-            #     print("trunc_normal_means",trunc_normal_means)
-            #     print("trunc_normal_stds",trunc_normal_stds)
-
-            #     # mask = uncertainty_post_samples < 0
-            #     # masked_samples = ma.masked_array(uncertainty_post_samples, mask)
-            #     # mean_non_negative = np.mean(masked_samples, axis=0).data
-            #     # print("mean_non_negative",mean_non_negative)
-            #     # print("mean_with_negative",np.mean(uncertainty_post_samples,axis=0))
-            # #     # uncertain_vals = (weight * np.mean(masked_samples, axis=0).data +
-            #                           (1-weight) * uncertain_vals_old)
-            # else:
             uncertain_vals = (
                 weight * np.mean(uncertainty_post_samples, axis=0)
                 + (1 - weight) * uncertain_vals_old
@@ -806,10 +655,6 @@ def solve_with_casadi(
             print("updated uncertain values: ", uncertain_vals)
 
         uncertain_vals_tracker.append(uncertain_vals.copy())
-
-        # if mode == 2.0:
-        #     uncertain_post_SD = trunc_normal_stds.copy()
-        # else:
 
         ## to do
         theta_coe_subset = uncertainty_post_samples[:, :8]
