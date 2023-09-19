@@ -295,7 +295,7 @@ def solve_with_casadi(
     # sample_size = 1000, # simulations before convergence (to evaluate the mean)
     sample_size=1000,
     mode_as_solution=False,  # If true, use the modeas solution for gamma
-    final_sample_size=25_000,  # number of samples to collect after convergence
+    final_sample_size=5_000,  # number of samples to collect after convergence
     two_param_uncertainty=True,
     weight=0.25,  # <-- Not sure how this linear combination weighting helps!
     output_dir="Casadi_Results",
