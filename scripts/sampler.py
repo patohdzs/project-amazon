@@ -6,7 +6,7 @@ import argparse
 import os
 
 # Import the solvers
-import solvers
+from solvers.casadi import solve_with_casadi
 
 parser = argparse.ArgumentParser(description="parameter settings")
 parser.add_argument("--weight", type=float, default=0.25)
@@ -129,7 +129,7 @@ if not os.path.exists(output_dir):
 if not os.path.exists(plotdir):
     os.makedirs(plotdir)
 
-casadi_results = solvers.solve_with_casadi(
+casadi_results = solve_with_casadi(
     weight=weight,
     xi=xi,
     pf=pf,
