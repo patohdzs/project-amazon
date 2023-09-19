@@ -168,12 +168,12 @@ def log_density_function(
     N,  # Number of control intervals
     alpha,  # Mean reversion coefficient
     sol_val_X,
-    sol_val_Ua,
-    sol_val_Up,
+    sol_val_Ua,  # Squared total control adjustments; dimensions T x 1
+    sol_val_Up,  # U control; dimensions T x I
     zbar_2017,
-    forestArea_2017_ha,
+    forestArea_2017_ha,  # Forest area in 2017
     norm_fac,  # Normalization factor
-    alpha_p_Adym,
+    alpha_p_Adym,  # Vector of alpha^Adym
     Bdym,
     leng,
     T,  # Time horizon
@@ -214,14 +214,17 @@ def log_density_function(
         gamma_coe=gamma_coe_vals, gamma_dataframe=site_gamma_2017_df
     )
 
+    # Num of theta_fitted values
     size = theta_fit.size
+
+    # Full fitted values vector (theta, gamma)
     beta_vals = np.concatenate((theta_fit, gamma_fit))
 
     # Check for complex-valued uncertain_vals
     if np.iscomplexobj(beta_vals):
-        print("beta_vals contains complex numbers.", beta_vals)
-        print("gamma", gamma_coe_vals, "theta", theta_coe_vals)
+        raise TypeError(f"beta_vals contains complex numbers {beta_vals}")
 
+    # Carbon captured at time zero
     x0_vals = beta_vals[size:].T.dot(forestArea_2017_ha) / norm_fac
     X_zero = np.sum(x0_vals) * np.ones(leng)
 
@@ -252,12 +255,14 @@ def log_density_function(
     # Overall objective value
     obj_val = term_1 + term_2 + term_3
 
+    # Computing kinetic energy term
+    # TODO: Check, should it be demeaned beta or coefs
     uncertain_vals_dev = uncertain_vals - uncertain_vals_mean
     norm_log_prob = -0.5 * np.dot(
         uncertain_vals_dev, np.linalg.inv(block_matrix).dot(uncertain_vals_dev)
     )
 
-    # Computing log-density (proportional to g star)
+    # Computing Hamiltonian (potential energy + kinetic energy)
     log_density_val = -1.0 / xi * obj_val + norm_log_prob
     log_density_val = float(log_density_val)
 
