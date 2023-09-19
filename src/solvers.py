@@ -394,7 +394,7 @@ def solve_with_casadi(
     # mass_matrix = 100*np.concatenate((theta_coe_sd, gamma_coe_sd))
     # mass_matrix=100*np.block([[theta_vcov_array, zeros_top_right],
     #                         [zeros_bottom_left, 10000*gamma_vcov_array]])
-    mass_matrix = np.linalg.inv(block_matrix)
+    mass_matrix = 10000*np.diag(1/np.concatenate((theta_coe_sd, gamma_coe_sd))**2)
     # L = sqrtm(mass_matrix)
 
     # print("mass_matrix used",mass_matrix)
@@ -858,7 +858,7 @@ def solve_with_casadi(
         )
         uncertain_SD_tracker.append(uncertain_post_SD.copy())
 
-        mass_matrix=0.9*mass_matrix+0.1*np.linalg.inv(block_matrix)
+        mass_matrix=mass_matrix
 
         print("updated mass matrix:", mass_matrix)
 
