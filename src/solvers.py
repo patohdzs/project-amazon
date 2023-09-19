@@ -603,7 +603,7 @@ def solve_with_casadi(
             )
 
         # TODO: Discuss with Daniel how this is taking too long, not the sampling!
-        print("solving the Outer Optimization problem")
+        print("Solving the outer optimization problem...")
         start_time = time.time()
         sol = opti.solve()
         print(f"Done; time taken {time.time()-start_time} seconds...")
@@ -628,11 +628,6 @@ def solve_with_casadi(
         sol_val_Um_tracker.append(sol_val_Um)
         sol_val_Z_tracker.append(sol_val_Z)
 
-        # print("sol_val_X",sol_val_X)
-        # sys.exit("Exiting because of some condition.")
-        ## Start Sampling
-        # Update signature of log density evaluator
-        # TODO: refactor using partial
         log_density = partial(
             log_density_function,
             uncertain_vals_mean=uncertain_vals_mean,
@@ -696,12 +691,8 @@ def solve_with_casadi(
         # if mode in [1.0, 3.0]:
         #     constraint_test_mode = lambda x: True if np.all(x >= 0) else False
         # elif mode == 2.0:
-        def constraint_test_mode(x):
-            return True if np.max(x >= 0) else False
 
-        # else:
-        #     raise ValueError("Invalid mode")
-        print("start HMC")
+        print("Starting HMC sampling...")
         sampler = create_hmc_sampler(
             size=size_coe,
             log_density=log_density,
@@ -710,7 +701,7 @@ def solve_with_casadi(
             symplectic_integrator="verlet",
             symplectic_integrator_stepsize=stepsize,
             symplectic_integrator_num_steps=symplectic_integrator_num_steps,
-            constraint_test=constraint_test_mode,
+            constraint_test=lambda x: True if np.max(x >= 0) else False,
             mass_matrix=mass_matrix,
         )
 
@@ -910,7 +901,7 @@ def solve_with_casadi(
                 plt.title(f"Iteration {cntr}; Site {j+1}")
                 plt.show()
 
-    print("Terminated. Sampling the final distribution")
+    print("Terminated. Sampling the final distribution...")
     # Sample (densly) the final distribution
     final_sample = sampler.sample(
         sample_size=final_sample_size,
