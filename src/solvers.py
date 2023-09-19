@@ -17,6 +17,7 @@ import pickle
 import shutil
 import sys
 import time
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -632,32 +633,31 @@ def solve_with_casadi(
         ## Start Sampling
         # Update signature of log density evaluator
         # TODO: refactor using partial
-        def log_density(uncertain_vals):
-            return log_density_function(
-                uncertain_vals=uncertain_vals,
-                uncertain_vals_mean=uncertain_vals_mean,
-                block_matrix=block_matrix,
-                alpha=alpha,
-                N=N,
-                sol_val_X=sol_val_X,
-                sol_val_Ua=sol_val_Ua,
-                sol_val_Up=sol_val_Up,
-                zbar_2017=zbar_2017,
-                forestArea_2017_ha=forestArea_2017_ha,
-                norm_fac=norm_fac,
-                alpha_p_Adym=alpha_p_Adym,
-                Bdym=Bdym,
-                leng=leng,
-                T=T,
-                ds_vect=ds_vect,
-                zeta=zeta,
-                xi=xi,
-                kappa=kappa,
-                pa=pa,
-                pf=pf,
-                site_theta_2017_df=site_theta_2017_df,
-                site_gamma_2017_df=site_gamma_2017_df,
-            )
+        log_density = partial(
+            log_density_function,
+            uncertain_vals_mean=uncertain_vals_mean,
+            block_matrix=block_matrix,
+            alpha=alpha,
+            N=N,
+            sol_val_X=sol_val_X,
+            sol_val_Ua=sol_val_Ua,
+            sol_val_Up=sol_val_Up,
+            zbar_2017=zbar_2017,
+            forestArea_2017_ha=forestArea_2017_ha,
+            norm_fac=norm_fac,
+            alpha_p_Adym=alpha_p_Adym,
+            Bdym=Bdym,
+            leng=leng,
+            T=T,
+            ds_vect=ds_vect,
+            zeta=zeta,
+            xi=xi,
+            kappa=kappa,
+            pa=pa,
+            pf=pf,
+            site_theta_2017_df=site_theta_2017_df,
+            site_gamma_2017_df=site_gamma_2017_df,
+        )
 
         # test_vec = np.random.randn(13)
         # log_density(test_vec)
@@ -705,7 +705,6 @@ def solve_with_casadi(
         sampler = create_hmc_sampler(
             size=size_coe,
             log_density=log_density,
-            #
             burn_in=100,
             mix_in=mix_in,
             symplectic_integrator="verlet",
