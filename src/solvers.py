@@ -263,7 +263,7 @@ def log_density_function(
         uncertain_vals_dev, np.linalg.inv(block_matrix).dot(uncertain_vals_dev)
     )
 
-    # Computing Hamiltonian (potential energy + kinetic energy)
+    # Computing potential energy
     log_density_val = -1.0 / xi * obj_val + norm_log_prob
     log_density_val = float(log_density_val)
 
