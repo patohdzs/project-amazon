@@ -9,6 +9,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import plots
 import seaborn as sns
 from scipy.integrate import quad
 from scipy.stats import truncnorm
@@ -143,11 +144,17 @@ if not os.path.exists(plotdir):
 (
     zbar_2017,
     gamma,
-    gammaSD,
     z_2017,
     forestArea_2017_ha,
     theta,
-    thetaSD,
+    gamma_coe,
+    gamma_coe_sd,
+    theta_coe,
+    theta_coe_sd,
+    gamma_vcov_array,
+    theta_vcov_array,
+    site_theta_2017_df,
+    site_gamma_2017_df,
 ) = load_site_data(
     sitenum,
     norm_fac=1e9,
@@ -158,37 +165,10 @@ with open(output_dir + "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
-fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-plt.plot(results["abs_error_tracker"], label=r"Absolute Error")
-plt.xlabel("Iteration")
-plt.ylabel(r"Absolute Error")
-plt.title(r"Trace Plot of Absolute Error")
-legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-fig.tight_layout()
-plt.subplots_adjust(right=0.7)
-fig.savefig(
-    plotdir + "abs_error.png",
-    bbox_extra_artists=(legend,),
-    bbox_inches="tight",
-    dpi=100,
-)
-plt.close()
 
-fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-plt.plot(results["percentage_error_tracker"], label=r"Proportional Error")
-plt.xlabel("Iteration")
-plt.ylabel(r"Proportional Error")
-plt.title(r"Trace Plot of Proportional Error")
-legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-fig.tight_layout()
-plt.subplots_adjust(right=0.7)
-fig.savefig(
-    plotdir + "pro_error.png",
-    bbox_extra_artists=(legend,),
-    bbox_inches="tight",
-    dpi=100,
-)
-plt.close()
+# Plot absolute and percentage error
+plots.lineplot_abs_error(results, plotdir)
+plots.lineplot_pct_error(results, plotdir)
 
 
 size = results["size"]
