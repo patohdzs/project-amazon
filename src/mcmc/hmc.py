@@ -824,7 +824,7 @@ class HMCSampler(Sampler):
         )
         return hmc_results["map_estimate"]
 
-    def generate_white_noise(self, size, truncate=True):
+    def generate_white_noise(self, size, truncate=False):
         """
         Generate a standard normal random vector of size `size` with values truncated
             at -/+3 if `truncate` is set to `True`
@@ -1277,16 +1277,12 @@ class HMCSampler(Sampler):
                 proposal_energy = proposal_kinetic_energy + proposal_potential_energy
 
                 energy_loss = proposal_energy - current_energy
-                _loss_thresh = 0.05 * current_energy
-                if (
-                    abs(energy_loss) >= _loss_thresh
-                ):  # this should avoid overflow errors
-                    if energy_loss < 0:
-                        sign = -1
-                    else:
-                        sign = 1
-                    energy_loss = sign * _loss_thresh
+                _loss_thresh = 0.05*current_energy
+                if abs(energy_loss) >= _loss_thresh:  # this should avoid overflow errors
+                    energy_loss = 1e11
                     print("energy loss")
+                if energy_loss=="nan":
+                    energy_loss=1e11
                 acceptance_probability = np.exp(-energy_loss)
 
                 acceptance_probability = min(acceptance_probability, 1.0)

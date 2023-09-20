@@ -131,10 +131,10 @@ def log_density_function(
     # Computing fitted values for theta and gamma
     theta_fit = theta_fitted(
         theta_coe=theta_coe_vals, theta_dataframe=site_theta_2017_df
-    )
+    ).flatten()
     gamma_fit = gamma_fitted(
         gamma_coe=gamma_coe_vals, gamma_dataframe=site_gamma_2017_df
-    )
+    ).flatten()
 
     # Num of theta_fitted values
     size = theta_fit.size

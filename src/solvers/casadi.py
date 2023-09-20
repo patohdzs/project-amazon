@@ -15,14 +15,14 @@ from utils.text import decorate_text
 def solve_with_casadi(
     # Configurations/Settings
     site_num=25,  # Number of sites(10, 25, 100, 1000)
-    norm_fac=1e11,
+    norm_fac=1e11, # normalization factor consistent used in paper
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
     pf=20.76,
     pa=44.75,
     xi=0.01,
-    zeta=1.66e-4 * 1e9,  # zeta := 1.66e-4*norm_fac
+    zeta=1.66e-4 * 1e11,  # use the same normalization factor
     max_iter=20000,
     tol=0.001,
     T=200,
@@ -413,11 +413,11 @@ def solve_with_casadi(
         zeros_bottom_left = np.zeros((rows2, cols1))
 
         # Construct the block matrix
-        block_matrix = np.block(
+        block_matrix_post = np.block(
             [[theta_vcov_array, zeros_top_right], [zeros_bottom_left, gamma_vcov_array]]
         )
 
-        uncertain_post_SD = block_matrix
+        uncertain_post_SD = block_matrix_post
         print(
             "uncertain value standard deviation from this iteration: ",
             uncertain_post_SD,
