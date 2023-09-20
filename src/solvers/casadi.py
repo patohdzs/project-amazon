@@ -15,14 +15,14 @@ from utils.text import decorate_text
 def solve_with_casadi(
     # Configurations/Settings
     site_num=25,  # Number of sites(10, 25, 100, 1000)
-    norm_fac=1e11,
+    norm_fac=1e11, # normalization factor consistent used in paper
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
     pf=20.76,
     pa=44.75,
     xi=0.01,
-    zeta=1.66e-4 * 1e11,  # zeta := 1.66e-4*norm_fac
+    zeta=1.66e-4 * 1e11,  # use the same normalization factor
     max_iter=20000,
     tol=0.001,
     T=200,

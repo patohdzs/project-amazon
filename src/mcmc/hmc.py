@@ -824,7 +824,7 @@ class HMCSampler(Sampler):
         )
         return hmc_results["map_estimate"]
 
-    def generate_white_noise(self, size, truncate=True):
+    def generate_white_noise(self, size, truncate=False):
         """
         Generate a standard normal random vector of size `size` with values truncated
             at -/+3 if `truncate` is set to `True`
@@ -843,9 +843,9 @@ class HMCSampler(Sampler):
         self.random_state = np.random.get_state()
         np.random.set_state(np_state)
 
-        # if truncate:
-        #     randn_vec[randn_vec > 3] = 3
-        #     randn_vec[randn_vec < -3] = -3
+        if truncate:
+            randn_vec[randn_vec > 3] = 3
+            randn_vec[randn_vec < -3] = -3
         return randn_vec
 
     def mass_matrix_matvec(self, momentum):
