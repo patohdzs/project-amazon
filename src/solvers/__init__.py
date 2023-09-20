@@ -86,7 +86,7 @@ def gamma_fitted(gamma_coe, gamma_dataframe):
 def log_density_function(
     uncertain_vals,
     uncertain_vals_mean,
-    block_matrix,
+    uncertain_vals_vcov,
     N,  # Number of control intervals
     alpha,  # Mean reversion coefficient
     sol_val_X,
@@ -179,7 +179,7 @@ def log_density_function(
 
     # Computing log prior density term
     log_prior_density = _log_normal_prior(
-        uncertain_vals, uncertain_vals_mean, block_matrix
+        uncertain_vals, uncertain_vals_mean, uncertain_vals_vcov
     )
 
     # Computing potential energy
