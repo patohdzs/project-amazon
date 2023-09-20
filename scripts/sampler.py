@@ -17,8 +17,6 @@ parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
 parser.add_argument("--pa", type=float, default=44.75)
-parser.add_argument("--theta", type=float, default=1.0)
-parser.add_argument("--gamma", type=float, default=1.0)
 parser.add_argument("--sitenum", type=int, default=10)
 parser.add_argument("--time", type=int, default=200)
 parser.add_argument("--mix_in", type=int, default=2)
@@ -42,8 +40,6 @@ logs_dir = logs_dir_path(**vars(args))
 weight = args.weight
 pf = args.pf
 pa = args.pa
-theta_multiplier = args.theta
-gamma_multiplier = args.gamma
 site_num = args.sitenum
 T = args.time
 xi = args.xi
