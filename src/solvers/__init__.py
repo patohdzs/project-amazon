@@ -177,7 +177,7 @@ def log_density_function(
     # Overall objective value
     obj_val = term_1 + term_2 + term_3
 
-    # Computing kinetic energy term
+    # Computing log prior term
     # TODO: Check, should it be demeaned beta or coefs
     uncertain_vals_dev = uncertain_vals - uncertain_vals_mean
     norm_log_prob = -0.5 * np.dot(
@@ -189,3 +189,7 @@ def log_density_function(
     log_density_val = float(log_density_val)
 
     return log_density_val
+
+
+def _log_prior_density(beta, Sigma):
+    pass
