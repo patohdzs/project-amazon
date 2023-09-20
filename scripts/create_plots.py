@@ -9,12 +9,13 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import plots
 import seaborn as sns
 from scipy.integrate import quad
 from scipy.stats import truncnorm
 from services.data_service import load_site_data
 from sklearn.neighbors import KernelDensity
+
+import plots
 
 sys.path.append(os.path.abspath("src"))
 sns.set(font_scale=1.2)

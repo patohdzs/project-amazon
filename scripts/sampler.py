@@ -3,21 +3,22 @@
 # Import Required Packages
 # ========================
 import argparse
-import os
+
+from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 # Import the solvers
 from solvers.casadi import solve_with_casadi
 
+# Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
+
+parser.add_argument("--dataname", type=str, default="tests")
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
 parser.add_argument("--pa", type=float, default=44.75)
-parser.add_argument("--theta", type=float, default=1.0)
-parser.add_argument("--gamma", type=float, default=1.0)
 parser.add_argument("--sitenum", type=int, default=10)
 parser.add_argument("--time", type=int, default=200)
-parser.add_argument("--dataname", type=str, default="tests")
 parser.add_argument("--mix_in", type=int, default=2)
 parser.add_argument("--mass_matrix_theta_scale", type=float, default=1.0)
 parser.add_argument("--mass_matrix_gamma_scale", type=float, default=1.0)
@@ -27,123 +28,30 @@ parser.add_argument("--stepsize", type=float, default=0.1)
 parser.add_argument("--scale", type=float, default=1.0)
 parser.add_argument("--mode", type=float, default=1.0)
 
-
+# Parse arguments
 args = parser.parse_args()
-weight = args.weight
-pf = args.pf
-pa = args.pa
-theta_multiplier = args.theta
-gamma_multiplier = args.gamma
-sitenum = args.sitenum
-time_hzn = args.time
-xi = args.xi
-dataname = args.dataname
-mix_in = args.mix_in
-mass_matrix_theta_scale = args.mass_matrix_theta_scale
-mass_matrix_gamma_scale = args.mass_matrix_gamma_scale
-mass_matrix_weight = args.mass_matrix_weight
-symplectic_integrator_num_steps = args.symplectic_integrator_num_steps
-stepsize = args.stepsize
-scale = args.scale
-mode = args.mode
 
-workdir = os.getcwd()
-output_dir = (
-    workdir
-    + "/output/"
-    + dataname
-    + "/scale_"
-    + str(scale)
-    + "_mode_"
-    + str(mode)
-    + "/pf_"
-    + str(pf)
-    + "_pa_"
-    + str(pa)
-    + "_time_"
-    + str(time_hzn)
-    + "/theta_"
-    + str(theta_multiplier)
-    + "_gamma_"
-    + str(gamma_multiplier)
-    + "/sitenum_"
-    + str(sitenum)
-    + "_xi_"
-    + str(xi)
-    + "/mix_in_"
-    + str(mix_in)
-    + "_mm_theta_scale_"
-    + str(mass_matrix_theta_scale)
-    + "_mm_gamma_scale_"
-    + str(mass_matrix_gamma_scale)
-    + "_num_steps_"
-    + str(symplectic_integrator_num_steps)
-    + "_stepsize_"
-    + str(stepsize)
-    + "/weight_"
-    + str(weight)
-    + "_mass_matrix_weight_"
-    + str(mass_matrix_weight)
-    + "/"
-)
-plotdir = (
-    workdir
-    + "/plot/"
-    + dataname
-    + "/scale_"
-    + str(scale)
-    + "_mode_"
-    + str(mode)
-    + "/pf_"
-    + str(pf)
-    + "_pa_"
-    + str(pa)
-    + "_time_"
-    + str(time_hzn)
-    + "/theta_"
-    + str(theta_multiplier)
-    + "_gamma_"
-    + str(gamma_multiplier)
-    + "/sitenum_"
-    + str(sitenum)
-    + "_xi_"
-    + str(xi)
-    + "/mix_in_"
-    + str(mix_in)
-    + "_mm_theta_scale_"
-    + str(mass_matrix_theta_scale)
-    + "_mm_gamma_scale_"
-    + str(mass_matrix_gamma_scale)
-    + "_num_steps_"
-    + str(symplectic_integrator_num_steps)
-    + "_stepsize_"
-    + str(stepsize)
-    + "/weight_"
-    + str(weight)
-    + "_mass_matrix_weight_"
-    + str(mass_matrix_weight)
-    + "/"
-)
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-if not os.path.exists(plotdir):
-    os.makedirs(plotdir)
+# Create output and plots directories
+output_dir = output_dir_path(**vars(args))
+plots_dir = plots_dir_path(**vars(args))
+logs_dir = logs_dir_path(**vars(args))
 
+# Solve model with Casadi
 casadi_results = solve_with_casadi(
-    weight=weight,
-    xi=xi,
-    pf=pf,
-    pa=pa,
-    site_num=sitenum,
-    T=time_hzn,
+    weight=args.weight,
+    xi=args.xi,
+    pf=args.pf,
+    pa=args.pa,
+    site_num=args.sitenum,
+    T=args.time,
     output_dir=output_dir,
-    mix_in=mix_in,
-    mass_matrix_theta_scale=mass_matrix_theta_scale,
-    mass_matrix_gamma_scale=mass_matrix_gamma_scale,
-    mass_matrix_weight=mass_matrix_weight,
-    stepsize=stepsize,
-    symplectic_integrator_num_steps=symplectic_integrator_num_steps,
+    mix_in=args.mix_in,
+    mass_matrix_theta_scale=args.mass_matrix_theta_scale,
+    mass_matrix_gamma_scale=args.mass_matrix_gamma_scale,
+    mass_matrix_weight=args.mass_matrix_weight,
+    stepsize=args.stepsize,
+    symplectic_integrator_num_steps=args.symplectic_integrator_num_steps,
     two_param_uncertainty=True,
-    scale=scale,
-    mode=mode,
+    scale=args.scale,
+    mode=args.mode,
 )
