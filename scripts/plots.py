@@ -13,6 +13,7 @@ import seaborn as sns
 from scipy.integrate import quad
 from scipy.stats import truncnorm
 from services.data_service import load_site_data
+from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 from sklearn.neighbors import KernelDensity
 
 sys.path.append(os.path.abspath("src"))
@@ -57,87 +58,10 @@ stepsize = args.stepsize
 scale = args.scale
 mode = args.mode
 
-workdir = os.getcwd()
-output_dir = (
-    workdir
-    + "/output/"
-    + dataname
-    + "/scale_"
-    + str(scale)
-    + "_mode_"
-    + str(mode)
-    + "/pf_"
-    + str(pf)
-    + "_pa_"
-    + str(pa)
-    + "_time_"
-    + str(time)
-    + "/theta_"
-    + str(theta_multiplier)
-    + "_gamma_"
-    + str(gamma_multiplier)
-    + "/sitenum_"
-    + str(sitenum)
-    + "_xi_"
-    + str(xi)
-    + "/mix_in_"
-    + str(mix_in)
-    + "_mm_theta_scale_"
-    + str(mass_matrix_theta_scale)
-    + "_mm_gamma_scale_"
-    + str(mass_matrix_gamma_scale)
-    + "_num_steps_"
-    + str(symplectic_integrator_num_steps)
-    + "_stepsize_"
-    + str(stepsize)
-    + "/weight_"
-    + str(weight)
-    + "_mass_matrix_weight_"
-    + str(mass_matrix_weight)
-    + "/"
-)
-plotdir = (
-    workdir
-    + "/plot/"
-    + dataname
-    + "/scale_"
-    + str(scale)
-    + "_mode_"
-    + str(mode)
-    + "/pf_"
-    + str(pf)
-    + "_pa_"
-    + str(pa)
-    + "_time_"
-    + str(time)
-    + "/theta_"
-    + str(theta_multiplier)
-    + "_gamma_"
-    + str(gamma_multiplier)
-    + "/sitenum_"
-    + str(sitenum)
-    + "_xi_"
-    + str(xi)
-    + "/mix_in_"
-    + str(mix_in)
-    + "_mm_theta_scale_"
-    + str(mass_matrix_theta_scale)
-    + "_mm_gamma_scale_"
-    + str(mass_matrix_gamma_scale)
-    + "_num_steps_"
-    + str(symplectic_integrator_num_steps)
-    + "_stepsize_"
-    + str(stepsize)
-    + "/weight_"
-    + str(weight)
-    + "_mass_matrix_weight_"
-    + str(mass_matrix_weight)
-    + "/"
-)
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-if not os.path.exists(plotdir):
-    os.makedirs(plotdir)
+# Create output and plots directories
+output_dir = output_dir_path(**vars(args))
+plots_dir = plots_dir_path(**vars(args))
+logs_dir = logs_dir_path(**vars(args))
 
 
 (
@@ -148,13 +72,10 @@ if not os.path.exists(plotdir):
     forestArea_2017_ha,
     theta,
     thetaSD,
-) = load_site_data(
-    sitenum,
-    norm_fac=1e9,
-)
+) = load_site_data(sitenum, norm_fac=1e9)
 
 
-with open(output_dir + "results.pcl", "rb") as f:
+with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
@@ -167,7 +88,7 @@ legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad
 fig.tight_layout()
 plt.subplots_adjust(right=0.7)
 fig.savefig(
-    plotdir + "abs_error.png",
+    plots_dir + "abs_error.png",
     bbox_extra_artists=(legend,),
     bbox_inches="tight",
     dpi=100,
@@ -183,7 +104,7 @@ legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad
 fig.tight_layout()
 plt.subplots_adjust(right=0.7)
 fig.savefig(
-    plotdir + "pro_error.png",
+    plots_dir + "pro_error.png",
     bbox_extra_artists=(legend,),
     bbox_inches="tight",
     dpi=100,
@@ -209,7 +130,7 @@ axes[0].set_ylim([y_min, y_max])
 axes[1].set_ylim([y_min, y_max])
 fig.tight_layout()
 fig.savefig(
-    plotdir + "site_pro_error.png",
+    plots_dir + "site_pro_error.png",
     bbox_extra_artists=(legend,),
     bbox_inches="tight",
     dpi=100,
@@ -227,7 +148,7 @@ legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad
 fig.tight_layout()
 plt.subplots_adjust(right=0.7)
 fig.savefig(
-    plotdir + "gamma.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
+    plots_dir + "gamma.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
 )
 plt.close()
 
@@ -241,7 +162,7 @@ legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad
 fig.tight_layout()
 plt.subplots_adjust(right=0.7)
 fig.savefig(
-    plotdir + "theta.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
+    plots_dir + "theta.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
 )
 plt.close()
 
@@ -425,7 +346,7 @@ for j in range(size):
     ax2.legend(lines + lines2, labels + labels2, loc=0)
     ax1.grid(False)
     ax2.grid(False)
-    fig.savefig(plotdir + "theta_site_%d_iter_%d_hist.png" % (j + 1, i), dpi=100)
+    fig.savefig(plots_dir + "theta_site_%d_iter_%d_hist.png" % (j + 1, i), dpi=100)
     plt.close()
 
     fig, ax1 = plt.subplots(1, 1, figsize=(8, 6))
@@ -466,7 +387,7 @@ for j in range(size):
     ax2.legend(lines + lines2, labels + labels2, loc=0)
     ax1.grid(False)
     ax2.grid(False)
-    fig.savefig(plotdir + "gamma_site_%d_iter_%d_hist.png" % (j + 1, i), dpi=100)
+    fig.savefig(plots_dir + "gamma_site_%d_iter_%d_hist.png" % (j + 1, i), dpi=100)
     plt.close()
 
     if mode == 2.0:
@@ -527,7 +448,7 @@ for j in range(size):
         if j in [0, 1]:
             plt.ylim([0, 120])
         plt.legend()
-        fig.savefig(plotdir + "theta_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
+        fig.savefig(plots_dir + "theta_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -585,7 +506,7 @@ for j in range(size):
             r"Density of $\gamma_{site_%d}$ for truncated normal methods" % (j + 1)
         )
         plt.legend()
-        fig.savefig(plotdir + "gamma_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
+        fig.savefig(plots_dir + "gamma_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
         plt.close()
     else:
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -621,7 +542,7 @@ for j in range(size):
         if j in [0, 1]:
             plt.ylim([0, 120])
         plt.legend()
-        fig.savefig(plotdir + "theta_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
+        fig.savefig(plots_dir + "theta_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -655,7 +576,7 @@ for j in range(size):
             r"Density of $\gamma_{site_%d}$ for reflection boundary methods" % (j + 1)
         )
         plt.legend()
-        fig.savefig(plotdir + "gamma_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
+        fig.savefig(plots_dir + "gamma_site_%d_iter_%d.png" % (j + 1, i), dpi=100)
         plt.close()
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -717,7 +638,7 @@ for j in range(size):
             plt.ylim([0, 120])
         plt.legend()
         fig.savefig(
-            plotdir + "theta_site_%d_iter_%d_truncnormal.png" % (j + 1, i), dpi=100
+            plots_dir + "theta_site_%d_iter_%d_truncnormal.png" % (j + 1, i), dpi=100
         )
         plt.close()
 
@@ -780,7 +701,7 @@ for j in range(size):
         )
         plt.legend()
         fig.savefig(
-            plotdir + "gamma_site_%d_iter_%d_truncnormal.png" % (j + 1, i), dpi=100
+            plots_dir + "gamma_site_%d_iter_%d_truncnormal.png" % (j + 1, i), dpi=100
         )
         plt.close()
 
@@ -812,7 +733,8 @@ for j in range(size):
         ax1.grid(False)
         ax2.grid(False)
         fig.savefig(
-            plotdir + "theta_site_%d_iter_%d_untruncated_hist.png" % (j + 1, i), dpi=100
+            plots_dir + "theta_site_%d_iter_%d_untruncated_hist.png" % (j + 1, i),
+            dpi=100,
         )
         plt.close()
 
@@ -835,7 +757,7 @@ for j in range(size):
             plt.ylim([0, 120])
         plt.legend()
         fig.savefig(
-            plotdir + "theta_site_%d_iter_%d_untruncated.png" % (j + 1, i), dpi=100
+            plots_dir + "theta_site_%d_iter_%d_untruncated.png" % (j + 1, i), dpi=100
         )
         plt.close()
 
@@ -866,7 +788,8 @@ for j in range(size):
         ax1.grid(False)
         ax2.grid(False)
         fig.savefig(
-            plotdir + "gamma_site_%d_iter_%d_untruncated_hist.png" % (j + 1, i), dpi=100
+            plots_dir + "gamma_site_%d_iter_%d_untruncated_hist.png" % (j + 1, i),
+            dpi=100,
         )
         plt.close()
 
@@ -887,7 +810,7 @@ for j in range(size):
         )
         plt.legend()
         fig.savefig(
-            plotdir + "gamma_site_%d_iter_%d_untruncated.png" % (j + 1, i), dpi=100
+            plots_dir + "gamma_site_%d_iter_%d_untruncated.png" % (j + 1, i), dpi=100
         )
         plt.close()
 
@@ -933,7 +856,7 @@ for j in range(size):
         if j in [0, 1]:
             plt.ylim([0, 120])
         plt.legend()
-        fig.savefig(plotdir + "theta_site_%d_inflated.png" % (j + 1), dpi=100)
+        fig.savefig(plots_dir + "theta_site_%d_inflated.png" % (j + 1), dpi=100)
         plt.close()
 
     # size = results['size']
