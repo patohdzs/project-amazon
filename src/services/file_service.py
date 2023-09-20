@@ -2,17 +2,17 @@ import os
 from pathlib import Path
 
 
-def output_dir_path(**kwargs):
+def output_dir_path(**kwargs) -> Path:
     path = get_path("output")
     return _nested_dir_path(path, **kwargs)
 
 
-def logs_dir_path(**kwargs):
+def logs_dir_path(**kwargs) -> Path:
     path = get_path("logs")
     return _nested_dir_path(path, **kwargs)
 
 
-def plots_dir_path(**kwargs):
+def plots_dir_path(**kwargs) -> Path:
     path = get_path("plots")
     return _nested_dir_path(path, **kwargs)
 
@@ -21,7 +21,7 @@ def get_path(*args: str) -> Path:
     return _project_root().joinpath(*args)
 
 
-def _nested_dir_path(path, **kwargs):
+def _nested_dir_path(path, **kwargs) -> Path:
     for key, value in kwargs.items():
         # Make subdir name
         subdir_name = f"{key}_{value}"
