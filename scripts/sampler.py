@@ -36,39 +36,22 @@ output_dir = output_dir_path(**vars(args))
 plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
-# Assing arguments
-weight = args.weight
-pf = args.pf
-pa = args.pa
-site_num = args.sitenum
-T = args.time
-xi = args.xi
-dataname = args.dataname
-mix_in = args.mix_in
-mass_matrix_theta_scale = args.mass_matrix_theta_scale
-mass_matrix_gamma_scale = args.mass_matrix_gamma_scale
-mass_matrix_weight = args.mass_matrix_weight
-symplectic_integrator_num_steps = args.symplectic_integrator_num_steps
-stepsize = args.stepsize
-scale = args.scale
-mode = args.mode
-
 # Solve model with Casadi
 casadi_results = solve_with_casadi(
-    weight=weight,
-    xi=xi,
-    pf=pf,
-    pa=pa,
-    site_num=site_num,
-    T=T,
+    weight=args.weight,
+    xi=args.xi,
+    pf=args.pf,
+    pa=args.pa,
+    site_num=args.sitenum,
+    T=args.time,
     output_dir=output_dir,
-    mix_in=mix_in,
-    mass_matrix_theta_scale=mass_matrix_theta_scale,
-    mass_matrix_gamma_scale=mass_matrix_gamma_scale,
-    mass_matrix_weight=mass_matrix_weight,
-    stepsize=stepsize,
-    symplectic_integrator_num_steps=symplectic_integrator_num_steps,
+    mix_in=args.mix_in,
+    mass_matrix_theta_scale=args.mass_matrix_theta_scale,
+    mass_matrix_gamma_scale=args.mass_matrix_gamma_scale,
+    mass_matrix_weight=args.mass_matrix_weight,
+    stepsize=args.stepsize,
+    symplectic_integrator_num_steps=args.symplectic_integrator_num_steps,
     two_param_uncertainty=True,
-    scale=scale,
-    mode=mode,
+    scale=args.scale,
+    mode=args.mode,
 )
