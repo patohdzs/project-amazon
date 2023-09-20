@@ -4,8 +4,12 @@
 
 # Data
 data/
+
+# Results
 output/
 plot/
+plots/
+logs/
 Casadi_Results/
 
 # Local bash scripts
