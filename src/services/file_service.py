@@ -2,24 +2,38 @@ import os
 from pathlib import Path
 
 
-def get_output_dir(**kwargs):
+def output_dir_path(**kwargs):
     path = get_path("output")
+    return _nested_dir_path(path, **kwargs)
 
-    for key, value in kwargs.items():
-        subdir_name = f"{key}_{value}"
 
-        # Construct the full path of the subdirectory
-        path = path.joinpath(path, subdir_name)
+def logs_dir_path(**kwargs):
+    path = get_path("logs")
+    return _nested_dir_path(path, **kwargs)
 
-        # Create the subdirectory
-        if not os.path.exists(path):
-            os.makedirs(path)
 
-    return path
+def plots_dir_path(**kwargs):
+    path = get_path("plots")
+    return _nested_dir_path(path, **kwargs)
 
 
 def get_path(*args: str) -> Path:
     return _project_root().joinpath(*args)
+
+
+def _nested_dir_path(path, **kwargs):
+    for key, value in kwargs.items():
+        # Make subdir name
+        subdir_name = f"{key}_{value}"
+
+        # Join subdir to rest of the path
+        path = path.joinpath(path, subdir_name)
+
+        # Create subdir if non-existent
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    return path
 
 
 def _project_root() -> Path:
