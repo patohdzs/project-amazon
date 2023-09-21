@@ -184,52 +184,7 @@ plots.traceplot_theta(results, plotdir)
 # plots.traceplot_adjustments(results, plotdir)
 
 
-# For Up
-# for j in range(size):
-#     for i in range(len(results["sol_val_Up_tracker"])):
-# i = len(results['sol_val_Up_tracker'])-1
-#         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         plt.plot(results['sol_val_Up_tracker'][i][j,:],
-#                  label=r"$Up_{site_%d, iter_%d}$"%(j+1, i))
-#         plt.xlabel("Iteration")
-#         plt.ylabel(r"$Up$")
-#         plt.title(r"Trace Plot of Up")
-# legend = plt.legend(bbox_to_anchor=(1.05, 0.5),
-#                     loc="center left", borderaxespad=0)
-#         fig.tight_layout()
-#         plt.subplots_adjust(right=0.7)
-# fig.savefig(
-#     plotdir + "Up_site_%d_iter_%d.png" % (j + 1, i),
-#     bbox_extra_artists=(legend,),
-#     bbox_inches="tight",
-#     dpi=100,
-# )
-#         plt.close()
-
 # For Z
-# for j in range(size):
-#     for i in range(len(results["sol_val_Z_tracker"])):
-#         i = len(results['sol_val_Z_tracker'])-1
-#         fig, axes = plt.subplots(1, 1, figsize = (8,6))
-#         plt.plot(
-#             results["sol_val_Z_tracker"][i][j, :],
-#             label=r"$Z_{site_%d, iter_%d}$" % (j + 1, i),
-#         )
-#         plt.xlabel("Iteration")
-#         plt.ylabel(r"$Z$")
-#         plt.title(r"Trace Plot of Z")
-#         legend = plt.legend(
-#             bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
-#         )
-#         fig.tight_layout()
-#         plt.subplots_adjust(right=0.7)
-#         fig.savefig(
-#             plotdir + "Z_site_%d_iter_%d.png" % (j + 1, i),
-#             bbox_extra_artists=(legend,),
-#             bbox_inches="tight",
-#             dpi=100,
-#         )
-#         plt.close()
 
 
 size = results["size"]
