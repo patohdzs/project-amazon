@@ -4,16 +4,16 @@
 #SBATCH --job-name=project_amazon_hmc_sampling
 #SBATCH --time=0-4:30
 #SBATCH --partition=standard
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=7G
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=hdzsen.patricio@gmail.com
+#SBATCH --mail-user=ph2696@columbia.edu
 
 dataname="tests"
 sitenum=24
 xi=0.1
 pf=25
-pa=44.75
+pa=44.751
 theta=1.0
 gamma=1.0
 T=200
@@ -27,19 +27,25 @@ stepsize=0.05
 scale=0.0
 mode=1.0
 
+echo "${SLURM_JOB_NAME}"
+
 # Load conda
+echo "Loading conda..."
 module load anaconda
 
 # Create and activate virtual environment
+echo "Creating virtual environment..."
 python -m venv venv
 source venv/bin/activate
 
 # Install dependencies
+echo "Installing dependencies..."
 python -m pip install -e '.[all]'
 
 
 # Run sampler script
-python scripts/sampler.py \
+echo "Running script..."
+python -u scripts/sampler.py \
     --dataname ${dataname} \
     --weight ${weight} \
     --xi ${xi} \
@@ -56,6 +62,6 @@ python scripts/sampler.py \
     --scale ${stepsize} \
     --mode ${mode}
 
-
+echo "Finished running!"
 deactivate
 # End of script
