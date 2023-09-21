@@ -174,8 +174,8 @@ plots.traceplot_pct_error(results, plotdir)
 
 # Plot theta and gamma convergence
 plots.traceplot_params_pct_error(results, plotdir)
-plots.traceplot_gamma(results, plotdir)
-plots.traceplot_theta(results, plotdir)
+plots.traceplot_gamma_coefs(results, plotdir)
+plots.traceplot_theta_coefs(results, plotdir)
 
 # Plot X convergence
 # plots.traceplot_state(results, plotdir)

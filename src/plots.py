@@ -85,11 +85,12 @@ def traceplot_params_pct_error(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_gamma(results: dict, plots_dir: Path, K=8) -> None:
+def traceplot_gamma_coefs(results: dict, plots_dir: Path, K=8) -> None:
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     for j in range(K):
         plt.plot(
-            results["uncertain_vals_tracker"][:, j], label=r"$\beta{%d}$" % (j + 1)
+            results["uncertain_vals_tracker"][:, j],
+            label=r"$\beta_\gamma^{%d}$" % (j + 1),
         )
     plt.xlabel("Iteration")
     plt.ylabel(r"$\beta_\gamma$")
@@ -106,20 +107,21 @@ def traceplot_gamma(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_theta(results: dict, plots_dir: Path, K=8) -> None:
+def traceplot_theta_coefs(results: dict, plots_dir: Path, K=8) -> None:
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
     for j in range(K, 13):
         plt.plot(
-            results["uncertain_vals_tracker"][:, j], label=r"$\theta_{%d}$" % (j + 1)
+            results["uncertain_vals_tracker"][:, j],
+            label=r"$\beta_\theta^{%d}$" % (j + 1),
         )
     plt.xlabel("Iteration")
-    plt.ylabel(r"$\theta$")
-    plt.title(r"Trace Plot of $\theta$")
+    plt.ylabel(r"$\beta_\theta$")
+    plt.title(r"Trace Plot of $\beta_\theta$")
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     fig.tight_layout()
     plt.subplots_adjust(right=0.7)
     fig.savefig(
-        plots_dir / "theta.png",
+        plots_dir / "theta_coef.png",
         bbox_extra_artists=(legend,),
         bbox_inches="tight",
         dpi=100,
@@ -127,40 +129,53 @@ def traceplot_theta(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_state(results: dict, plots_dir: Path) -> None:
+def traceplot_X(results: dict, plots_dir: Path) -> None:
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-    for j in range(K + 2):
-        plt.plot(results["sol_val_X_tracker"][:, j], label=r"$X_{%d}$" % (j + 1))
-    plt.xlabel("Iteration")
+    X = results["sol_val_X_tracker"][-1]
+
+    for j in range(results["size"]):
+        plt.plot(X[j, :], label=r"$X_{%d}$" % (j + 1))
+
+    plt.xlabel("Time")
     plt.ylabel(r"$X$")
-    plt.title(r"Trace Plot of X")
+    plt.title(r"Trace Plot of X Trajectory")
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     fig.tight_layout()
     plt.subplots_adjust(right=0.7)
     fig.savefig(
-        plots_dir / "X.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
+        plots_dir / "X_trajectory.png",
+        bbox_extra_artists=(legend,),
+        bbox_inches="tight",
+        dpi=100,
     )
     plt.close()
 
 
-def traceplot_adjustments(results: dict, plots_dir: Path) -> None:
+def traceplot_Ua(results: dict, plots_dir: Path) -> None:
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-    for j in range(results["size"] + 2):
-        plt.plot(results["sol_val_Ua_tracker"][:, j], label=r"$Ua_{%d}$" % (j + 1))
-    plt.xlabel("Iteration")
+
+    for j in range(8):
+        plt.plot(results["sol_val_Ua_tracker"][j], label=r"$Ua_{%d}$" % (j + 1))
+
+    plt.xlabel("Time")
     plt.ylabel(r"$Ua$")
-    plt.title(r"Trace Plot of Ua")
+    plt.title(r"Trace Plot of Ua Trajectory")
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     fig.tight_layout()
     plt.subplots_adjust(right=0.7)
     fig.savefig(
-        plots_dir / "Ua.png", bbox_extra_artists=(legend,), bbox_inches="tight", dpi=100
+        plots_dir / "Ua_trajectory.png",
+        bbox_extra_artists=(legend,),
+        bbox_inches="tight",
+        dpi=100,
     )
     plt.close()
 
 
 def traceplot_Um(results: dict, plots_dir: Path) -> None:
     size = results["size"]
+    print(np.array(results["sol_val_Um_tracker"]).shape)
+
     for j in range(size):
         for i in range(len(results["sol_val_Um_tracker"])):
             i = len(results["sol_val_Up_tracker"]) - 1
@@ -178,7 +193,7 @@ def traceplot_Um(results: dict, plots_dir: Path) -> None:
             fig.tight_layout()
             plt.subplots_adjust(right=0.7)
             fig.savefig(
-                plots_dir / "Um_site_%d_iter_%d.png" % (j + 1, i + 1),
+                plots_dir / f"Um_site_{j+1}_iter_{i+1}.png",
                 bbox_extra_artists=(legend,),
                 bbox_inches="tight",
                 dpi=100,
@@ -405,9 +420,7 @@ def dist_theta(results, plotdir):
         #     color="blue"
         # )
         a, b = (0 - np.mean(gamma_samples)) / np.std(gamma_samples), np.inf
-        truncnorm(
-            a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples)
-        )
+        truncnorm(a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples))
         x = np.linspace(min_theta, max_theta, 1000)
         axes.plot(
             x, unadjusted_dist.pdf(x), label="Unadjusted (truncnorm)", color="blue"
@@ -509,9 +522,7 @@ def dist_theta(results, plotdir):
         #     color="red",
         # )
         a, b = (0 - np.mean(gamma_samples)) / np.std(gamma_samples), np.inf
-        truncnorm(
-            a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples)
-        )
+        truncnorm(a, b, loc=np.mean(gamma_samples), scale=np.std(gamma_samples))
         a, b = (0 - np.mean(results["collected_ensembles"][i][:, j + size])) / np.std(
             results["collected_ensembles"][i][:, j + size]
         ), np.inf

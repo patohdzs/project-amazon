@@ -71,12 +71,15 @@ plots.traceplot_pct_error(results, plots_dir)
 
 # Plot theta and gamma convergence
 plots.traceplot_params_pct_error(results, plots_dir)
-plots.traceplot_gamma(results, plots_dir)
-plots.traceplot_theta(results, plots_dir)
+plots.traceplot_gamma_coefs(results, plots_dir)
+plots.traceplot_theta_coefs(results, plots_dir)
 
 
 # Plot X convergence
-plots.traceplot_state(results, plots_dir)
+plots.traceplot_X(results, plots_dir)
 
 # Plot adjustments
-plots.traceplot_adjustments(results, plots_dir)
+plots.traceplot_Ua(results, plots_dir)
+
+# Plot Um
+plots.traceplot_Um(results, plots_dir)
