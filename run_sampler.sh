@@ -1,3 +1,14 @@
+#!/bin/bash
+
+#SBATCH --account=sscc
+#SBATCH --job-name=project_amazon_hmc_sampling
+#SBATCH --time=0-4:30
+#SBATCH --partition=standard
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=7G
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=hdzsen.patricio@gmail.com
+
 dataname="tests"
 sitenum=24
 xi=0.1
@@ -16,6 +27,15 @@ stepsize=0.05
 scale=0.0
 mode=1.0
 
+# Load conda
+module load anaconda
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate
+
+
+# Run sampler script
 python scripts/sampler.py \
     --dataname ${dataname} \
     --weight ${weight} \
@@ -32,3 +52,7 @@ python scripts/sampler.py \
     --stepsize ${stepsize} \
     --scale ${stepsize} \
     --mode ${mode}
+
+
+deactivate
+# End of script
