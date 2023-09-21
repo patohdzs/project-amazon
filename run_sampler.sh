@@ -34,6 +34,9 @@ module load anaconda
 python -m venv venv
 source venv/bin/activate
 
+# Install dependencies
+python -m pip install -e '.[all]'
+
 
 # Run sampler script
 python scripts/sampler.py \
