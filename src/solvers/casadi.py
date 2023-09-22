@@ -123,18 +123,7 @@ def solve_with_casadi(
     Adym = np.arange(1, leng + 1)
     alpha_p_Adym = np.power(1 - alpha, Adym)
 
-    # Initialize Blocks of the A matrix those won't change
-    A = np.zeros((size + 2, size + 2))
-    Ax = np.zeros(size + 2)
-
-    # Construct Matrix B
-    B = np.eye(N=size + 2, M=size, k=0)
-    B = casadi.sparsify(B)
-
-    # Construct Matrxi D constant blocks
-    D = np.zeros((size + 2, size))
-
-    # time step!
+    # Time step
     dt = T / N
 
     # Other placeholders!
@@ -191,14 +180,15 @@ def solve_with_casadi(
 
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
-        # Solve outer
-
-        sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua = solve_outer_problem(
+        # Solve outer optimization problem
+        (
+            sol_val_X,
+            sol_val_Up,
+            sol_val_Um,
+            sol_val_Z,
+            sol_val_Ua,
+        ) = solve_outer_optimization_problem(
             N=N,
-            A=A,
-            Ax=Ax,
-            B=B,
-            D=D,
             dt=dt,
             ds_vect=ds_vect,
             theta_vals=theta_vals,
@@ -385,12 +375,8 @@ def solve_with_casadi(
     return results
 
 
-def solve_outer_problem(
+def solve_outer_optimization_problem(
     N,
-    A,
-    Ax,
-    B,
-    D,
     dt,
     ds_vect,
     theta_vals,
@@ -406,6 +392,16 @@ def solve_outer_problem(
 ):
     # Find size
     size = gamma_vals.size
+
+    # Initialize Blocks of the A matrix those won't change
+    A = np.zeros((size + 2, size + 2))
+    Ax = np.zeros(size + 2)
+
+    # Construct Matrix B
+    B = casadi.sparsify(np.eye(N=size + 2, M=size, k=0))
+
+    # Construct Matrxi D constant blocks
+    D = np.zeros((size + 2, size))
 
     # Construct Matrix A from new uncertain_vals
     A[:-2, :] = 0.0
