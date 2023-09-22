@@ -83,6 +83,19 @@ def gamma_fitted(gamma_coe, gamma_dataframe):
     return result["gamma2017_Sites"].to_numpy()
 
 
+def coeff_vcov(theta_vcov, gamma_vcov):
+    # Construct the block matrix
+    rows1, cols1 = theta_vcov.shape
+    rows2, cols2 = gamma_vcov.shape
+
+    # Zero matrices for padding
+    zeros_top_right = np.zeros((rows1, cols2))
+    zeros_bottom_left = np.zeros((rows2, cols1))
+
+    # Construct the block matrix
+    return np.block([[theta_vcov, zeros_top_right], [zeros_bottom_left, gamma_vcov]])
+
+
 def log_density_function(
     uncertain_vals,
     uncertain_vals_mean,
