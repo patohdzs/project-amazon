@@ -34,13 +34,10 @@ def solve_with_casadi(
     weight=0.25,  # <-- Not sure how this linear combination weighting helps!
     output_dir="Casadi_Results",
     mix_in=2,
-    mass_matrix_theta_scale=1.0,
-    mass_matrix_gamma_scale=1.0,
     symplectic_integrator_num_steps=10,
     mass_matrix_weight=0.1,
     stepsize=0.1,
     scale=0.0,
-    mode=1.0,
 ):
     """
     Main function to solve the bilievel optimization problem using casadi for

@@ -46,12 +46,9 @@ casadi_results = solve_with_casadi(
     T=args.time,
     output_dir=output_dir,
     mix_in=args.mix_in,
-    mass_matrix_theta_scale=args.mass_matrix_theta_scale,
-    mass_matrix_gamma_scale=args.mass_matrix_gamma_scale,
     mass_matrix_weight=args.mass_matrix_weight,
     stepsize=args.stepsize,
     symplectic_integrator_num_steps=args.symplectic_integrator_num_steps,
     two_param_uncertainty=True,
     scale=args.scale,
-    mode=args.mode,
 )
