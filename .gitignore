@@ -12,9 +12,6 @@ plots/
 logs/
 Casadi_Results/
 
-# Local bash scripts
-run_sampler.sh
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
