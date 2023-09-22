@@ -178,6 +178,25 @@ def solve_with_casadi(
 
         print("uncertain_vals used in optimation: ", uncertain_vals)
 
+        # Flatten uncertain values
+        uncertain_vals = np.asarray(uncertain_vals).flatten()
+
+        # Unpacking uncertain values
+        theta_coe_vals = uncertain_vals[:8]
+        gamma_coe_vals = uncertain_vals[8:]
+
+        # Computing fitted values for theta and gamma
+        theta_fit = theta_fitted(
+            theta_coe=theta_coe_vals, theta_dataframe=site_theta_2017_df
+        ).flatten()
+        gamma_fit = gamma_fitted(
+            gamma_coe=gamma_coe_vals, gamma_dataframe=site_gamma_2017_df
+        ).flatten()
+
+        theta_vals=theta_fit.copy()
+        gamma_vals=gamma_fit.copy()
+
+
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
         # Construct Matrix A from new uncertain_vals
