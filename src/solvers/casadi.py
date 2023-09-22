@@ -7,7 +7,7 @@ import casadi
 import numpy as np
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
-from solvers import _DEBUG, construct_block_matrix, log_density_function
+from solvers import _DEBUG, coeff_vcov, log_density_function
 from utils.text import decorate_text
 
 
@@ -81,26 +81,21 @@ def solve_with_casadi(
     # Retrieve z data for selected site(s)
     site_z_vals = z_2017
 
-    # Coes value
-    gamma_coe_vals = gamma_coe
-    theta_coe_vals = theta_coe
-
-    # Construct the block matrix
-    block_matrix = construct_block_matrix(theta_vcov_array, gamma_vcov_array)
-
-    # Two parameter uncertainty (both theta and gamma)
-    vals = np.concatenate((theta_coe_vals, gamma_coe_vals))
+    # Initialize uncertain values
+    vals = np.concatenate((theta_coe, gamma_coe))
     size_coe = vals.size
-
-    # Initialize Gamma Values
     uncertain_vals = vals.copy()
-    uncertain_vals_mean = vals.copy()
     uncertain_vals_old = vals.copy()
 
-    # Householder to track sampled gamma values
-    uncertain_vals_tracker = [uncertain_vals.copy()]
-    uncertain_SD_tracker = [block_matrix.copy()]
+    # Initialize coeff mean and vcov
+    uncertain_vals_mean = vals.copy()
+    uncertain_vals_vcov = coeff_vcov(theta_vcov_array, gamma_vcov_array)
 
+    # Trackers for uncertain values
+    uncertain_vals_tracker = [uncertain_vals.copy()]
+    uncertain_SD_tracker = [uncertain_vals_vcov.copy()]
+
+    # Initialize HMC mass matrix
     mass_matrix = 10000 * np.diag(1 / np.concatenate((theta_coe_sd, gamma_coe_sd)) ** 2)
     mass_matrix_tracker = [mass_matrix.copy()]
 
@@ -298,7 +293,7 @@ def solve_with_casadi(
         log_density = partial(
             log_density_function,
             uncertain_vals_mean=uncertain_vals_mean,
-            uncertain_vals_vcov=block_matrix,
+            uncertain_vals_vcov=uncertain_vals_vcov,
             alpha=alpha,
             N=N,
             sol_val_X=sol_val_X,
@@ -385,7 +380,7 @@ def solve_with_casadi(
         gamma_vcov_array = np.cov(gamma_coe_subset, rowvar=False)
 
         # Construct the block matrix
-        block_matrix_post = construct_block_matrix(theta_vcov_array, gamma_vcov_array)
+        block_matrix_post = coeff_vcov(theta_vcov_array, gamma_vcov_array)
 
         uncertain_post_SD = block_matrix_post
         print(
@@ -443,8 +438,8 @@ def solve_with_casadi(
         saveto = os.path.join(output_dir, "results.pcl")
         pickle.dump(results, open(saveto, "wb"))
 
-    print("Terminated. Sampling the final distribution...")
     # Sample (densly) the final distribution
+    print("Terminated. Sampling the final distribution...")
     final_sample = sampler.sample(
         sample_size=final_sample_size,
         initial_state=uncertain_vals,

@@ -83,7 +83,7 @@ def gamma_fitted(gamma_coe, gamma_dataframe):
     return result["gamma2017_Sites"].to_numpy()
 
 
-def construct_block_matrix(theta_vcov, gamma_vcov):
+def coeff_vcov(theta_vcov, gamma_vcov):
     # Construct the block matrix
     rows1, cols1 = theta_vcov.shape
     rows2, cols2 = gamma_vcov.shape
