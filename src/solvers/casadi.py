@@ -7,7 +7,7 @@ import casadi
 import numpy as np
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
-from solvers import _DEBUG, coeff_vcov, gamma_fitted, log_density_function, theta_fitted
+from solvers import coeff_vcov, gamma_fitted, log_density_function, theta_fitted
 from utils.text import decorate_text
 
 
@@ -191,109 +191,27 @@ def solve_with_casadi(
 
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
-        # Construct Matrix A from new uncertain_vals
-        A[:-2, :] = 0.0
-        Ax[0:size] = -alpha * gamma_vals
-        Ax[-1] = alpha * np.sum(gamma_vals * zbar_2017)
-        Ax[-2] = -alpha
-        A[-2, :] = Ax
-        A[-1, :] = 0.0
-        A = casadi.sparsify(A)
+        # Solve outer
 
-        # Construct Matrix D from new uncertain_vals
-        D[:, :] = 0.0
-        D[-2, :] = -gamma_vals
-        D = casadi.sparsify(D)
-
-        # Define the right hand side (symbolic here) as a function of gamma
-        gamma = casadi.MX.sym("gamma", size + 2)
-        up = casadi.MX.sym("up", size)
-        um = casadi.MX.sym("um", size)
-
-        rhs = (A @ gamma + B @ (up - um) + D @ up) * dt + gamma
-        f = casadi.Function("f", [gamma, um, up], [rhs])
-
-        ## Define an optimizer and initialize it, and set constraints
-        opti = casadi.Opti()
-
-        # Decision variables for states
-        X = opti.variable(size + 2, N + 1)
-
-        # Aliases for states
-        Up = opti.variable(size, N)
-        Um = opti.variable(size, N)
-        Ua = opti.variable(1, N)
-
-        # 1.2: Parameter for initial state
-        ic = opti.parameter(size + 2)
-
-        # Gap-closing shooting constraints
-        for k in range(N):
-            opti.subject_to(X[:, k + 1] == f(X[:, k], Um[:, k], Up[:, k]))
-
-        # Initial and terminal constraints
-        opti.subject_to(X[:, 0] == ic)
-        opti.subject_to(opti.bounded(0, X[0:size, :], zbar_2017[0:size]))
-
-        # Objective: regularization of controls
-        for k in range(size):
-            opti.subject_to(opti.bounded(0, Um[k, :], casadi.inf))
-            opti.subject_to(opti.bounded(0, Up[k, :], casadi.inf))
-
-        opti.subject_to(Ua == casadi.sum1(Up + Um) ** 2)
-
-        term1 = casadi.sum2(ds_vect[0:N, :].T * Ua * zeta / 2)
-        term2 = -casadi.sum2(ds_vect[0:N, :].T * (pf * (X[-2, 1:] - X[-2, 0:-1])))
-        term3 = -casadi.sum2(
-            ds_vect.T * casadi.sum1((pa * theta_vals - pf * kappa) * X[0:size, :])
+        sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua = solve_outer_problem(
+            N=N,
+            A=A,
+            Ax=Ax,
+            B=B,
+            D=D,
+            dt=dt,
+            ds_vect=ds_vect,
+            theta_vals=theta_vals,
+            gamma_vals=gamma_vals,
+            x0_vals=x0_vals,
+            zbar_2017=zbar_2017,
+            site_z_vals=site_z_vals,
+            alpha=alpha,
+            kappa=kappa,
+            pf=pf,
+            pa=pa,
+            zeta=zeta,
         )
-
-        opti.minimize(term1 + term2 + term3)
-
-        # Solve optimization problem
-        options = dict()
-        options["print_time"] = True
-        options["expand"] = True
-        options["ipopt"] = {
-            "print_level": 1,
-            "fast_step_computation": "yes",
-            "mu_allow_fast_monotone_decrease": "yes",
-            "warm_start_init_point": "yes",
-        }
-        opti.solver("ipopt", options)
-
-        opti.set_value(
-            ic,
-            casadi.vertcat(site_z_vals, np.sum(x0_vals), 1),
-        )
-
-        if _DEBUG:
-            print("ic: ", ic)
-            print("site_z_vals: ", site_z_vals)
-            print("x0_vals: ", x0_vals)
-            print(
-                "casadi.vertcat(site_z_vals,np.sum(x0_vals),1): ",
-                casadi.vertcat(site_z_vals, np.sum(x0_vals), 1),
-            )
-
-        # TODO: Discuss with Daniel how this is taking too long, not the sampling!
-        print("Solving the outer optimization problem...")
-        start_time = time.time()
-        sol = opti.solve()
-        print(f"Done; time taken {time.time()-start_time} seconds...")
-
-        print("sol.value(X)", sol.value(X))
-        print("sol.value(Ua)", sol.value(Ua))
-        print("sol.value(Up)", sol.value(Up))
-        print("sol.value(Um)", sol.value(Um))
-
-        # Extract information from the solver
-        N = X.shape[1] - 1
-        sol_val_X = sol.value(X)
-        sol_val_Up = sol.value(Up)
-        sol_val_Um = sol.value(Um)
-        sol_val_Z = sol_val_Up - sol_val_Um
-        sol_val_Ua = sol.value(Ua)
 
         sol_val_X_tracker.append(sol_val_X)
         sol_val_Ua_tracker.append(sol_val_Ua)
