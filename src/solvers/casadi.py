@@ -298,7 +298,7 @@ def solve_with_casadi(
         log_density = partial(
             log_density_function,
             uncertain_vals_mean=uncertain_vals_mean,
-            block_matrix=block_matrix,
+            uncertain_vals_vcov=block_matrix,
             alpha=alpha,
             N=N,
             sol_val_X=sol_val_X,
