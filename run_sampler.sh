@@ -2,7 +2,7 @@
 
 #SBATCH --account=sscc
 #SBATCH --job-name=project_amazon_hmc_sampling
-#SBATCH --time=0-4:30
+#SBATCH --time=1-00:30
 #SBATCH --partition=standard
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=7G
