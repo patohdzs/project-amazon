@@ -72,12 +72,6 @@ def solve_with_casadi(
         norm_fac=norm_fac,
     )
 
-    # Print the data
-    print("data loaded")
-
-    site_theta_2017_df = site_theta_2017_df
-    site_gamma_2017_df = site_gamma_2017_df
-
     # Evaluate Gamma values
     gamma_vals = gamma
     size = gamma.size
