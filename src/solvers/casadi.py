@@ -7,7 +7,7 @@ import casadi
 import numpy as np
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
-from solvers import _DEBUG, coeff_vcov, log_density_function
+from solvers import _DEBUG, coeff_vcov, gamma_fitted, log_density_function, theta_fitted
 from utils.text import decorate_text
 
 
@@ -186,16 +186,8 @@ def solve_with_casadi(
         gamma_coe_vals = uncertain_vals[8:]
 
         # Computing fitted values for theta and gamma
-        theta_fit = theta_fitted(
-            theta_coe=theta_coe_vals, theta_dataframe=site_theta_2017_df
-        ).flatten()
-        gamma_fit = gamma_fitted(
-            gamma_coe=gamma_coe_vals, gamma_dataframe=site_gamma_2017_df
-        ).flatten()
-
-        theta_vals=theta_fit.copy()
-        gamma_vals=gamma_fit.copy()
-
+        theta_vals = theta_fitted(theta_coe_vals, site_theta_2017_df).flatten().copy()
+        gamma_vals = gamma_fitted(gamma_coe_vals, site_gamma_2017_df).flatten().copy()
 
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
