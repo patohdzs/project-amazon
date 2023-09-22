@@ -86,7 +86,7 @@ def gamma_fitted(gamma_coe, gamma_dataframe):
 def log_density_function(
     uncertain_vals,
     uncertain_vals_mean,
-    block_matrix,
+    uncertain_vals_vcov,
     N,  # Number of control intervals
     alpha,  # Mean reversion coefficient
     sol_val_X,
@@ -177,15 +177,19 @@ def log_density_function(
     # Overall objective value
     obj_val = term_1 + term_2 + term_3
 
-    # Computing kinetic energy term
-    # TODO: Check, should it be demeaned beta or coefs
-    uncertain_vals_dev = uncertain_vals - uncertain_vals_mean
-    norm_log_prob = -0.5 * np.dot(
-        uncertain_vals_dev, np.linalg.inv(block_matrix).dot(uncertain_vals_dev)
+    # Computing log prior density term
+    log_prior_density = _log_normal_prior(
+        uncertain_vals, uncertain_vals_mean, uncertain_vals_vcov
     )
 
     # Computing potential energy
-    log_density_val = -1.0 / xi * obj_val + norm_log_prob
+    log_density_val = -1.0 / xi * obj_val + log_prior_density
     log_density_val = float(log_density_val)
 
     return log_density_val
+
+
+def _log_normal_prior(x, mu, Sigma):
+    # Log prior density assuming x (prior)~ N(mu, Sigma)
+    mean_zero_x = x - mu
+    return -0.5 * np.dot(mean_zero_x, np.linalg.inv(Sigma).dot(mean_zero_x))
