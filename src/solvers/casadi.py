@@ -4,7 +4,6 @@ import time
 from functools import partial
 
 import casadi
-import matplotlib.pyplot as plt
 import numpy as np
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
@@ -443,18 +442,6 @@ def solve_with_casadi(
         # Save results (overwrite existing file)
         saveto = os.path.join(output_dir, "results.pcl")
         pickle.dump(results, open(saveto, "wb"))
-
-        # Extensive plotting for monitoring; not needed really!
-        if False:
-            plt.plot(uncertain_vals_tracker[-2], label=r"Old $\gamma$")
-            plt.plot(uncertain_vals_tracker[-1], label=r"New $\gamma$")
-            plt.legend()
-            plt.show()
-
-            for j in range(size):
-                plt.hist(uncertainty_post_samples[:, j], bins=50)
-                plt.title(f"Iteration {cntr}; Site {j+1}")
-                plt.show()
 
     print("Terminated. Sampling the final distribution...")
     # Sample (densly) the final distribution
