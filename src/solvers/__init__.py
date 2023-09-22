@@ -189,3 +189,16 @@ def log_density_function(
     log_density_val = float(log_density_val)
 
     return log_density_val
+
+
+def construct_block_matrix(theta_vcov, gamma_vcov):
+    # Construct the block matrix
+    rows1, cols1 = theta_vcov.shape
+    rows2, cols2 = gamma_vcov.shape
+
+    # Zero matrices for padding
+    zeros_top_right = np.zeros((rows1, cols2))
+    zeros_bottom_left = np.zeros((rows2, cols1))
+
+    # Construct the block matrix
+    return np.block([[theta_vcov, zeros_top_right], [zeros_bottom_left, gamma_vcov]])

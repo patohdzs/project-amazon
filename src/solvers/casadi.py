@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
-from solvers import _DEBUG, log_density_function
+from solvers import _DEBUG, construct_block_matrix, log_density_function
 from utils.text import decorate_text
 
 
 def solve_with_casadi(
     # Configurations/Settings
     site_num=25,  # Number of sites(10, 25, 100, 1000)
-    norm_fac=1e11, # normalization factor consistent used in paper
+    norm_fac=1e11,  # normalization factor consistent used in paper
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
@@ -96,17 +96,7 @@ def solve_with_casadi(
     theta_coe_vals = theta_coe
 
     # Construct the block matrix
-    rows1, cols1 = theta_vcov_array.shape
-    rows2, cols2 = gamma_vcov_array.shape
-
-    # Zero matrices for padding
-    zeros_top_right = np.zeros((rows1, cols2))
-    zeros_bottom_left = np.zeros((rows2, cols1))
-
-    # Construct the block matrix
-    block_matrix = np.block(
-        [[theta_vcov_array, zeros_top_right], [zeros_bottom_left, gamma_vcov_array]]
-    )
+    block_matrix = construct_block_matrix(theta_vcov_array, gamma_vcov_array)
 
     # Two parameter uncertainty (both theta and gamma)
     vals = np.concatenate((theta_coe_vals, gamma_coe_vals))
@@ -405,17 +395,7 @@ def solve_with_casadi(
         gamma_vcov_array = np.cov(gamma_coe_subset, rowvar=False)
 
         # Construct the block matrix
-        rows1, cols1 = theta_vcov_array.shape
-        rows2, cols2 = gamma_vcov_array.shape
-
-        # Zero matrices for padding
-        zeros_top_right = np.zeros((rows1, cols2))
-        zeros_bottom_left = np.zeros((rows2, cols1))
-
-        # Construct the block matrix
-        block_matrix_post = np.block(
-            [[theta_vcov_array, zeros_top_right], [zeros_bottom_left, gamma_vcov_array]]
-        )
+        block_matrix_post = construct_block_matrix(theta_vcov_array, gamma_vcov_array)
 
         uncertain_post_SD = block_matrix_post
         print(
