@@ -74,7 +74,6 @@ plots.traceplot_params_pct_error(results, plots_dir)
 plots.traceplot_gamma_coefs(results, plots_dir)
 plots.traceplot_theta_coefs(results, plots_dir)
 
-
 # Plot Z (for each site)
 plots.Z_trajectory(results, plots_dir)
 
@@ -84,3 +83,8 @@ plots.X_trajectory(results, plots_dir)
 plots.delta_Z_trajectory(results, plots_dir)
 
 # Plot adjustments
+plots.Ua_trajectory(results, plots_dir)
+
+# Plot trajectory of controls
+plots.Um_trajectory(results, plots_dir)
+plots.Up_trajectory(results, plots_dir)

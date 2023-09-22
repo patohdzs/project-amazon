@@ -159,7 +159,7 @@ def Z_trajectory(results: dict, plots_dir: Path) -> None:
             plt.close()
 
 
-def X_trajectory(results: dict, plots_dir: Path):
+def X_trajectory(results: dict, plots_dir: Path) -> None:
     path = plots_dir / "X_trajectory"
     if not os.path.exists(path):
         os.makedirs(path)
@@ -184,7 +184,7 @@ def X_trajectory(results: dict, plots_dir: Path):
         plt.close()
 
 
-def delta_Z_trajectory(results, plots_dir):
+def delta_Z_trajectory(results: dict, plots_dir: Path) -> None:
     for site in range(results["size"]):
         path = plots_dir / "delta_Z_trajectory" / f"site_{site}"
         if not os.path.exists(path):
@@ -213,49 +213,77 @@ def delta_Z_trajectory(results, plots_dir):
             plt.close()
 
 
-def traceplot_Ua(results: dict, plots_dir: Path) -> None:
-    fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+def Ua_trajectory(results: dict, plots_dir: Path) -> None:
+    path = plots_dir / "Ua_trajectory"
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-    for j in range(8):
-        plt.plot(results["sol_val_Ua_tracker"][j], label=r"$Ua_{%d}$" % (j + 1))
+    for i, Ua in enumerate(results["sol_val_Ua_tracker"]):
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+        plt.plot(Ua, label=r"$Ua$")
 
-    plt.xlabel("Time")
-    plt.ylabel(r"$Ua$")
-    plt.title(r"Trace Plot of Ua Trajectory")
-    legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-    fig.tight_layout()
-    plt.subplots_adjust(right=0.7)
-    fig.savefig(
-        plots_dir / "Ua_trajectory.png",
-        bbox_extra_artists=(legend,),
-        bbox_inches="tight",
-        dpi=100,
-    )
-    plt.close()
+        plt.xlabel("Time")
+        plt.ylabel(r"$Ua$")
+        plt.title(r"Trajectory of Ua")
+        legend = plt.legend(
+            bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+        )
+        fig.tight_layout()
+        plt.subplots_adjust(right=0.7)
+        fig.savefig(
+            path / f"Ua_iter_{i}.png",
+            bbox_extra_artists=(legend,),
+            bbox_inches="tight",
+            dpi=100,
+        )
+        plt.close()
 
 
-def traceplot_Um(results: dict, plots_dir: Path) -> None:
-    size = results["size"]
-    print(np.array(results["sol_val_Um_tracker"]).shape)
+def Um_trajectory(results: dict, plots_dir: Path) -> None:
+    for site in range(results["size"]):
+        path = plots_dir / "Um_trajectory" / f"site_{site}"
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-    for j in range(size):
-        for i in range(len(results["sol_val_Um_tracker"])):
-            i = len(results["sol_val_Up_tracker"]) - 1
+        for i, Um in enumerate(results["sol_val_Um_tracker"]):
             fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-            plt.plot(
-                results["sol_val_Um_tracker"][i][j, :],
-                label=r"site_%d_iter_%d" % (j + 1, i + 1),
-            )
+            plt.plot(Um[site, :], label=r"site_%d_iter_%d" % (site, i))
             plt.xlabel("Iteration")
             plt.ylabel(r"$Um$")
-            plt.title(r"Trace Plot of Um for site_%d_iter_%d" % (j + 1, i + 1))
+            plt.title(r"Trajectory of Um")
             legend = plt.legend(
                 bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
             )
             fig.tight_layout()
             plt.subplots_adjust(right=0.7)
             fig.savefig(
-                plots_dir / f"Um_site_{j+1}_iter_{i+1}.png",
+                path / f"Um_site_{site}_iter_{i}.png",
+                bbox_extra_artists=(legend,),
+                bbox_inches="tight",
+                dpi=100,
+            )
+            plt.close()
+
+
+def Up_trajectory(results: dict, plots_dir: Path) -> None:
+    for site in range(results["size"]):
+        path = plots_dir / "Up_trajectory" / f"site_{site}"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        for i, Up in enumerate(results["sol_val_Up_tracker"]):
+            fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+            plt.plot(Up[site, :], label=r"site_%d_iter_%d" % (site, i))
+            plt.xlabel("Iteration")
+            plt.ylabel(r"$Up$")
+            plt.title(r"Trajectory of Up")
+            legend = plt.legend(
+                bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+            )
+            fig.tight_layout()
+            plt.subplots_adjust(right=0.7)
+            fig.savefig(
+                path / f"Up_site_{site}_iter_{i}.png",
                 bbox_extra_artists=(legend,),
                 bbox_inches="tight",
                 dpi=100,
