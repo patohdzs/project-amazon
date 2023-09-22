@@ -83,8 +83,8 @@ plots.X_trajectory(results, plots_dir)
 plots.delta_Z_trajectory(results, plots_dir)
 
 # Plot adjustments
-plots.Ua_trajectory(results, plots_dir)
+plots.adj_costs_trajectory(results, plots_dir)
 
 # Plot trajectory of controls
-plots.Um_trajectory(results, plots_dir)
-plots.Up_trajectory(results, plots_dir)
+plots.V_trajectory(results, plots_dir)
+plots.U_trajectory(results, plots_dir)
