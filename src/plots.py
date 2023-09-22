@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -129,26 +130,87 @@ def traceplot_theta_coefs(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_X(results: dict, plots_dir: Path) -> None:
-    fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-    X = results["sol_val_X_tracker"][-1]
+def Z_trajectory(results: dict, plots_dir: Path) -> None:
+    for site in range(results["size"]):
+        path = plots_dir / "Z_trajectory" / f"site_{site}"
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-    for j in range(results["size"]):
-        plt.plot(X[j, :], label=r"$X_{%d}$" % (j + 1))
+        for i, Z in enumerate(results["sol_val_X_tracker"]):
+            fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+            plt.plot(
+                Z[site, :],
+                label=r"$Z_{site_%d, iter_%d}$" % (site, i),
+            )
+            plt.xlabel("Iteration")
+            plt.ylabel(r"$Z$")
+            plt.title(f"Trajectory of $Z_{site}$")
+            legend = plt.legend(
+                bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+            )
+            fig.tight_layout()
+            plt.subplots_adjust(right=0.7)
+            fig.savefig(
+                path / f"Z_site_{site}_iter_{i}.png",
+                bbox_extra_artists=(legend,),
+                bbox_inches="tight",
+                dpi=100,
+            )
+            plt.close()
 
-    plt.xlabel("Time")
-    plt.ylabel(r"$X$")
-    plt.title(r"Trace Plot of X Trajectory")
-    legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-    fig.tight_layout()
-    plt.subplots_adjust(right=0.7)
-    fig.savefig(
-        plots_dir / "X_trajectory.png",
-        bbox_extra_artists=(legend,),
-        bbox_inches="tight",
-        dpi=100,
-    )
-    plt.close()
+
+def X_trajectory(results: dict, plots_dir: Path):
+    path = plots_dir / "X_trajectory"
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for i, X in enumerate(results["sol_val_X_tracker"]):
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+        plt.plot(X[-2, :], label=r"$X$")
+        plt.xlabel("Time")
+        plt.ylabel(r"$X$")
+        plt.title(r"Trajectory of $X$")
+        legend = plt.legend(
+            bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+        )
+        fig.tight_layout()
+        plt.subplots_adjust(right=0.7)
+        fig.savefig(
+            path / f"X_iter_{i}.png",
+            bbox_extra_artists=(legend,),
+            bbox_inches="tight",
+            dpi=100,
+        )
+        plt.close()
+
+
+def delta_Z_trajectory(results, plots_dir):
+    for site in range(results["size"]):
+        path = plots_dir / "delta_Z_trajectory" / f"site_{site}"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        for i, Z in enumerate(results["sol_val_Z_tracker"]):
+            fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+            plt.plot(
+                Z[site, :],
+                label=r"$\Delta Z_{site_%d, iter_%d}$" % (site, i),
+            )
+            plt.xlabel("Iteration")
+            plt.ylabel(r"$U - V$")
+            plt.title(r"Trajectory of $\Delta Z$")
+            legend = plt.legend(
+                bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+            )
+            fig.tight_layout()
+            plt.subplots_adjust(right=0.7)
+            fig.savefig(
+                path / f"delta_Z_site_{site}_iter_{i}.png",
+                bbox_extra_artists=(legend,),
+                bbox_inches="tight",
+                dpi=100,
+            )
+            plt.close()
 
 
 def traceplot_Ua(results: dict, plots_dir: Path) -> None:
@@ -225,32 +287,6 @@ def traceplot_Up(results, plotdir):
                 dpi=100,
             )
     plt.close()
-
-
-def traceplot_Z(results, plotdir):
-    for j in range(results["size"]):
-        for i in range(len(results["sol_val_Z_tracker"])):
-            i = len(results["sol_val_Z_tracker"]) - 1
-            fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-            plt.plot(
-                results["sol_val_Z_tracker"][i][j, :],
-                label=r"$Z_{site_%d, iter_%d}$" % (j + 1, i),
-            )
-            plt.xlabel("Iteration")
-            plt.ylabel(r"$Z$")
-            plt.title(r"Trace Plot of Z")
-            legend = plt.legend(
-                bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
-            )
-            fig.tight_layout()
-            plt.subplots_adjust(right=0.7)
-            fig.savefig(
-                plotdir / "Z_site_%d_iter_%d.png" % (j + 1, i),
-                bbox_extra_artists=(legend,),
-                bbox_inches="tight",
-                dpi=100,
-            )
-            plt.close()
 
 
 def dist_theta(results, plotdir):
