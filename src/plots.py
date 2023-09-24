@@ -320,7 +320,50 @@ def coef_prior_density(coef_samples, plots_dir, K=8):
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(gamma_coef_samples[:, i], bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Density of $\beta^\gamma_%d$" % i)
+        plt.title(r"Prior density of $\beta^\gamma_%d$" % i)
+        fig.tight_layout()
+        plt.subplots_adjust(right=0.7)
+        fig.savefig(
+            path / f"gamma_coef_{i}.png",
+            bbox_inches="tight",
+            dpi=100,
+        )
+        plt.close()
+
+
+def coef_posterior_density(coef_samples, plots_dir, K=8):
+    theta_coef_samples = coef_samples[:, :K]
+    gamma_coef_samples = coef_samples[:, K:]
+
+    for i in range(theta_coef_samples.shape[1]):
+        # Make paths
+        path = plots_dir / "theta_coef_posterior"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+        plt.hist(theta_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.ylabel(r"$Frequency$")
+        plt.title(r"Posterior density of $\beta^\theta_%d$" % i)
+        fig.tight_layout()
+        plt.subplots_adjust(right=0.7)
+        fig.savefig(
+            path / f"theta_coef_{i}.png",
+            bbox_inches="tight",
+            dpi=100,
+        )
+        plt.close()
+
+    for i in range(gamma_coef_samples.shape[1]):
+        # Make paths
+        path = plots_dir / "gamma_coef_posterior"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+        plt.hist(gamma_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.ylabel(r"$Frequency$")
+        plt.title(r"Posterior density of $\beta^\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(

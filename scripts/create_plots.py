@@ -75,10 +75,24 @@ Sigma = coeff_vcov(
 )
 
 # Sampling from prior
-coef_samples = np.random.multivariate_normal(mu, Sigma, size=10000)
+prior_samples = np.random.multivariate_normal(mu, Sigma, size=10000)
 
 # Ploting historgam of prior samples
-plots.coef_prior_density(coef_samples=coef_samples, plots_dir=plots_dir, K=8)
+plots.coef_prior_density(coef_samples=prior_samples, plots_dir=plots_dir, K=8)
+
+
+try:
+    post_samples = results["final_sample"]
+except KeyError:
+    print(
+        """
+        Algorithm did not finish converging.
+        Plotting posterior samples from last iteration...
+        """
+    )
+    post_samples = results["collected_ensembles"][results["cntr"] - 1]
+
+plots.coef_posterior_density(post_samples, plots_dir)
 
 
 # Plot absolute and percentage error
