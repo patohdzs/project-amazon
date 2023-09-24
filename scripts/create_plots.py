@@ -7,8 +7,11 @@ import os
 import pickle
 import sys
 
+import numpy as np
 import seaborn as sns
+from services.data_service import load_site_data
 from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
+from solvers import coeff_vcov
 
 import plots
 
@@ -18,7 +21,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--dataname", type=str, default="tests")
+parser.add_argument("--dataname", type=str, default="plots")
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
@@ -43,26 +46,40 @@ plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
 # Load data
-# (
-#     zbar_2017,
-#     gamma,
-#     z_2017,
-#     forestArea_2017_ha,
-#     theta,
-#     gamma_coe,
-#     gamma_coe_sd,
-#     theta_coe,
-#     theta_coe_sd,
-#     gamma_vcov_array,
-#     theta_vcov_array,
-#     site_theta_2017_df,
-#     site_gamma_2017_df,
-# ) = load_site_data(args.sitenum, norm_fac=1e11)
+(
+    zbar_2017,
+    gamma,
+    z_2017,
+    forestArea_2017_ha,
+    theta,
+    gamma_coe,
+    gamma_coe_sd,
+    theta_coe,
+    theta_coe_sd,
+    gamma_coef_vcov,
+    theta_coef_vcov,
+    site_theta_2017_df,
+    site_gamma_2017_df,
+) = load_site_data(args.sitenum, norm_fac=1e11)
 
 
 with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
+
+# Prior hyperparameters
+mu = np.concatenate((theta_coe, gamma_coe))
+Sigma = coeff_vcov(
+    theta_coef_vcov,
+    gamma_coef_vcov,
+)
+
+# Sampling from prior
+coef_samples = np.random.multivariate_normal(mu, Sigma, size=10000)
+
+# Ploting historgam of prior samples
+plots.coef_prior_density(coef_samples=coef_samples, plots_dir=plots_dir, K=8)
+
 
 # Plot absolute and percentage error
 plots.traceplot_abs_error(results, plots_dir)
