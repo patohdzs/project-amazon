@@ -75,7 +75,7 @@ Sigma = coeff_vcov(
 )
 
 # Sampling from prior
-prior_samples = np.random.multivariate_normal(mu, Sigma, size=10000)
+prior_samples = np.random.multivariate_normal(mu, Sigma, size=5000)
 
 # Ploting historgam of prior samples
 plots.coef_prior_density(coef_samples=prior_samples, plots_dir=plots_dir, K=8)
@@ -93,6 +93,14 @@ except KeyError:
     post_samples = results["collected_ensembles"][results["cntr"] - 1]
 
 plots.coef_posterior_density(post_samples, plots_dir)
+
+
+# Plot overlapped prior-posterior
+plots.coef_overlap_prior_posterior(
+    prior_samples,
+    post_samples,
+    plots_dir,
+)
 
 
 # Plot absolute and percentage error
