@@ -74,12 +74,17 @@ plots.traceplot_params_pct_error(results, plots_dir)
 plots.traceplot_gamma_coefs(results, plots_dir)
 plots.traceplot_theta_coefs(results, plots_dir)
 
+# Plot Z (for each site)
+plots.Z_trajectory(results, plots_dir)
 
-# Plot X convergence
-plots.traceplot_X(results, plots_dir)
+# Plot X (aggregate among sites)
+plots.X_trajectory(results, plots_dir)
+
+plots.delta_Z_trajectory(results, plots_dir)
 
 # Plot adjustments
-plots.traceplot_Ua(results, plots_dir)
+plots.adj_costs_trajectory(results, plots_dir)
 
-# Plot Um
-plots.traceplot_Um(results, plots_dir)
+# Plot trajectory of controls
+plots.V_trajectory(results, plots_dir)
+plots.U_trajectory(results, plots_dir)
