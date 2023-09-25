@@ -22,7 +22,9 @@ def sample_with_stan(
     pa=44.75,
     xi=0.01,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
-    max_iter=30,
+    gamma_prior_mean=None,
+    theta_prior_mean=None,
+    max_iter=20000,
     tol=0.001,
     sample_size=1000,
     final_sample_size=5_000,  # number of samples to collect after convergence
@@ -63,6 +65,13 @@ def sample_with_stan(
 
     # Theta Values
     theta_vals = theta
+
+    # Prior means
+    if gamma_prior_mean is None:
+        gamma_prior_mean = gamma.copy()
+    if theta_prior_mean is None:
+        theta_prior_mean = theta.copy()
+
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
 
     # Retrieve z data for selected site(s)
@@ -183,12 +192,16 @@ def sample_with_stan(
             kappa=kappa,
             pa=pa,
             pf=pf,
+            gamma_prior_mean=gamma_prior_mean,
+            gamma_prior_vcov=20 * np.eye(num_sites),
+            theta_prior_mean=theta_prior_mean,
+            theta_prior_vcov=0.8 * np.eye(num_sites),
         )
 
         sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
         print("Model compiled!\n")
 
-        fit = sampler.fixed_param(num_chains=num_chains, num_samples=sample_size)
+        fit = sampler.sample(num_chains=num_chains, num_samples=sample_size)
         print("Finished sampling!\n")
 
         samples = fit.to_frame()
@@ -268,13 +281,18 @@ def sample_with_stan(
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...")
-    fit = sampler.fixed_param(num_chains=2, num_samples=final_sample_size)
+    fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
     samples = fit.to_frame()
 
     # Final sample!!!
-    final_sample = np.asarray(
-        samples[[s for s in samples.columns if not s.endswith("_")]]
+    theta_post_samples = np.asarray(
+        samples[[s for s in samples.columns if s.startswith("theta")]]
     )
+    gamma_post_samples = np.asarray(
+        samples[[s for s in samples.columns if s.startswith("gamma")]]
+    )
+    final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
+
     results.update({"final_sample": final_sample})
 
     # Save results (overwrite existing file)

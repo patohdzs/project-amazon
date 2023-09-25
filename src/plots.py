@@ -84,15 +84,12 @@ def traceplot_params_pct_error(results: dict, plots_dir: Path) -> None:
     plt.close()
 
 
-def traceplot_gammas(
-    results: dict,
-    plots_dir: Path,
-) -> None:
+def traceplot_gammas(results: dict, plots_dir: Path) -> None:
     num_sites = results["num_sites"]
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     for j in range(num_sites):
         plt.plot(
-            results["uncertain_vals_tracker"][:, j],
+            results["uncertain_vals_tracker"][:, j + num_sites],
             label=r"$\gamma_{%d}$" % (j + 1),
         )
     plt.xlabel("Iteration")
@@ -113,19 +110,19 @@ def traceplot_gammas(
 def traceplot_thetas(results: dict, plots_dir: Path) -> None:
     num_sites = results["num_sites"]
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-    for j in range(num_sites, 13):
+    for j in range(num_sites):
         plt.plot(
             results["uncertain_vals_tracker"][:, j],
-            label=r"$\beta_\theta^{%d}$" % (j + 1),
+            label=r"$\theta_{%d}$" % (j + 1),
         )
     plt.xlabel("Iteration")
-    plt.ylabel(r"$\beta_\theta$")
-    plt.title(r"Trace Plot of $\beta_\theta$")
+    plt.ylabel(r"$\theta$")
+    plt.title(r"Trace Plot of $\theta$")
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     fig.tight_layout()
     plt.subplots_adjust(right=0.7)
     fig.savefig(
-        plots_dir / "theta_coef.png",
+        plots_dir / "theta.png",
         bbox_extra_artists=(legend,),
         bbox_inches="tight",
         dpi=100,
@@ -134,7 +131,7 @@ def traceplot_thetas(results: dict, plots_dir: Path) -> None:
 
 
 def Z_trajectory(results: dict, plots_dir: Path) -> None:
-    for site in range(results["size"]):
+    for site in range(results["num_sites"]):
         path = plots_dir / "Z_trajectory" / f"site_{site}"
         if not os.path.exists(path):
             os.makedirs(path)
@@ -188,7 +185,7 @@ def X_trajectory(results: dict, plots_dir: Path) -> None:
 
 
 def delta_Z_trajectory(results: dict, plots_dir: Path) -> None:
-    for site in range(results["size"]):
+    for site in range(results["num_sites"]):
         path = plots_dir / "delta_Z_trajectory" / f"site_{site}"
         if not os.path.exists(path):
             os.makedirs(path)
@@ -243,7 +240,7 @@ def adj_costs_trajectory(results: dict, plots_dir: Path) -> None:
 
 
 def V_trajectory(results: dict, plots_dir: Path) -> None:
-    for site in range(results["size"]):
+    for site in range(results["num_sites"]):
         path = plots_dir / "V_trajectory" / f"site_{site}"
         if not os.path.exists(path):
             os.makedirs(path)
@@ -269,7 +266,7 @@ def V_trajectory(results: dict, plots_dir: Path) -> None:
 
 
 def U_trajectory(results: dict, plots_dir: Path) -> None:
-    for site in range(results["size"]):
+    for site in range(results["num_sites"]):
         path = plots_dir / "U_trajectory" / f"site_{site}"
         if not os.path.exists(path):
             os.makedirs(path)
@@ -380,16 +377,16 @@ def posterior_density(samples, plots_dir, num_sites=10):
         plt.close()
 
 
-def coef_overlap_prior_posterior(prior_samples, post_samples, plots_dir, K=8):
-    theta_coef_prior_samples = prior_samples[:, :K]
-    gamma_coef_prior_samples = prior_samples[:, K:]
+def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10):
+    theta_coef_prior_samples = prior_samples[:, :num_sites]
+    gamma_coef_prior_samples = prior_samples[:, num_sites:]
 
-    theta_coef_post_samples = post_samples[:, :K]
-    gamma_coef_post_samples = post_samples[:, K:]
+    theta_coef_post_samples = post_samples[:, :num_sites]
+    gamma_coef_post_samples = post_samples[:, num_sites:]
 
     for i in range(theta_coef_prior_samples.shape[1]):
         # Make paths
-        path = plots_dir / "theta_coef_density"
+        path = plots_dir / "theta_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -397,11 +394,11 @@ def coef_overlap_prior_posterior(prior_samples, post_samples, plots_dir, K=8):
         plt.hist(theta_coef_prior_samples[:, i], bins=30, alpha=0.7)
         plt.hist(theta_coef_post_samples[:, i], bins=30, alpha=0.7, color="red")
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Density of $\beta^\theta_%d$" % i)
+        plt.title(r"Density of $\theta_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"theta_coef_{i}.png",
+            path / f"theta_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
@@ -409,7 +406,7 @@ def coef_overlap_prior_posterior(prior_samples, post_samples, plots_dir, K=8):
 
     for i in range(gamma_coef_prior_samples.shape[1]):
         # Make paths
-        path = plots_dir / "gamma_coef_density"
+        path = plots_dir / "gamma_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -417,11 +414,11 @@ def coef_overlap_prior_posterior(prior_samples, post_samples, plots_dir, K=8):
         plt.hist(gamma_coef_prior_samples[:, i], bins=30, alpha=0.7)
         plt.hist(gamma_coef_post_samples[:, i], bins=30, alpha=0.7, color="red")
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Density of $\beta^\gamma_%d$" % i)
+        plt.title(r"Density of $\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"gamma_coef_{i}.png",
+            path / f"gamma_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
