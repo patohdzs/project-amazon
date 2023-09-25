@@ -50,7 +50,8 @@ def traceplot_pct_error(results: dict, plots_dir: Path) -> None:
     plt.close()
 
 
-def traceplot_params_pct_error(results: dict, plots_dir: Path, K=8) -> None:
+def traceplot_params_pct_error(results: dict, plots_dir: Path) -> None:
+    num_sites = results["num_sites"]
     # Find pct change
     pct_change = (
         abs(np.diff(results["uncertain_vals_tracker"], axis=0))
@@ -60,14 +61,14 @@ def traceplot_params_pct_error(results: dict, plots_dir: Path, K=8) -> None:
     # Create mpl base
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
-    for i in range(K):
-        axes[0].plot(pct_change[:, i], label=f"Theta_coef {i+1}")
+    for i in range(num_sites):
+        axes[0].plot(pct_change[:, i], label=f"Theta {i+1}")
 
-    axes[0].set_title("Theta_coef Proportional Error")
-    for i in range(K, pct_change.shape[1]):
-        axes[1].plot(pct_change[:, i], label=f"Gamma_coef {i+1-K}")
+    axes[0].set_title("Theta Proportional Error")
+    for i in range(num_sites, pct_change.shape[1]):
+        axes[1].plot(pct_change[:, i], label=f"Gamma {i+1-num_sites}")
 
-    axes[1].set_title("Gamma_coef Proportional Error")
+    axes[1].set_title("Gamma Proportional Error")
     y_min = np.min(pct_change)
     y_max = np.max(pct_change)
     axes[0].set_ylim([y_min, y_max])
@@ -83,21 +84,25 @@ def traceplot_params_pct_error(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_gamma_coefs(results: dict, plots_dir: Path, K=8) -> None:
+def traceplot_gammas(
+    results: dict,
+    plots_dir: Path,
+) -> None:
+    num_sites = results["num_sites"]
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    for j in range(K):
+    for j in range(num_sites):
         plt.plot(
             results["uncertain_vals_tracker"][:, j],
-            label=r"$\beta_\gamma^{%d}$" % (j + 1),
+            label=r"$\gamma_{%d}$" % (j + 1),
         )
     plt.xlabel("Iteration")
-    plt.ylabel(r"$\beta_\gamma$")
-    plt.title(r"Trace Plot of $\beta_\gamma$")
+    plt.ylabel(r"$\gamma$")
+    plt.title(r"Trace Plot of $\gamma$")
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     fig.tight_layout()
     plt.subplots_adjust(right=0.7)
     fig.savefig(
-        plots_dir / "gamma_coef.png",
+        plots_dir / "gamma.png",
         bbox_extra_artists=(legend,),
         bbox_inches="tight",
         dpi=100,
@@ -105,9 +110,10 @@ def traceplot_gamma_coefs(results: dict, plots_dir: Path, K=8) -> None:
     plt.close()
 
 
-def traceplot_theta_coefs(results: dict, plots_dir: Path, K=8) -> None:
+def traceplot_thetas(results: dict, plots_dir: Path) -> None:
+    num_sites = results["num_sites"]
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-    for j in range(K, 13):
+    for j in range(num_sites, 13):
         plt.plot(
             results["uncertain_vals_tracker"][:, j],
             label=r"$\beta_\theta^{%d}$" % (j + 1),
@@ -288,86 +294,86 @@ def U_trajectory(results: dict, plots_dir: Path) -> None:
             plt.close()
 
 
-def coef_prior_density(coef_samples, plots_dir, K=8):
-    theta_coef_samples = coef_samples[:, :K]
-    gamma_coef_samples = coef_samples[:, K:]
+def prior_density(samples, plots_dir, num_sites=10):
+    theta_samples = samples[:, :num_sites]
+    gamma_samples = samples[:, num_sites:]
 
-    for i in range(theta_coef_samples.shape[1]):
+    for i in range(theta_samples.shape[1]):
         # Make paths
-        path = plots_dir / "theta_coef_prior"
+        path = plots_dir / "theta_prior"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(theta_samples[:, i], bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Prior density of $\beta^\theta_%d$" % i)
+        plt.title(r"Prior density of $\theta_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"theta_coef_{i}.png",
+            path / f"theta_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
         plt.close()
 
-    for i in range(gamma_coef_samples.shape[1]):
+    for i in range(gamma_samples.shape[1]):
         # Make paths
-        path = plots_dir / "gamma_coef_prior"
+        path = plots_dir / "gamma_prior"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(gamma_samples[:, i], bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Prior density of $\beta^\gamma_%d$" % i)
+        plt.title(r"Prior density of $\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"gamma_coef_{i}.png",
+            path / f"gamma_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
         plt.close()
 
 
-def coef_posterior_density(coef_samples, plots_dir, K=8):
-    theta_coef_samples = coef_samples[:, :K]
-    gamma_coef_samples = coef_samples[:, K:]
+def posterior_density(samples, plots_dir, num_sites=10):
+    theta_samples = samples[:, :num_sites]
+    gamma_samples = samples[:, num_sites:]
 
-    for i in range(theta_coef_samples.shape[1]):
+    for i in range(theta_samples.shape[1]):
         # Make paths
-        path = plots_dir / "theta_coef_posterior"
+        path = plots_dir / "theta_posterior"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(theta_samples[:, i], bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Posterior density of $\beta^\theta_%d$" % i)
+        plt.title(r"Posterior density of $\theta_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"theta_coef_{i}.png",
+            path / f"theta_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
         plt.close()
 
-    for i in range(gamma_coef_samples.shape[1]):
+    for i in range(gamma_samples.shape[1]):
         # Make paths
-        path = plots_dir / "gamma_coef_posterior"
+        path = plots_dir / "gamma_posterior"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_coef_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(gamma_samples[:, i], bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Posterior density of $\beta^\gamma_%d$" % i)
+        plt.title(r"Posterior density of $\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
-            path / f"gamma_coef_{i}.png",
+            path / f"gamma_{i}.png",
             bbox_inches="tight",
             dpi=100,
         )
