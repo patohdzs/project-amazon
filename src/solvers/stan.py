@@ -147,11 +147,11 @@ def sample_with_stan(
         uncertain_vals = np.asarray(uncertain_vals).flatten()
 
         # Unpacking uncertain values
-        theta_vals = uncertain_vals[:num_sites]
-        gamma_vals = uncertain_vals[num_sites:]
+        theta_vals = uncertain_vals[:num_sites].copy()
+        gamma_vals = uncertain_vals[num_sites:].copy()
 
-        print("Gamma: ", gamma_vals)
         print("Theta: ", theta_vals)
+        print("Gamma: ", gamma_vals)
 
         # Unpacking uncertain values
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
@@ -179,14 +179,15 @@ def sample_with_stan(
             zeta=zeta,
         )
 
+        # Update trackers
         sol_val_X_tracker.append(sol_val_X)
         sol_val_Ua_tracker.append(sol_val_Ua)
         sol_val_Up_tracker.append(sol_val_Up)
         sol_val_Um_tracker.append(sol_val_Um)
         sol_val_Z_tracker.append(sol_val_Z)
 
+        # HMC sampling
         print("Starting HMC sampling...")
-        # Stan sampler
         model_data = dict(
             T=T,
             S=num_sites,
@@ -211,9 +212,11 @@ def sample_with_stan(
             theta_prior_vcov=0.8 * np.eye(num_sites),
         )
 
+        # Compiling model
         sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
         print("Model compiled!\n")
 
+        # Posterior sampling
         fit = sampler.sample(num_chains=num_chains, num_samples=sample_size)
         print("Finished sampling!\n")
 
@@ -260,12 +263,12 @@ def sample_with_stan(
 
         print(
             f"""
-            Iteration [{cntr+1:4d}]: Absolte Error = {abs_error},
+            Iteration [{cntr+1:4d}]: Absolute Error = {abs_error},
             Percentage Error = {percentage_error}
             """
         )
 
-        # Exchange gamma values (for future weighting/update & error evaluation)
+        # Exchange parameter values (for future weighting/update & error evaluation)
         uncertain_vals_old = uncertain_vals
 
         # Increase the counter
