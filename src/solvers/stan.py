@@ -23,7 +23,9 @@ def sample_with_stan(
     xi=0.01,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
     gamma_prior_mean=None,
+    gamma_prior_std=None,
     theta_prior_mean=None,
+    theta_prior_std=None,
     max_iter=20000,
     tol=0.001,
     sample_size=1000,
@@ -36,6 +38,7 @@ def sample_with_stan(
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
+    # Read model code
     with open(stan_model_path(model_name)) as f:
         model_code = f.read()
 
@@ -72,6 +75,8 @@ def sample_with_stan(
     if theta_prior_mean is None:
         theta_prior_mean = theta.copy()
 
+    # Save starting params
+    uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
 
     # Retrieve z data for selected site(s)
@@ -137,6 +142,14 @@ def sample_with_stan(
     # Loop until convergence
     while cntr < max_iter and percentage_error > tol:
         print(f"Optimization Iteration[{cntr+1}/{max_iter}]")
+
+        # Flatten uncertain values
+        uncertain_vals = np.asarray(uncertain_vals).flatten()
+
+        # Unpacking uncertain values
+        theta_vals = uncertain_vals[:num_sites]
+        gamma_vals = uncertain_vals[num_sites:]
+
         print("Gamma: ", gamma_vals)
         print("Theta: ", theta_vals)
 
