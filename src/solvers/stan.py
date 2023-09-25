@@ -5,12 +5,13 @@ import numpy as np
 import stan
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
+from solvers import reparametrize_lognormal
 from solvers.casadi import solve_outer_optimization_problem
 
 
 def sample_with_stan(
-    model_name="basic_model.stan",
-    # Configurations/Settings
+    model_name,
+    # Model params
     T=200,
     N=200,
     site_num=10,  # Number of sites(10, 25, 100, 1000)
@@ -22,10 +23,12 @@ def sample_with_stan(
     pa=44.75,
     xi=0.01,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
+    # Prior hyperparams
     gamma_prior_mean=None,
     gamma_prior_std=None,
     theta_prior_mean=None,
     theta_prior_std=None,
+    # Sampling params
     max_iter=20000,
     tol=0.001,
     sample_size=1000,
@@ -45,10 +48,10 @@ def sample_with_stan(
     # Load sites' data
     (
         zbar_2017,
-        gamma,
+        gamma_vals,
         z_2017,
         forestArea_2017_ha,
-        theta,
+        theta_vals,
         gamma_coe,
         gamma_coe_sd,
         theta_coe,
@@ -62,18 +65,29 @@ def sample_with_stan(
         norm_fac=norm_fac,
     )
 
-    # Evaluate Gamma values
-    gamma_vals = gamma
-    num_sites = gamma.size
+    num_sites = gamma_vals.size
 
-    # Theta Values
-    theta_vals = theta
-
-    # Prior means
+    # Setting calibrated prior means
     if gamma_prior_mean is None:
-        gamma_prior_mean = gamma.copy()
+        gamma_prior_mean = gamma_vals.copy()
+
     if theta_prior_mean is None:
-        theta_prior_mean = theta.copy()
+        theta_prior_mean = theta_vals.copy()
+
+    # Setting calibrated prior vcovs
+    if gamma_prior_std is None:
+        gamma_prior_std = 20 * np.ones(num_sites)
+
+    if theta_prior_std is None:
+        theta_prior_std = 0.8 * np.ones(num_sites)
+
+    # Re-parametrizing for lognormal prior
+    gamma_prior_mean, gamma_prior_std = reparametrize_lognormal(
+        gamma_prior_mean, gamma_prior_std
+    )
+    theta_prior_mean, theta_prior_std = reparametrize_lognormal(
+        theta_prior_mean, theta_prior_std
+    )
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -128,6 +142,10 @@ def sample_with_stan(
         pa=pa,
         xi=xi,
         zeta=zeta,
+        theta_prior_mean=theta_prior_mean,
+        theta_prior_std=theta_prior_std,
+        gamma_prior_mean=gamma_prior_mean,
+        gamma_prior_std=gamma_prior_std,
         sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
@@ -207,9 +225,9 @@ def sample_with_stan(
             pa=pa,
             pf=pf,
             gamma_prior_mean=gamma_prior_mean,
-            gamma_prior_vcov=20 * np.eye(num_sites),
+            gamma_prior_std=gamma_prior_std,
             theta_prior_mean=theta_prior_mean,
-            theta_prior_vcov=0.8 * np.eye(num_sites),
+            theta_prior_std=theta_prior_std,
         )
 
         # Compiling model

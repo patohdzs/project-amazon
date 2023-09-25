@@ -202,6 +202,25 @@ def log_density_function(
     return log_density_val
 
 
+def reparametrize_lognormal(mu_ln, sigma_ln):
+    """
+    Convert mean and variance of a log-normally distributed variable to
+    the mean and variance of the underlying normally distributed variable.
+
+    Parameters:
+    mean_ln (float): Mean of the log-normally distributed variable.
+    var_ln (float): Variance of the log-normally distributed variable.
+
+    Returns:
+    tuple: Tuple containing the mean and variance of the underlying normally
+           distributed variable.
+    """
+    mu = np.log(mu_ln**2 / np.sqrt(sigma_ln + mu_ln**2))
+    sigma = np.sqrt(np.log(sigma_ln / mu_ln**2 + 1))
+
+    return mu, sigma
+
+
 def _log_normal_prior(x, mu, Sigma):
     # Log prior density assuming x (prior)~ N(mu, Sigma)
     mean_zero_x = x - mu
