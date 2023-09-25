@@ -21,7 +21,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--dataname", type=str, default="stan")
+parser.add_argument("--dataname", type=str, default="stan_lognorm")
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
@@ -68,14 +68,24 @@ with open(output_dir / "results.pcl", "rb") as f:
     results = pickle.load(f)
 
 # Prior hyperparameters
-mu = np.concatenate((theta, gamma))
-Sigma = coeff_vcov(
-    0.8 * np.eye(args.sitenum),
-    20 * np.eye(args.sitenum),
+gamma_prior_mean, gamma_prior_std = (
+    results["gamma_prior_mean"],
+    results["gamma_prior_std"],
+)
+theta_prior_mean, theta_prior_std = (
+    results["theta_prior_mean"],
+    results["theta_prior_std"],
 )
 
-# # Sampling from prior
-prior_samples = np.random.multivariate_normal(mu, Sigma, size=12000)
+
+mu = np.concatenate((theta_prior_mean, gamma_prior_mean))
+Sigma = coeff_vcov(
+    np.diag(theta_prior_std),
+    np.diag(gamma_prior_std),
+)
+
+# Sampling from prior
+prior_samples = np.exp(np.random.multivariate_normal(mu, Sigma, size=12000))
 
 # Ploting historgam of prior samples
 # plots.prior_density(samples=prior_samples, plots_dir=plots_dir, num_sites=10)
