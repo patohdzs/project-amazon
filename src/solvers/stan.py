@@ -20,7 +20,7 @@ def sample_with_stan(
     kappa=2.094215255,
     pf=20.76,
     pa=44.75,
-    xi=0.01,
+    xi=1.0,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
     # Prior hyperparams
     gamma_prior_mean=None,

@@ -1,7 +1,6 @@
 functions {
 
   vector grouped_fitted(matrix X, vector coef, matrix G){
-
     // Compute fitted values
     return G * exp(X * coef);
 
