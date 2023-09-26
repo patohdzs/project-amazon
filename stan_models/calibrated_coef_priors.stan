@@ -1,4 +1,44 @@
 functions {
+  matrix groupby_avg(matrix X) {
+    int N = rows(X);
+    int M = cols(X);
+    int num_groups = max(X[, 1]); // Assuming group identifiers are integers
+
+    matrix[num_groups, 2] group_averages;
+
+    for (group in 1:num_groups) {
+      vector group_X;
+      int group_size = 0;
+
+      for (n in 1:N) {
+        if (X[n, 1] == group) {
+          group_X[group_size + 1] = X[n, 2];
+          group_size += 1;
+        }
+      }
+
+      if (group_size > 0) {
+        group_averages[group, 1] = group;
+        group_averages[group, 2] = mean(group_X[1:group_size]);
+      }
+    }
+
+    return group_averages;
+  }
+
+  vector grouped_fitted(real N, matrix X, vector coef, vector groups){
+    vector[N] fitted = X * coef;
+    matrix[N, 2] G;
+
+    for (i in 1:N) {
+      G[i, 1] = groups[i];
+      G[i, 2] = gamma_fitted[i];
+    }
+
+    return groupby_avg(G)[,2]
+
+  }
+
   real log_density_function(
     vector gamma,
     vector theta,
@@ -69,6 +109,8 @@ data {
   int<lower=0> S;                                   // Number of sites
   int<lower=0> K_theta;                             // Number of coefficients on theta
   int<lower=0> K_gamma;                             // Number of coefficients on gamma
+  int<lower=0> N_theta;
+  int<lower=0> N_gamma;
   real<lower=0> norm_fac;                           // Normalization factor
   real<lower=0> alpha;                              // Mean reversion coefficient
   matrix[S+2,T+1] sol_val_X;                        // Sate trajectories
@@ -85,8 +127,10 @@ data {
   real<lower=0> pa;                                 // Price of cattle output
   real<lower=0> pf;                                 // Price of carbon emission transfers
 
-  matrix [S,K_theta] X_theta;                       // Design matrix for regressors on gamma
-  matrix [S,K_gamma] X_gamma;                       // Design matrix for regressors on gamma
+  matrix [N_theta,K_theta] X_theta;                 // Design matrix for regressors on gamma
+  vector [N_theta] theta_groups;
+  matrix [N_gamma, K_gamma] X_gamma;                // Design matrix for regressors on gamma
+  vector [N_gamma] gamma_groups;
 
   vector[K_theta] beta_theta_prior_mean;            // Prior hyperparam
   matrix[K_theta,K_theta] beta_theta_prior_vcov;    // Prior hyperparam
@@ -94,14 +138,18 @@ data {
   matrix[K_gamma, K_gamma] beta_gamma_prior_vcov;   // Prior hyperparam
 
 }
+
 parameters {
   vector[K_theta] beta_theta;          // Coefficients on theta
   vector[K_gamma] beta_gamma;          // Coefficients on gamma
 }
+
 transformed parameters{
-  theta = X_theta * beta_theta
-  gamma = X_gamma * beta_gamma
+  vector[S] theta = grouped_fitted(N_theta, X_theta, beta_theta, theta_groups) / 44.9736197781184
+  vector[S] gamma = grouped_fitted(N_gamma, X_gamma, beta_gamma, gamma_groups)
+
 }
+
 model {
   // Priors
   beta_theta ~ multi_normal(beta_theta_prior_mean, beta_theta_prior_vcov)
