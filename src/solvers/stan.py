@@ -46,7 +46,7 @@ def sample_with_stan(
     kappa=2.094215255,
     pf=20.76,
     pa=44.75,
-    xi=1.0,
+    xi=0.1,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
     # Sampling params
     max_iter=20000,
