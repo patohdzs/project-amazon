@@ -79,7 +79,9 @@ gamma_prior_samples = np.array(
     [gamma_fitted(c, site_gamma_2017_df) for c in beta_gamma_prior_samples]
 )
 
-prior_samples = np.concatenate((theta_prior_samples, gamma_prior_samples), axis=1)
+prior_samples = np.concatenate(
+    (theta_prior_samples[:5000, :], gamma_prior_samples), axis=1
+)
 
 
 # Ploting historgam of prior samples
