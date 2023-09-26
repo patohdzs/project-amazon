@@ -1,41 +1,36 @@
 functions {
-  matrix groupby_avg(matrix X) {
-    int N = rows(X);
-    int M = cols(X);
-    int num_groups = max(X[, 1]); // Assuming group identifiers are integers
+  matrix groupby_avg(vector x, vector groups, int num_groups) {
+    int N = rows(x);
 
     matrix[num_groups, 2] group_averages;
 
     for (group in 1:num_groups) {
-      vector[N] group_X;
+      vector[N] group_x;
       int group_size = 0;
 
       for (n in 1:N) {
-        if (X[n, 1] == group) {
-          group_X[group_size + 1] = X[n, 2];
+        if (groups[n] == group) {
+          group_x[group_size + 1] = x[n];
           group_size += 1;
         }
       }
 
       if (group_size > 0) {
         group_averages[group, 1] = group;
-        group_averages[group, 2] = mean(group_X[1:group_size]);
+        group_averages[group, 2] = mean(group_x[1:group_size]);
       }
     }
 
     return group_averages;
   }
 
-  vector grouped_fitted(real N, matrix X, vector coef, vector groups){
+  vector grouped_fitted(int N, int S, matrix X, vector coef, vector groups){
+
+    // Compute fitted values
     vector[N] fitted = exp(X * coef);
-    matrix[N, 2] G;
 
-    for (i in 1:N) {
-      G[i, 1] = groups[i];
-      G[i, 2] = gamma_fitted[i];
-    }
-
-    return groupby_avg(G)[,2];
+    // Return site averages
+    return groupby_avg(fitted, groups, S)[,2];
 
   }
 
@@ -145,8 +140,8 @@ parameters {
 }
 
 transformed parameters{
-  vector[S] theta = grouped_fitted(N_theta, X_theta, beta_theta, theta_groups) / 44.9736197781184;
-  vector[S] gamma = grouped_fitted(N_gamma, X_gamma, beta_gamma, gamma_groups);
+  vector[S] theta = grouped_fitted(N_theta, S, X_theta, beta_theta, theta_groups) / 44.9736197781184;
+  vector[S] gamma = grouped_fitted(N_gamma, S, X_gamma, beta_gamma, gamma_groups);
 
 }
 

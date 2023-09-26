@@ -38,7 +38,7 @@ logs_dir = logs_dir_path(**vars(args))
 
 # Solve model with Casadi
 stan_results = sample_with_stan(
-    model_name="calibrated_lognormal_priors.stan",
+    model_name="calibrated_coef_priors.stan",
     site_num=10,
     max_iter=50,
     sample_size=1000,

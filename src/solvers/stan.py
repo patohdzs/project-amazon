@@ -5,7 +5,6 @@ import numpy as np
 import stan
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
-from solvers import reparametrize_lognormal
 from solvers.casadi import solve_outer_optimization_problem
 
 
@@ -60,34 +59,18 @@ def sample_with_stan(
         theta_vcov_array,
         site_theta_2017_df,
         site_gamma_2017_df,
-    ) = load_site_data(
-        site_num,
-        norm_fac=norm_fac,
-    )
+    ) = load_site_data(site_num, norm_fac=norm_fac)
 
     num_sites = gamma_vals.size
 
-    # Setting calibrated prior means
-    if gamma_prior_mean is None:
-        gamma_prior_mean = gamma_vals.copy()
+    # Splitting data
+    X_theta = site_theta_2017_df.iloc[:, 1:9].to_numpy()
+    theta_groups = site_theta_2017_df["id"].to_numpy()
+    N_theta, K_theta = X_theta.shape
 
-    if theta_prior_mean is None:
-        theta_prior_mean = theta_vals.copy()
-
-    # Setting calibrated prior vcovs
-    if gamma_prior_std is None:
-        gamma_prior_std = 20 * np.ones(num_sites)
-
-    if theta_prior_std is None:
-        theta_prior_std = 0.8 * np.ones(num_sites)
-
-    # Re-parametrizing for lognormal prior
-    gamma_prior_mean, gamma_prior_std = reparametrize_lognormal(
-        gamma_prior_mean, gamma_prior_std
-    )
-    theta_prior_mean, theta_prior_std = reparametrize_lognormal(
-        theta_prior_mean, theta_prior_std
-    )
+    X_gamma = site_gamma_2017_df.iloc[:, 1:6].to_numpy()
+    gamma_groups = site_gamma_2017_df["id"].to_numpy()
+    N_gamma, K_gamma = X_gamma.shape
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -142,10 +125,10 @@ def sample_with_stan(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        theta_prior_mean=theta_prior_mean,
-        theta_prior_std=theta_prior_std,
-        gamma_prior_mean=gamma_prior_mean,
-        gamma_prior_std=gamma_prior_std,
+        beta_theta_prior_mean=theta_coe,
+        beta_theta_prior_vcov=theta_vcov_array,
+        beta_gamma_prior_mean=gamma_coe,
+        beta_gamma_prior_vcov=gamma_vcov_array,
         sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
@@ -209,6 +192,10 @@ def sample_with_stan(
         model_data = dict(
             T=T,
             S=num_sites,
+            K_theta=K_theta,
+            K_gamma=K_gamma,
+            N_theta=N_theta,
+            N_gamma=N_gamma,
             norm_fac=norm_fac,
             alpha=alpha,
             sol_val_X=sol_val_X,
@@ -224,10 +211,14 @@ def sample_with_stan(
             kappa=kappa,
             pa=pa,
             pf=pf,
-            gamma_prior_mean=gamma_prior_mean,
-            gamma_prior_std=gamma_prior_std,
-            theta_prior_mean=theta_prior_mean,
-            theta_prior_std=theta_prior_std,
+            X_theta=X_theta,
+            theta_groups=theta_groups,
+            X_gamma=X_gamma,
+            gamma_groups=gamma_groups,
+            beta_theta_prior_mean=theta_coe,
+            beta_theta_prior_vcov=theta_vcov_array,
+            beta_gamma_prior_mean=gamma_coe,
+            beta_gamma_prior_vcov=gamma_vcov_array,
         )
 
         # Compiling model
