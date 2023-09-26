@@ -43,6 +43,6 @@ stan_results = sample_with_stan(
     max_iter=50,
     sample_size=1000,
     final_sample_size=5_000,
-    num_chains=2,
+    num_chains=1,
     output_dir=output_dir,
 )

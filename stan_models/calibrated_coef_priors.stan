@@ -1,36 +1,9 @@
 functions {
-  matrix groupby_avg(vector x, vector groups, int num_groups) {
-    int N = rows(x);
 
-    matrix[num_groups, 2] group_averages;
-
-    for (group in 1:num_groups) {
-      vector[N] group_x;
-      int group_size = 0;
-
-      for (n in 1:N) {
-        if (groups[n] == group) {
-          group_x[group_size + 1] = x[n];
-          group_size += 1;
-        }
-      }
-
-      if (group_size > 0) {
-        group_averages[group, 1] = group;
-        group_averages[group, 2] = mean(group_x[1:group_size]);
-      }
-    }
-
-    return group_averages;
-  }
-
-  vector grouped_fitted(int N, int S, matrix X, vector coef, vector groups){
+  vector grouped_fitted(matrix X, vector coef, matrix G){
 
     // Compute fitted values
-    vector[N] fitted = exp(X * coef);
-
-    // Return site averages
-    return groupby_avg(fitted, groups, S)[,2];
+    return G * exp(X * coef);
 
   }
 
@@ -100,37 +73,37 @@ functions {
 
 
 data {
-  int<lower=0> T;                                   // Time horizon
-  int<lower=0> S;                                   // Number of sites
-  int<lower=0> K_theta;                             // Number of coefficients on theta
-  int<lower=0> K_gamma;                             // Number of coefficients on gamma
+  int<lower=0> T;                                       // Time horizon
+  int<lower=0> S;                                       // Number of sites
+  int<lower=0> K_theta;                                 // Number of coefficients on theta
+  int<lower=0> K_gamma;                                 // Number of coefficients on gamma
   int<lower=0> N_theta;
   int<lower=0> N_gamma;
-  real<lower=0> norm_fac;                           // Normalization factor
-  real<lower=0> alpha;                              // Mean reversion coefficient
-  matrix[S+2,T+1] sol_val_X;                        // Sate trajectories
-  vector[T] sol_val_Ua;                             // Squared total control adjustments; dimensions T x 1
-  matrix[S, T] sol_val_Up;                          // U control
-  vector[S] zbar_2017;                              // z_bar in 2017
-  vector[S] forestArea_2017_ha;                     // forrest area in 2017
+  real<lower=0> norm_fac;                               // Normalization factor
+  real<lower=0> alpha;                                  // Mean reversion coefficient
+  matrix[S+2,T+1] sol_val_X;                            // Sate trajectories
+  vector[T] sol_val_Ua;                                 // Squared total control adjustments; dimensions T x 1
+  matrix[S, T] sol_val_Up;                              // U control
+  vector[S] zbar_2017;                                  // z_bar in 2017
+  vector[S] forestArea_2017_ha;                         // forrest area in 2017
   vector[T] alpha_p_Adym;
   matrix[T,T] Bdym;
-  vector[T+1] ds_vect;                              // Time discounting vector
-  real zeta;                                        // Penalty on adjustment costs
-  real xi;                                          // Penalty on prior-posterior KL div
-  real kappa;                                       // Effect of cattle farming on emissions
-  real<lower=0> pa;                                 // Price of cattle output
-  real<lower=0> pf;                                 // Price of carbon emission transfers
+  vector[T+1] ds_vect;                                  // Time discounting vector
+  real zeta;                                            // Penalty on adjustment costs
+  real xi;                                              // Penalty on prior-posterior KL div
+  real kappa;                                           // Effect of cattle farming on emissions
+  real<lower=0> pa;                                     // Price of cattle output
+  real<lower=0> pf;                                     // Price of carbon emission transfers
 
-  matrix [N_theta,K_theta] X_theta;                 // Design matrix for regressors on theta
-  vector [N_theta] theta_groups;                    // Groups for theta
-  matrix [N_gamma, K_gamma] X_gamma;                // Design matrix for regressors on gamma
-  vector [N_gamma] gamma_groups;                    // Groups for gamma
+  matrix [N_theta,K_theta] X_theta;                     // Design matrix for regressors on theta
+  matrix [S, N_theta] G_theta;                          // Groups for theta
+  matrix [N_gamma, K_gamma] X_gamma;                    // Design matrix for regressors on gamma
+  matrix [S, N_gamma] G_gamma;                          // Groups for gamma
 
-  vector[K_theta] beta_theta_prior_mean;            // Prior hyperparam
-  matrix[K_theta,K_theta] beta_theta_prior_vcov;    // Prior hyperparam
-  vector[K_gamma] beta_gamma_prior_mean;            // Prior hyperparam
-  matrix[K_gamma, K_gamma] beta_gamma_prior_vcov;   // Prior hyperparam
+  vector[K_theta] beta_theta_prior_mean;                // Prior hyperparam
+  cov_matrix[K_theta] beta_theta_prior_vcov;    // Prior hyperparam
+  vector[K_gamma] beta_gamma_prior_mean;                // Prior hyperparam
+  cov_matrix[K_gamma] beta_gamma_prior_vcov;   // Prior hyperparam
 
 }
 
@@ -140,8 +113,8 @@ parameters {
 }
 
 transformed parameters{
-  vector[S] theta = grouped_fitted(N_theta, S, X_theta, beta_theta, theta_groups) / 44.9736197781184;
-  vector[S] gamma = grouped_fitted(N_gamma, S, X_gamma, beta_gamma, gamma_groups);
+  vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta) / 44.9736197781184;
+  vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, G_gamma);
 
 }
 

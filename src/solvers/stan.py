@@ -33,6 +33,7 @@ def sample_with_stan(
     sample_size=1000,
     final_sample_size=5_000,  # number of samples to collect after convergence
     num_chains=2,
+    num_warmup=500,
     weight=0.25,  # <-- Not sure how this linear combination weighting helps!
     output_dir="output/stan_results",
 ):
@@ -65,12 +66,24 @@ def sample_with_stan(
 
     # Splitting data
     X_theta = site_theta_2017_df.iloc[:, 1:9].to_numpy()
-    theta_groups = site_theta_2017_df["id"].to_numpy()
     N_theta, K_theta = X_theta.shape
+    G_theta = np.array(
+        [
+            (site_theta_2017_df["id"].to_numpy() == i).astype(int)
+            for i in range(1, num_sites + 1)
+        ]
+    )
+    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
 
     X_gamma = site_gamma_2017_df.iloc[:, 1:6].to_numpy()
-    gamma_groups = site_gamma_2017_df["id"].to_numpy()
     N_gamma, K_gamma = X_gamma.shape
+    G_gamma = np.array(
+        [
+            (site_gamma_2017_df["id"].to_numpy() == i).astype(int)
+            for i in range(1, num_sites + 1)
+        ]
+    )
+    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -212,9 +225,9 @@ def sample_with_stan(
             pa=pa,
             pf=pf,
             X_theta=X_theta,
-            theta_groups=theta_groups,
+            G_theta=G_theta,
             X_gamma=X_gamma,
-            gamma_groups=gamma_groups,
+            G_gamma=G_gamma,
             beta_theta_prior_mean=theta_coe,
             beta_theta_prior_vcov=theta_vcov_array,
             beta_gamma_prior_mean=gamma_coe,
@@ -226,7 +239,9 @@ def sample_with_stan(
         print("Model compiled!\n")
 
         # Posterior sampling
-        fit = sampler.sample(num_chains=num_chains, num_samples=sample_size)
+        fit = sampler.sample(
+            num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
+        )
         print("Finished sampling!\n")
 
         samples = fit.to_frame()
