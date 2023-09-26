@@ -22,7 +22,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--dataname", type=str, default="stan_lognorm")
+parser.add_argument("--dataname", type=str, default="stan_coefs")
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
@@ -69,7 +69,10 @@ with open(output_dir / "results.pcl", "rb") as f:
     results = pickle.load(f)
 
 # Prior samples
-beta_theta_prior_samples = pd.read_csv("./data/hmc/theta_coe_ori.csv").to_numpy()
+print("Transforming prior samples...")
+beta_theta_prior_samples = pd.read_csv("./data/hmc/theta_coe_ori.csv").to_numpy()[
+    :5000, :
+]
 beta_gamma_prior_samples = pd.read_csv("./data/hmc/gamma_coe_ori.csv").to_numpy()
 
 theta_prior_samples = np.array(
@@ -79,10 +82,8 @@ gamma_prior_samples = np.array(
     [gamma_fitted(c, site_gamma_2017_df) for c in beta_gamma_prior_samples]
 )
 
-prior_samples = np.concatenate(
-    (theta_prior_samples[:5000, :], gamma_prior_samples), axis=1
-)
-
+prior_samples = np.concatenate((theta_prior_samples, gamma_prior_samples), axis=1)
+print("Done!")
 
 # Ploting historgam of prior samples
 # plots.prior_density(samples=prior_samples, plots_dir=plots_dir, num_sites=10)

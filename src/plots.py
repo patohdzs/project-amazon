@@ -302,7 +302,7 @@ def prior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(theta_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Prior density of $\theta_%d$" % i)
         fig.tight_layout()
@@ -321,7 +321,7 @@ def prior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(gamma_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Prior density of $\gamma_%d$" % i)
         fig.tight_layout()
@@ -345,7 +345,7 @@ def posterior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(theta_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Posterior density of $\theta_%d$" % i)
         fig.tight_layout()
@@ -364,7 +364,7 @@ def posterior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_samples[:, i], bins=30, alpha=0.7)
+        plt.hist(gamma_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Posterior density of $\gamma_%d$" % i)
         fig.tight_layout()
@@ -391,8 +391,10 @@ def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_coef_prior_samples[:, i], bins=30, alpha=0.7)
-        plt.hist(theta_coef_post_samples[:, i], bins=30, alpha=0.7, color="red")
+        plt.hist(theta_coef_prior_samples[:, i], density=True, bins=30, alpha=0.7)
+        plt.hist(
+            theta_coef_post_samples[:, i], density=True, bins=30, alpha=0.7, color="red"
+        )
         plt.ylabel(r"$Frequency$")
         plt.title(r"Density of $\theta_%d$" % i)
         fig.tight_layout()
@@ -411,8 +413,10 @@ def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_coef_prior_samples[:, i], bins=30, alpha=0.7)
-        plt.hist(gamma_coef_post_samples[:, i], bins=30, alpha=0.7, color="red")
+        plt.hist(gamma_coef_prior_samples[:, i], density=True, bins=30, alpha=0.7)
+        plt.hist(
+            gamma_coef_post_samples[:, i], density=True, bins=30, alpha=0.7, color="red"
+        )
         plt.ylabel(r"$Frequency$")
         plt.title(r"Density of $\gamma_%d$" % i)
         fig.tight_layout()

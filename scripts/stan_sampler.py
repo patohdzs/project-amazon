@@ -12,7 +12,7 @@ from solvers.stan import sample_with_stan
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--dataname", type=str, default="stan_lognorm")
+parser.add_argument("--dataname", type=str, default="stan_coefs")
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--xi", type=float, default=0.01)
 parser.add_argument("--pf", type=float, default=20.76)
