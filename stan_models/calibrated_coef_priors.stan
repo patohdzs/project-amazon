@@ -7,7 +7,7 @@ functions {
     matrix[num_groups, 2] group_averages;
 
     for (group in 1:num_groups) {
-      vector group_X;
+      vector[N] group_X;
       int group_size = 0;
 
       for (n in 1:N) {
@@ -27,7 +27,7 @@ functions {
   }
 
   vector grouped_fitted(real N, matrix X, vector coef, vector groups){
-    vector[N] fitted = X * coef;
+    vector[N] fitted = exp(X * coef);
     matrix[N, 2] G;
 
     for (i in 1:N) {
@@ -35,7 +35,7 @@ functions {
       G[i, 2] = gamma_fitted[i];
     }
 
-    return groupby_avg(G)[,2]
+    return groupby_avg(G)[,2];
 
   }
 
@@ -127,10 +127,10 @@ data {
   real<lower=0> pa;                                 // Price of cattle output
   real<lower=0> pf;                                 // Price of carbon emission transfers
 
-  matrix [N_theta,K_theta] X_theta;                 // Design matrix for regressors on gamma
-  vector [N_theta] theta_groups;
+  matrix [N_theta,K_theta] X_theta;                 // Design matrix for regressors on theta
+  vector [N_theta] theta_groups;                    // Groups for theta
   matrix [N_gamma, K_gamma] X_gamma;                // Design matrix for regressors on gamma
-  vector [N_gamma] gamma_groups;
+  vector [N_gamma] gamma_groups;                    // Groups for gamma
 
   vector[K_theta] beta_theta_prior_mean;            // Prior hyperparam
   matrix[K_theta,K_theta] beta_theta_prior_vcov;    // Prior hyperparam
@@ -145,15 +145,15 @@ parameters {
 }
 
 transformed parameters{
-  vector[S] theta = grouped_fitted(N_theta, X_theta, beta_theta, theta_groups) / 44.9736197781184
-  vector[S] gamma = grouped_fitted(N_gamma, X_gamma, beta_gamma, gamma_groups)
+  vector[S] theta = grouped_fitted(N_theta, X_theta, beta_theta, theta_groups) / 44.9736197781184;
+  vector[S] gamma = grouped_fitted(N_gamma, X_gamma, beta_gamma, gamma_groups);
 
 }
 
 model {
   // Priors
-  beta_theta ~ multi_normal(beta_theta_prior_mean, beta_theta_prior_vcov)
-  beta_gamma ~ multi_normal(beta_gamma_prior_mean, beta_gamma_prior_vcov)
+  beta_theta ~ multi_normal(beta_theta_prior_mean, beta_theta_prior_vcov);
+  beta_gamma ~ multi_normal(beta_gamma_prior_mean, beta_gamma_prior_vcov);
 
   // Value function
   target += log_density_function(gamma, theta, T, S, alpha, sol_val_X, sol_val_Ua,
