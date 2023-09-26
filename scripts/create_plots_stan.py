@@ -8,10 +8,11 @@ import pickle
 import sys
 
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from services.data_service import load_site_data
 from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
-from solvers import coeff_vcov
+from solvers import gamma_fitted, theta_fitted
 
 import plots
 
@@ -67,25 +68,19 @@ with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
-# Prior hyperparameters
-gamma_prior_mean, gamma_prior_std = (
-    results["gamma_prior_mean"],
-    results["gamma_prior_std"],
-)
-theta_prior_mean, theta_prior_std = (
-    results["theta_prior_mean"],
-    results["theta_prior_std"],
-)
+# Prior samples
+beta_theta_prior_samples = pd.read_csv("./data/hmc/theta_coe_ori.csv").to_numpy()
+beta_gamma_prior_samples = pd.read_csv("./data/hmc/gamma_coe_ori.csv").to_numpy()
 
-
-mu = np.concatenate((theta_prior_mean, gamma_prior_mean))
-Sigma = coeff_vcov(
-    np.diag(theta_prior_std),
-    np.diag(gamma_prior_std),
+theta_prior_samples = np.array(
+    [theta_fitted(c, site_theta_2017_df) for c in beta_theta_prior_samples]
+)
+gamma_prior_samples = np.array(
+    [gamma_fitted(c, site_gamma_2017_df) for c in beta_gamma_prior_samples]
 )
 
-# Sampling from prior
-prior_samples = np.exp(np.random.multivariate_normal(mu, Sigma, size=12000))
+prior_samples = np.concatenate((theta_prior_samples, gamma_prior_samples), axis=1)
+
 
 # Ploting historgam of prior samples
 # plots.prior_density(samples=prior_samples, plots_dir=plots_dir, num_sites=10)

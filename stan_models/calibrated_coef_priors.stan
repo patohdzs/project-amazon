@@ -114,7 +114,6 @@ parameters {
 transformed parameters{
   vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta) / 44.9736197781184;
   vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, G_gamma);
-
 }
 
 model {
