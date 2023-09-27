@@ -36,27 +36,26 @@ def gamma_reg_data(num_sites, gamma_df):
 
 def sample_with_stan(
     model_name,
-    # Model params
-    T=200,
+    output_dir,
+    xi,
+    pf,
+    pa,
+    weight,
+    site_num,
+    T,
     N=200,
-    site_num=10,  # Number of sites(10, 25, 100, 1000)
-    norm_fac=1e11,  # normalization factor consistent used in paper
+    norm_fac=1e11,
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
-    pf=20.76,
-    pa=44.75,
-    xi=0.1,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
     # Sampling params
     max_iter=20000,
     tol=0.001,
     sample_size=1000,
-    final_sample_size=5_000,  # number of samples to collect after convergence
-    num_chains=2,
+    final_sample_size=5_000,
+    num_chains=8,
     num_warmup=500,
-    weight=0.25,  # <-- Not sure how this linear combination weighting helps!
-    output_dir="output/stan_results",
 ):
     # Create the output directory
     if not os.path.isdir(output_dir):

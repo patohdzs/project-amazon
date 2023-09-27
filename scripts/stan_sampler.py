@@ -12,21 +12,13 @@ from solvers.stan import sample_with_stan
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--dataname", type=str, default="stan_coefs")
-parser.add_argument("--weight", type=float, default=0.25)
-parser.add_argument("--xi", type=float, default=0.01)
-parser.add_argument("--pf", type=float, default=20.76)
+parser.add_argument("--model", type=str, default="calibrated_coef_priors")
+parser.add_argument("--xi", type=float, default=1.0)
+parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)
+parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--sitenum", type=int, default=10)
-parser.add_argument("--time", type=int, default=200)
-parser.add_argument("--mix_in", type=int, default=2)
-parser.add_argument("--mass_matrix_theta_scale", type=float, default=1.0)
-parser.add_argument("--mass_matrix_gamma_scale", type=float, default=1.0)
-parser.add_argument("--mass_matrix_weight", type=float, default=0.1)
-parser.add_argument("--symplectic_integrator_num_steps", type=int, default=2)
-parser.add_argument("--stepsize", type=float, default=0.1)
-parser.add_argument("--scale", type=float, default=1.0)
-parser.add_argument("--mode", type=float, default=1.0)
+parser.add_argument("--timehzn", type=int, default=200)
 
 # Parse arguments
 args = parser.parse_args()
@@ -38,11 +30,16 @@ logs_dir = logs_dir_path(**vars(args))
 
 # Solve model with Casadi
 stan_results = sample_with_stan(
-    model_name="calibrated_coef_priors.stan",
-    site_num=10,
+    model_name=args.model + ".stan",
+    output_dir=output_dir,
+    xi=args.xi,
+    pf=args.pf,
+    pa=args.pa,
+    weight=args.weight,
+    site_num=args.sitenum,
+    T=args.timehzn,
     max_iter=50,
     sample_size=1000,
     final_sample_size=5_000,
     num_chains=1,
-    output_dir=output_dir,
 )
