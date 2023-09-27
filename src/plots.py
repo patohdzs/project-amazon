@@ -378,21 +378,21 @@ def posterior_density(samples, plots_dir, num_sites=10):
 
 
 def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10):
-    theta_coef_prior_samples = prior_samples[:, :num_sites]
-    gamma_coef_prior_samples = prior_samples[:, num_sites:]
+    theta_prior_samples = prior_samples[:, :num_sites]
+    gamma_prior_samples = prior_samples[:, num_sites:]
 
-    theta_coef_post_samples = post_samples[:, :num_sites]
-    post_samples[:, num_sites:]
+    theta_post_samples = post_samples[:, :num_sites]
+    gamma_post_samples = post_samples[:, num_sites:]
 
-    for i in range(theta_coef_prior_samples.shape[1]):
+    for i in range(theta_prior_samples.shape[1]):
         # Make paths
         path = plots_dir / "theta_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
-        prior = theta_coef_prior_samples[:, i]
-        post = theta_coef_post_samples[:, i]
-        bins = np.histogram(np.hstack((prior, post)), bins=30)[1]
+        prior = theta_prior_samples[:, i]
+        post = theta_post_samples[:, i]
+        bins = np.histogram(np.hstack((prior, post)), bins=60)[1]
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(prior, density=True, bins=bins, alpha=0.7)
@@ -408,15 +408,15 @@ def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10
         )
         plt.close()
 
-    for i in range(gamma_coef_prior_samples.shape[1]):
+    for i in range(gamma_prior_samples.shape[1]):
         # Make paths
         path = plots_dir / "gamma_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
-        prior = gamma_coef_prior_samples[:, i]
-        post = gamma_coef_prior_samples[:, i]
-        bins = np.histogram(np.hstack((prior, post)), bins=30)[1]
+        prior = gamma_prior_samples[:, i]
+        post = gamma_post_samples[:, i]
+        bins = np.histogram(np.hstack((prior, post)), bins=60)[1]
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(prior, density=True, bins=bins, alpha=0.7)
