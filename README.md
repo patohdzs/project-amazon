@@ -1,5 +1,28 @@
 # Project Amazon
 
+## Requirements
+- Python >= 3.9
+- Project data with the following directory structure:
+
+```
+.
+└── data
+    └── hmc
+        ├── calibration_10SitesModel.csv
+        ├── calibration_24SitesModel.csv
+        ├── calibration_40SitesModel.csv
+        ├── data_gamma.geojson
+        ├── data_theta.geojson
+        ├── gamma_coe_ori.csv
+        ├── gamma_vcov.csv
+        ├── id_10.geojson
+        ├── id_24.geojson
+        ├── id_40.geojson
+        ├── theta_coe_ori.csv
+        └── theta_vcov.csv
+```
+
+
 ## Installation
 
 0. Clone git repository and move into `project-amazon/`
@@ -33,7 +56,7 @@ git add <names of changed files>
 ```
 git commit
 ```
-4. After several commits, push commits to remote (if it is the first time pushing this branch add the --set-upstrea)
+4. After several commits, push commits to remote (if it is the first time pushing this branch use the `--set-upstream` flag)
 ```
 git push
 ```
