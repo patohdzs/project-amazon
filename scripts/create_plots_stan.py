@@ -11,7 +11,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from services.data_service import load_site_data
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
+from services.file_service import (
+    get_path,
+    logs_dir_path,
+    output_dir_path,
+    plots_dir_path,
+)
 from solvers import gamma_fitted, theta_fitted
 
 import plots
@@ -62,10 +67,13 @@ with open(output_dir / "results.pcl", "rb") as f:
 
 # Prior samples
 print("Transforming prior samples...")
-beta_theta_prior_samples = pd.read_csv("./data/hmc/theta_coe_ori.csv").to_numpy()[
-    :5000, :
-]
-beta_gamma_prior_samples = pd.read_csv("./data/hmc/gamma_coe_ori.csv").to_numpy()
+beta_theta_prior_samples = pd.read_csv(
+    get_path("data", "hmc", "theta_coe_ori.csv")
+).to_numpy()[:5000, :]
+
+beta_gamma_prior_samples = pd.read_csv(
+    get_path("data", "hmc", "gamma_coe_ori.csv")
+).to_numpy()
 
 theta_prior_samples = np.array(
     [theta_fitted(c, site_theta_2017_df) for c in beta_theta_prior_samples]
