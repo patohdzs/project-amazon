@@ -110,7 +110,6 @@ plots.overlap_prior_posterior(
     plots_dir,
 )
 
-
 # Plot absolute and percentage error
 plots.traceplot_abs_error(results, plots_dir)
 plots.traceplot_pct_error(results, plots_dir)
