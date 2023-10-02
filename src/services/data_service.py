@@ -37,7 +37,7 @@ def load_site_data(
     """
     # Read data file
     n = site_num
-    file_path = data_folder / f"calibration_{n}SitesModel.csv"
+    file_path = data_folder / f"hmc_{n}SitesModel.csv"
     df = pd.read_csv(file_path)
 
     # Extract information
