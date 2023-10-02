@@ -8,32 +8,6 @@ from services.file_service import stan_model_path
 from solvers.casadi import solve_outer_optimization_problem
 
 
-def theta_reg_data(num_sites, theta_df):
-    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
-
-    X_theta = theta_df.iloc[:, 1:9].to_numpy()
-    N_theta, K_theta = X_theta.shape
-
-    G_theta = np.array(
-        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
-    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
-
-    return X_theta, N_theta, K_theta, G_theta
-
-
-def gamma_reg_data(num_sites, gamma_df):
-    X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
-    N_gamma, K_gamma = X_gamma.shape
-    G_gamma = np.array(
-        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
-
-    return X_gamma, N_gamma, K_gamma, G_gamma
-
-
 def sample_with_stan(
     model_name,
     output_dir,
@@ -86,8 +60,8 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Splitting data
-    X_theta, N_theta, K_theta, G_theta = theta_reg_data(num_sites, site_theta_2017_df)
-    X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(num_sites, site_gamma_2017_df)
+    X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, site_theta_2017_df)
+    X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, site_gamma_2017_df)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -371,3 +345,35 @@ def sample_with_stan(
     print(f"Results saved to {saveto}")
 
     return results
+
+
+def _theta_reg_data(num_sites, theta_df):
+    # Filter out null values
+    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
+
+    # Get regression design matrix and its dimensions
+    X_theta = theta_df.iloc[:, 1:9].to_numpy()
+    N_theta, K_theta = X_theta.shape
+
+    # Get weighted grouped average matrix
+    G_theta = np.array(
+        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
+    )
+    G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
+    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
+
+    return X_theta, N_theta, K_theta, G_theta
+
+
+def _gamma_reg_data(num_sites, gamma_df):
+    # Get regression design matrix and its dimensions
+    X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
+    N_gamma, K_gamma = X_gamma.shape
+
+    # Get grouped average matrix
+    G_gamma = np.array(
+        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
+    )
+    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
+
+    return X_gamma, N_gamma, K_gamma, G_gamma
