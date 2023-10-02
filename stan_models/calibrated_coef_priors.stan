@@ -10,14 +10,12 @@ functions {
                             vector forestArea_2017_ha, real norm_fac,
                             vector alpha_p_Adym, matrix Bdym, vector ds_vect,
                             real zeta, real xi, real kappa, real pa, real pf) {
+
     // Carbon captured at time zero
-    vector[S] x0_vals;
-    for (i in 1 : S) {
-      x0_vals[i] = (gamma[i] * forestArea_2017_ha[i]) / norm_fac;
-    }
+    real x0 = (gamma' * forestArea_2017_ha) / norm_fac;
 
     // Aggregate carbon captured
-    vector[T] X_zero = sum(x0_vals) * to_vector(rep_vector(1.0, T));
+    vector[T] X_zero = x0 * to_vector(rep_vector(1.0, T));
 
     matrix[S, T] shifted_X;
     for (j in 1 : T) {
@@ -26,7 +24,7 @@ functions {
     row_vector[T] omega = gamma' * ((alpha * shifted_X) - sol_val_Up);
 
     vector[T + 1] X_dym;
-    X_dym[1] = sum(x0_vals);
+    X_dym[1] = x0;
     X_dym[2 : (T + 1)] = alpha_p_Adym .* X_zero + Bdym * omega';
 
     matrix[S, T + 1] z_shifted_X;
@@ -79,7 +77,7 @@ data {
   matrix[S, N_theta] G_theta; // Groups for theta
   matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
   matrix[S, N_gamma] G_gamma; // Groups for gamma
-  real<lower=0> aux_price_2017;
+  real<lower=0> pa_2017; // Price of cattle in 2017
 
   vector[K_theta] beta_theta_prior_mean; // Prior hyperparam
   cov_matrix[K_theta] beta_theta_prior_vcov; // Prior hyperparam
@@ -92,7 +90,7 @@ parameters {
 }
 transformed parameters {
   vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta)
-                    / aux_price_2017;
+                    / pa_2017;
   vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, G_gamma);
 }
 model {

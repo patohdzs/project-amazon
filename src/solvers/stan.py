@@ -49,6 +49,7 @@ def sample_with_stan(
     alpha=0.045007414,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e11,  # use the same normalization factor
+    pa_2017=44.9736197781184,
     # Sampling params
     max_iter=20000,
     tol=0.001,
@@ -97,7 +98,7 @@ def sample_with_stan(
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
-    coe_ensembles   =  {}
+    coe_ensembles = {}
     # Track error over iterations
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
@@ -231,6 +232,7 @@ def sample_with_stan(
             G_theta=G_theta,
             X_gamma=X_gamma,
             G_gamma=G_gamma,
+            pa_2017=pa_2017,
             beta_theta_prior_mean=theta_coe,
             beta_theta_prior_vcov=theta_vcov_array,
             beta_gamma_prior_mean=gamma_coe,
@@ -256,7 +258,7 @@ def sample_with_stan(
         gamma_post_samples = np.asarray(
             samples[[s for s in samples.columns if s.startswith("gamma")]]
         )
-        
+
         theta_coe_post_samples = np.asarray(
             samples[[s for s in samples.columns if s.startswith("beta_theta")]]
         )
@@ -264,15 +266,13 @@ def sample_with_stan(
         gamma_coe_post_samples = np.asarray(
             samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
         )
-        
-        
 
         uncertainty_post_samples = np.concatenate(
             (theta_post_samples, gamma_post_samples), axis=1
         )
 
-        uncertainty_coe_post_samples=np.concatenate(
-            (theta_coe_post_samples,gamma_coe_post_samples),axis=1
+        uncertainty_coe_post_samples = np.concatenate(
+            (theta_coe_post_samples, gamma_coe_post_samples), axis=1
         )
 
         # Update ensemble/tracker
@@ -329,7 +329,7 @@ def sample_with_stan(
                 "sol_val_Up_tracker": sol_val_Up_tracker,
                 "sol_val_Um_tracker": sol_val_Um_tracker,
                 "sol_val_Z_tracker": sol_val_Z_tracker,
-                "coe_ensembles":coe_ensembles,
+                "coe_ensembles": coe_ensembles,
             }
         )
 
@@ -356,13 +356,15 @@ def sample_with_stan(
     gamma_coe_post_samples = np.asarray(
         samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
     )
-    
+
     final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
-    final_sample_coe = np.concatenate((theta_coe_post_samples, gamma_coe_post_samples), axis=1)
-    
+    final_sample_coe = np.concatenate(
+        (theta_coe_post_samples, gamma_coe_post_samples), axis=1
+    )
+
     results.update({"final_sample": final_sample})
     results.update({"final_sample_coe": final_sample_coe})
-    
+
     # Save results (overwrite existing file)
     saveto = os.path.join(output_dir, "results.pcl")
     pickle.dump(results, open(saveto, "wb"))
