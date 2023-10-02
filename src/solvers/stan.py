@@ -44,11 +44,11 @@ def sample_with_stan(
     site_num,
     T,
     N=200,
-    norm_fac=1e11,
+    norm_fac=1e9,
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e11,  # use the same normalization factor
+    zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
     # Sampling params
     max_iter=20000,
