@@ -10,12 +10,11 @@ functions {
                             vector forestArea_2017_ha, real norm_fac,
                             vector alpha_p_Adym, matrix Bdym, vector ds_vect,
                             real zeta, real xi, real kappa, real pa, real pf) {
-
     // Carbon captured at time zero
     real x0 = (gamma' * forestArea_2017_ha) / norm_fac;
 
     // Aggregate carbon captured
-    vector[T] X_zero = x0 * to_vector(rep_vector(1.0, T));
+    vector[T] X_zero = x0 * rep_vector(1.0, T);
 
     matrix[S, T] shifted_X;
     for (j in 1 : T) {
@@ -89,8 +88,7 @@ parameters {
   vector[K_gamma] beta_gamma; // Coefficients on gamma
 }
 transformed parameters {
-  vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta)
-                    / pa_2017;
+  vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta) / pa_2017;
   vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, G_gamma);
 }
 model {
