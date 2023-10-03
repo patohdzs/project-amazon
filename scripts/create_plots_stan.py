@@ -103,6 +103,8 @@ plots.overlap_prior_posterior(
 plots.traceplot_abs_error(results, plots_dir)
 plots.traceplot_pct_error(results, plots_dir)
 
+# Plot sampling time
+plots.traceplot_sampling_time(results, plots_dir)
 
 # Plot theta and gamma convergence
 plots.traceplot_params_pct_error(results, plots_dir)

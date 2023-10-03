@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 
 import numpy as np
 import stan
@@ -83,6 +84,7 @@ def sample_with_stan(
     sol_val_Up_tracker = []
     sol_val_Um_tracker = []
     sol_val_Z_tracker = []
+    sampling_time_tracker = []
 
     # Update this parameter (leng) once figured out where it is coming from
     leng = 200
@@ -133,7 +135,7 @@ def sample_with_stan(
 
     # Loop until convergence
     while cntr < max_iter and percentage_error > tol:
-        print(f"Optimization Iteration[{cntr+1}/{max_iter}]")
+        print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
 
         # Flatten uncertain values
         uncertain_vals = np.asarray(uncertain_vals).flatten()
@@ -142,10 +144,10 @@ def sample_with_stan(
         theta_vals = uncertain_vals[:num_sites].copy()
         gamma_vals = uncertain_vals[num_sites:].copy()
 
-        print("Theta: ", theta_vals)
-        print("Gamma: ", gamma_vals)
+        print(f"Theta: {theta_vals}\n")
+        print(f"Gamma: {gamma_vals}\n")
 
-        # Unpacking uncertain values
+        # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
         # Solve outer optimization problem
@@ -179,7 +181,7 @@ def sample_with_stan(
         sol_val_Z_tracker.append(sol_val_Z)
 
         # HMC sampling
-        print("Starting HMC sampling...")
+        print("Starting HMC sampling...\n")
         model_data = dict(
             T=T,
             S=num_sites,
@@ -218,11 +220,15 @@ def sample_with_stan(
         print("Model compiled!\n")
 
         # Posterior sampling
+        sampling_time = time.time()
         fit = sampler.sample(
             num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
         )
-        print("Finished sampling!\n")
+        sampling_time = time.time() - sampling_time
+        sampling_time_tracker.append(sampling_time)
+        print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
+        # Extract samples
         samples = fit.to_frame()
 
         theta_post_samples = np.asarray(
@@ -252,20 +258,22 @@ def sample_with_stan(
         # Update ensemble/tracker
         collected_ensembles.update({cntr: uncertainty_post_samples.copy()})
         coe_ensembles.update({cntr: uncertainty_coe_post_samples.copy()})
-        print("Parameters from last iteration: ", uncertain_vals_old)
+
+        print(f"Parameters from last iteration: {uncertain_vals_old}\n")
         print(
-            "Parameters from this iteration: ",
-            np.mean(uncertainty_post_samples, axis=0),
+            f"""Parameters from current iteration:
+            {np.mean(uncertainty_post_samples, axis=0)}\n"""
         )
 
+        # Compute exponentially-smoothened new params
         uncertain_vals = (
             weight * np.mean(uncertainty_post_samples, axis=0)
             + (1 - weight) * uncertain_vals_old
         )
 
-        print("Updated uncertain values: ", uncertain_vals)
-
         uncertain_vals_tracker.append(uncertain_vals.copy())
+        print(f"Updated uncertain values: {uncertain_vals}\n")
+
         # Evaluate error for convergence check
         # The percentage difference are changed to absolute difference
         abs_error = np.max(np.abs(uncertain_vals_old - uncertain_vals))
@@ -297,6 +305,7 @@ def sample_with_stan(
                 "percentage_error_tracker": np.asarray(percentage_error_tracker),
                 "log_diff_error_tracker": np.asarray(log_diff_error_tracker),
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
+                "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
                 "sol_val_X_tracker": sol_val_X_tracker,
                 "sol_val_Ua_tracker": sol_val_Ua_tracker,
@@ -312,7 +321,7 @@ def sample_with_stan(
         pickle.dump(results, open(saveto, "wb"))
 
     # Sample (densly) the final distribution
-    print("Terminated. Sampling the final distribution...")
+    print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
     samples = fit.to_frame()
 
