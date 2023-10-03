@@ -1,5 +1,6 @@
 functions {
-  vector grouped_fitted(matrix X, vector coef, vector w, array[] int v, array[] int u, int S, int N) {
+  vector grouped_fitted(matrix X, vector coef, vector w, array[] int v,
+                        array[] int u, int S, int N) {
     // Compute fitted values
     return csr_matrix_times_vector(S, N, w, v, u, exp(X * coef));
   }
@@ -100,8 +101,11 @@ parameters {
   vector[K_gamma] beta_gamma; // Coefficients on gamma
 }
 transformed parameters {
-  vector[S] theta = grouped_fitted(X_theta, beta_theta, w_theta, v_theta, u_theta, S, N_theta) / pa_2017;
-  vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, w_gamma, v_gamma, u_gamma, S, N_gamma);
+  vector[S] theta = grouped_fitted(X_theta, beta_theta, w_theta, v_theta,
+                                   u_theta, S, N_theta)
+                    / pa_2017;
+  vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, w_gamma, v_gamma,
+                                   u_gamma, S, N_gamma);
 }
 model {
   // Priors
