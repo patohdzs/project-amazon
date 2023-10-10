@@ -5,10 +5,11 @@ from functools import partial
 
 import casadi
 import numpy as np
-from mcmc.hmc import create_hmc_sampler
-from services.data_service import load_site_data
-from solvers import coeff_vcov, gamma_fitted, log_density_function, theta_fitted
-from utils.text import decorate_text
+
+from ..mcmc.hmc import create_hmc_sampler
+from ..services.data_service import load_site_data
+from ..utils.text import decorate_text
+from . import coeff_vcov, gamma_fitted, log_density_function, theta_fitted
 
 
 def solve_with_casadi(

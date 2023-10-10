@@ -10,16 +10,16 @@ import sys
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from services.data_service import load_site_data
-from services.file_service import (
+
+import pysrc.plots as plots
+from pysrc.services.data_service import load_site_data
+from pysrc.services.file_service import (
     get_path,
     logs_dir_path,
     output_dir_path,
     plots_dir_path,
 )
-from solvers import gamma_fitted, theta_fitted
-
-import plots
+from pysrc.solvers import gamma_fitted, theta_fitted
 
 sys.path.append(os.path.abspath("src"))
 sns.set(font_scale=1.2)

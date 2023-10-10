@@ -11,7 +11,8 @@ This module provides essential tools to handle data files related to this projec
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from services.file_service import get_path
+
+from .file_service import get_path
 
 # Default Path to the data folder
 _DATA_FOLDER = get_path("data", "hmc")

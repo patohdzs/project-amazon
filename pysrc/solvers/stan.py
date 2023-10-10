@@ -3,9 +3,10 @@ import pickle
 
 import numpy as np
 import stan
-from services.data_service import load_site_data
-from services.file_service import stan_model_path
-from solvers.casadi import solve_outer_optimization_problem
+
+from ..services.data_service import load_site_data
+from ..services.file_service import stan_model_path
+from .casadi import solve_outer_optimization_problem
 
 
 def theta_reg_data(num_sites, theta_df):

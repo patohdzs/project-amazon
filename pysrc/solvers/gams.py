@@ -6,10 +6,11 @@ import shutil
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from mcmc.hmc import create_hmc_sampler
 from services.data_service import load_site_data
-from solvers import log_density_function
-from utils.text import decorate_text
+
+from ..mcmc.hmc import create_hmc_sampler
+from ..utils.text import decorate_text
+from . import log_density_function
 
 # Check if gams is available; delay exception raise to the call
 try:
