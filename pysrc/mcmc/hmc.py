@@ -1277,12 +1277,14 @@ class HMCSampler(Sampler):
                 proposal_energy = proposal_kinetic_energy + proposal_potential_energy
 
                 energy_loss = proposal_energy - current_energy
-                _loss_thresh = 0.05*current_energy
-                if abs(energy_loss) >= _loss_thresh:  # this should avoid overflow errors
+                _loss_thresh = 0.05 * current_energy
+                if (
+                    abs(energy_loss) >= _loss_thresh
+                ):  # this should avoid overflow errors
                     energy_loss = 1e11
                     print("energy loss")
-                if energy_loss=="nan":
-                    energy_loss=1e11
+                if energy_loss == "nan":
+                    energy_loss = 1e11
                 acceptance_probability = np.exp(-energy_loss)
 
                 acceptance_probability = min(acceptance_probability, 1.0)
