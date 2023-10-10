@@ -10,8 +10,6 @@
 # > NOTES
 # 1: -
 conflicts_prefer(dplyr::filter)
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
-
 
 # Install and load dplyr package
 if (!"dplyr" %in% installed.packages()) {
@@ -115,7 +113,7 @@ load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
 
 
 muniTheta.prepData<-muniTheta.prepData %>%
-  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12)) 
+  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
 
 
 
@@ -155,7 +153,7 @@ regressor_df <- as.data.frame(reg.gamma.2017$model[-1])
 
 
 new_df <- muniTheta.prepData %>%
-  select(historical_precip, 
+  select(historical_precip,
          historical_temp, lat,lon)
 
 new_df <- new_df %>%
@@ -170,7 +168,7 @@ new_df<-new_df %>%
   mutate(log_historical_precip = (log_historical_precip-mean(regressor_df$`log(historical_precip)`))/ sd(regressor_df$`log(historical_precip)`)) %>%
   mutate(log_historical_temp = (log_historical_temp-mean(regressor_df$`log(historical_temp)`))/ sd(regressor_df$`log(historical_temp)`)) %>%
   mutate(log_lat = (log_lat-mean(regressor_df$`log(lat)`))/ sd(regressor_df$`log(lat)`)) %>%
-  mutate(log_lon = (log_lon-mean(regressor_df$`log(lon)`))/ sd(regressor_df$`log(lon)`)) 
+  mutate(log_lon = (log_lon-mean(regressor_df$`log(lon)`))/ sd(regressor_df$`log(lon)`))
 
 
 

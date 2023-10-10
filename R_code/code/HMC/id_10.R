@@ -9,7 +9,6 @@
 # > NOTES
 # 1: -
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 
 library(MASS)
 # Install and load dplyr package
@@ -120,8 +119,3 @@ id <-calibration.10SitesModel %>%
   select(id)
 
 st_write(id, "data/id_10.geojson", driver = "GeoJSON",delete_dsn = TRUE)
-
-
-
-
-

@@ -9,7 +9,6 @@
 # > NOTES
 # 1: -
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 
 library(MASS)
 # Install and load dplyr package
@@ -171,9 +170,9 @@ muniTheta.prepData<-merged_data_sf
 
 merged_data <- muniTheta.prepData %>%
   left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017), 
-                                                     average_weighted_price, 
-                                                     cattleSlaughter_farmGatePrice_2017)) 
+  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
+                                                     average_weighted_price,
+                                                     cattleSlaughter_farmGatePrice_2017))
 # select(-predicted_value_column_name)  # Remove the additional column from the result
 
 
@@ -198,7 +197,7 @@ b<-muniTheta.prepData
 c<-muniTheta.prepData_filtered
 
 new_df <- muniTheta.prepData %>%
-  select(historical_precip, 
+  select(historical_precip,
          historical_temp, lat,cattleSlaughter_farmGatePrice_2017,distance,zbar_2017_muni)
 
 # drop spatial feature
@@ -223,11 +222,9 @@ new_df <- new_df %>%
   mutate(I.lat.2. =I.lat.2./sqrt(mean(muniTheta.prepData_filtered$lat^4))) %>%
   #mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/35.75924071280666)%>%
   mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/sqrt(mean(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017^2)))%>%
-  mutate(distance = distance/sqrt(mean(muniTheta.prepData_filtered$distance^2))) 
+  mutate(distance = distance/sqrt(mean(muniTheta.prepData_filtered$distance^2)))
 
 
 
 
 st_write(new_df, "data/HMC_norm/data_theta.geojson", driver = "GeoJSON",delete_dsn = TRUE)
-
-

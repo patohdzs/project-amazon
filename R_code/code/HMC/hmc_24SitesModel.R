@@ -10,8 +10,6 @@
 # > NOTES
 # 1: -
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
-
 
 # Install and load dplyr package
 if (!"dplyr" %in% installed.packages()) {
@@ -120,7 +118,7 @@ calibration.24SitesModel$id <- 1:nrow(calibration.24SitesModel)
 load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
 
 muniTheta.prepData<-muniTheta.prepData %>%
-  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12)) 
+  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
 
 
 #reg.share.2017 <-
@@ -336,9 +334,9 @@ muniTheta.prepData<-merged_data_sf
 
 merged_data <- muniTheta.prepData %>%
   left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017), 
-                                                     average_weighted_price, 
-                                                     cattleSlaughter_farmGatePrice_2017)) 
+  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
+                                                     average_weighted_price,
+                                                     cattleSlaughter_farmGatePrice_2017))
 # select(-predicted_value_column_name)  # Remove the additional column from the result
 
 
@@ -411,7 +409,7 @@ site.theta.2017 <-
 # calculate cattleSlaughter_valuePerHa_fitted and pastureArea_value by site (for each muni adjust the value by the share of the muni area inside the site)
 aux.theta.2017 <-
   site.theta.2017 %>%
-  dplyr::filter(!is.na(zbar_2017_muni)) %>% 
+  dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
   dplyr::summarise(theta2017_24Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = zbar_2017_muni, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),

@@ -10,9 +10,6 @@
 # > NOTES
 # 1: -
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
-
-
 # Install and load dplyr package
 if (!"dplyr" %in% installed.packages()) {
   install.packages("dplyr")
@@ -115,7 +112,7 @@ load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
 
 
 muniTheta.prepData<-muniTheta.prepData %>%
-  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12)) 
+  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
 
 
 
@@ -209,7 +206,7 @@ b_t1 <- tryCatch({
 })
 c_t1<- c_t0+1
 d_t1<- d_t0+t(Y) %*% Y - t(b_t1) %*% Lambda_t1 %*% b_t1
-d_t1_value <- d_t1[1, 1] 
+d_t1_value <- d_t1[1, 1]
 
 
 p <- length(b_t1)  # Assuming b_t1 is the same size as beta_sample
@@ -221,29 +218,27 @@ index_vec<-NULL
 
 for(j in 1: 100000 )
 {
-  
+
   zeta_sample <- rgamma(1, shape = c_t1, rate = d_t1_value)
-  cov_matrix <- solve(zeta_sample * Lambda_t1)    
-  beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)    
-  d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample  
+  cov_matrix <- solve(zeta_sample * Lambda_t1)
+  beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)
+  d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample
   if (d_t1new>0){
     d_t1<- d_t1new
   } else {
     print("d value is negative")
   }
   d_t1_value <- d_t1[1, 1]
-  
-  
+
+
   if(j>50000){
     beta_vec <- rbind(beta_vec, beta_sample)
     zeta_vec<-c(zeta_vec,zeta_sample)
     index_vec<-c(index_vec,j)
   }
-}   
+}
 
 
 
 beta_sample_df <- as.data.frame(beta_vec)
 readr::write_csv(beta_sample_df, file = paste(getwd(), "data/HMC_norm/", "gamma_coe.csv", sep = "/"))
-
-

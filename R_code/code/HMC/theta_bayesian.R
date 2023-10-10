@@ -10,7 +10,6 @@
 # > NOTES
 # 1: -
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 
 library(MASS)
 # Install and load dplyr package
@@ -174,9 +173,9 @@ muniTheta.prepData<-merged_data_sf
 
 merged_data <- muniTheta.prepData %>%
   left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017), 
-                                                     average_weighted_price, 
-                                                     cattleSlaughter_farmGatePrice_2017)) 
+  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
+                                                     average_weighted_price,
+                                                     cattleSlaughter_farmGatePrice_2017))
 # select(-predicted_value_column_name)  # Remove the additional column from the result
 
 
@@ -217,7 +216,7 @@ scaled_data <-scaled_data %>%
   mutate(`I(lat^2)` =`I(lat^2)`/sqrt(mean(muniTheta.prepData_filtered$lat^4))) %>%
   #mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/35.75924071280666)%>%
   mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/sqrt(mean(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017^2)))%>%
-  mutate(distance = distance/sqrt(mean(muniTheta.prepData_filtered$distance^2))) 
+  mutate(distance = distance/sqrt(mean(muniTheta.prepData_filtered$distance^2)))
 
 #scaled_data[, cols_to_scale] <- scale(regressor_df[, cols_to_scale],center = FALSE,scale=TRUE)
 
@@ -301,7 +300,7 @@ b_t1 <- tryCatch({
 })
 c_t1<- c_t0+1
 d_t1<- d_t0+t(Y) %*% Y - t(b_t1) %*% Lambda_t1 %*% b_t1
-d_t1_value <- d_t1[1, 1] 
+d_t1_value <- d_t1[1, 1]
 
 
 p <- length(b_t1)  # Assuming b_t1 is the same size as beta_sample
@@ -313,25 +312,25 @@ index_vec<-NULL
 
 for(j in 1: 100000 )
 {
-  
+
   zeta_sample <- rgamma(1, shape = c_t1, rate = d_t1_value)
-  cov_matrix <- solve(zeta_sample * Lambda_t1)    
-  beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)    
-  d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample  
+  cov_matrix <- solve(zeta_sample * Lambda_t1)
+  beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)
+  d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample
   if (d_t1new>0){
     d_t1<- d_t1new
   } else {
     print("d value is negative")
   }
   d_t1_value <- d_t1[1, 1]
-  
-  
+
+
   if(j>50000){
     beta_vec <- rbind(beta_vec, beta_sample)
     zeta_vec<-c(zeta_vec,zeta_sample)
     index_vec<-c(index_vec,j)
   }
-}   
+}
 
 
 
