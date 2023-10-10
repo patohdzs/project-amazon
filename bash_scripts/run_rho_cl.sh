@@ -16,7 +16,7 @@ for sitenum in "${sitenumarray[@]}"; do
                     for weight in "${weightarray[@]}"; do
 
                         count=0
-                                    
+
                         action_name="test1_10_xi_0.1"
 
                         dataname="${action_name}"
@@ -53,7 +53,7 @@ echo "Program starts \$(date)"
 start_timehzn=\$(date +%s)
 
 
-python3 -u /project/lhansen/HMC_stan/project-amazon/scripts/$hmc_python_name  --pf ${pf} --pa ${pa} --timehzn ${timehzn} --sitenum ${sitenum} --xi ${xi} --weight ${weight}  
+python3 -u /project/lhansen/HMC_stan/project-amazon/scripts/$hmc_python_name  --pf ${pf} --pa ${pa} --timehzn ${timehzn} --sitenum ${sitenum} --xi ${xi} --weight ${weight}
 echo "Program ends \$(date)"
 end_timehzn=\$(date +%s)
 elapsed=\$((end_timehzn - start_timehzn))

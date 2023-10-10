@@ -34,7 +34,7 @@ for sitenum in "${sitenumarray[@]}"; do
                                                             for mode in "${mode_array[@]}"; do
 
                                                                 count=0
-                                                                            
+
                                                                 action_name="test1_07_23"
 
                                                                 dataname="${action_name}"
