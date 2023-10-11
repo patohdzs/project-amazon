@@ -59,15 +59,6 @@ def load_site_data(
             df["gamma_loglon"].to_numpy()[0],
         ]
     )
-    gamma_coe_sd = np.array(
-        [
-            df["gamma_sd_cons"].to_numpy()[0],
-            df["gamma_sd_log_precip"].to_numpy()[0],
-            df["gamma_sd_log_temp"].to_numpy()[0],
-            df["gamma_sd_loglat"].to_numpy()[0],
-            df["gamma_sd_loglon"].to_numpy()[0],
-        ]
-    )
     theta_coe = np.array(
         [
             df["theta_cons"].to_numpy()[0],
@@ -78,18 +69,6 @@ def load_site_data(
             df["theta_lat2"].to_numpy()[0],
             df["theta_gateprice"].to_numpy()[0],
             df["theta_distance"].to_numpy()[0],
-        ]
-    )
-    theta_coe_sd = np.array(
-        [
-            df["theta_sd_cons"].to_numpy()[0],
-            df["theta_sd_precip"].to_numpy()[0],
-            df["theta_sd_temp"].to_numpy()[0],
-            df["theta_sd_temp2"].to_numpy()[0],
-            df["theta_sd_lat"].to_numpy()[0],
-            df["theta_sd_lat2"].to_numpy()[0],
-            df["theta_sd_gateprice"].to_numpy()[0],
-            df["theta_sd_distance"].to_numpy()[0],
         ]
     )
 
@@ -128,9 +107,7 @@ def load_site_data(
         forestArea_2017_ha,
         theta,
         gamma_coe,
-        gamma_coe_sd,
         theta_coe,
-        theta_coe_sd,
         gamma_vcov_array,
         theta_vcov_array,
         site_theta_2017_df,
