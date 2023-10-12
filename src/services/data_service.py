@@ -48,29 +48,6 @@ def load_site_data(
     forestArea_2017_ha = df[f"forestArea_2017_ha_{n}Sites"].to_numpy()
     theta = df[f"theta_{n}Sites"].to_numpy()
 
-    # mean and sd for coefficients
-    gamma_coe_sd = np.array(
-        [
-            df["gamma_sd_cons"].to_numpy()[0],
-            df["gamma_sd_log_precip"].to_numpy()[0],
-            df["gamma_sd_log_temp"].to_numpy()[0],
-            df["gamma_sd_loglat"].to_numpy()[0],
-            df["gamma_sd_loglon"].to_numpy()[0],
-        ]
-    )
-    theta_coe_sd = np.array(
-        [
-            df["theta_sd_cons"].to_numpy()[0],
-            df["theta_sd_precip"].to_numpy()[0],
-            df["theta_sd_temp"].to_numpy()[0],
-            df["theta_sd_temp2"].to_numpy()[0],
-            df["theta_sd_lat"].to_numpy()[0],
-            df["theta_sd_lat2"].to_numpy()[0],
-            df["theta_sd_gateprice"].to_numpy()[0],
-            df["theta_sd_distance"].to_numpy()[0],
-        ]
-    )
-
     # Normalize Z data
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
@@ -80,12 +57,12 @@ def load_site_data(
     theta_coe_prior = pd.read_csv(data_folder / "theta_coe.csv").to_numpy()
 
     # Compute means
-    gamma_coe = gamma_coe_prior.mean(axis=0)
-    theta_coe = theta_coe_prior.mean(axis=0)
+    gamma_coe_mean = gamma_coe_prior.mean(axis=0)
+    theta_coe_mean = theta_coe_prior.mean(axis=0)
 
     # Compute covariances
-    gamma_vcov = np.cov(gamma_coe_prior, rowvar=False)
-    theta_vcov = np.cov(theta_coe_prior, rowvar=False)
+    gamma_coe_vcov = np.cov(gamma_coe_prior, rowvar=False)
+    theta_coe_vcov = np.cov(theta_coe_prior, rowvar=False)
 
     # Read geojson files
     data_theta = gpd.read_file(data_folder / "data_theta.geojson")
@@ -106,12 +83,10 @@ def load_site_data(
         z_2017,
         forestArea_2017_ha,
         theta,
-        gamma_coe,
-        gamma_coe_sd,
-        theta_coe,
-        theta_coe_sd,
-        gamma_vcov,
-        theta_vcov,
+        gamma_coe_mean,
+        theta_coe_mean,
+        gamma_coe_vcov,
+        theta_coe_vcov,
         site_theta_2017_df,
         site_gamma_2017_df,
     )
