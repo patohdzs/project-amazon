@@ -1,4 +1,6 @@
 library(tidyverse)
+library(sf)
+library(readxl)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
@@ -32,7 +34,7 @@ a <- muniTheta.prepData
 muniTheta.prepData_data <-
   as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
 muniTheta.prepData_data <-
-  muniTheta.prepData_data[-c(142, 106, 112),]
+  muniTheta.prepData_data[-c(142, 106, 112), ]
 
 # Remove geometries
 geo_backup <- st_geometry(muniTheta.prepData)
@@ -110,8 +112,8 @@ new_df <- muniTheta.prepData_filtered %>%
 new_df <- cbind(1, new_df)
 new_df <- new_df %>%
   mutate(
-    `I(historical_temp^2)` = historical_temp ^ 2,
-    `I(lat^2)` = lat ^ 2,
+    I.historical_temp.2. = historical_temp ^ 2,
+    I.lat.2. = lat ^ 2,
     log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017)
   ) %>%
   mutate(
@@ -126,7 +128,8 @@ new_df <- new_df %>%
     I.lat.2.,
     cattleSlaughter_farmGatePrice_2017,
     distance,
-    zbar_2017_muni
+    zbar_2017_muni,
+    log_cattleSlaughter_valuePerHa_2017
   ) %>%
   mutate(X1 = X1) %>%
   mutate(
@@ -142,9 +145,7 @@ new_df <- new_df %>%
 
 
 
-st_write(
-  new_df,
-  "data/hmc/data_theta_new.geojson",
-  driver = "GeoJSON",
-  delete_dsn = TRUE
-)
+st_write(new_df,
+         "data/hmc/data_theta.geojson",
+         driver = "GeoJSON",
+         delete_dsn = TRUE)
