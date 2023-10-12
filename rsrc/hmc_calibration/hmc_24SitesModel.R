@@ -511,14 +511,14 @@ calibration.24SitesModel <-
 
 # Save calibration.24SitesModel
 save(calibration.24SitesModel,
-     file = paste(getwd(), "data/HMC_norm/24SitesModel", "calibration_24SitesModel.Rdata", sep = "/"))
+     file = paste(getwd(), "data/HMC_norm/24SitesModel", "hmc_24SitesModel.Rdata", sep = "/"))
 
 # remove spatial feature
 calibration.24SitesModel <- calibration.24SitesModel %>% sf::st_drop_geometry()
 
 # Save calibration.24SitesModel as CSV
 readr::write_csv(calibration.24SitesModel,
-                 file = paste(getwd(), "data/HMC_norm/24SitesModel", "calibration_24SitesModel.csv", sep = "/"))
+                 file = paste(getwd(), "data/HMC_norm/24SitesModel", "hmc_24SitesModel.csv", sep = "/"))
 
 stop()
 # CLEAN TEMP DIR
