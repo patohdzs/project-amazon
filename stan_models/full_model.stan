@@ -79,15 +79,15 @@ data {
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
-  matrix[K_theta, K_theta] inv_Lambda_theta;
+  cov_matrix[K_theta] inv_Lambda_theta;
   vector[K_theta] mu_theta;
   real a_theta;
   real b_theta;
 
-  matrix[K_gamma, K_gamma] inv_Lambda_gamma;
+  cov_matrix[K_gamma] inv_Lambda_gamma;
   vector[K_gamma] mu_gamma;
-  real a_gamma;
-  real b_gamma;
+  real<lower=0> a_gamma;
+  real<lower=0> b_gamma;
 }
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta

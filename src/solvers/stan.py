@@ -231,23 +231,10 @@ def sample_with_stan(
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
         # Extract samples
-        samples = fit.to_frame()
-
-        theta_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("theta")]]
-        )
-
-        gamma_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("gamma")]]
-        )
-
-        theta_coe_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("beta_theta")]]
-        )
-
-        gamma_coe_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
-        )
+        theta_post_samples = fit["theta"].T
+        gamma_post_samples = fit["gamma"].T
+        theta_coe_post_samples = fit["beta_theta"].T
+        gamma_coe_post_samples = fit["beta_gamma"].T
 
         uncertainty_post_samples = np.concatenate(
             (theta_post_samples, gamma_post_samples), axis=1
@@ -325,22 +312,11 @@ def sample_with_stan(
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
-    samples = fit.to_frame()
 
-    # Final sample!!!
-    theta_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("theta")]]
-    )
-    gamma_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("gamma")]]
-    )
-    theta_coe_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("beta_theta")]]
-    )
-
-    gamma_coe_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
-    )
+    theta_post_samples = fit["theta"].T
+    gamma_post_samples = fit["gamma"].T
+    theta_coe_post_samples = fit["beta_theta"].T
+    gamma_coe_post_samples = fit["beta_gamma"].T
 
     final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
     final_sample_coe = np.concatenate(
