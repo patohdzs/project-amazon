@@ -58,9 +58,13 @@ def sample_with_stan(
 
     num_sites = gamma_vals.size
 
-    # Splitting data
+    # Retrieving Stan data
     X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, site_theta_2017_df)
-    X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, site_gamma_2017_df)
+    y_gamma, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
+        num_sites, site_gamma_2017_df
+    )
+
+    # Retrieving Stan prior hyperparams
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -204,15 +208,11 @@ def sample_with_stan(
             pf=pf,
             X_theta=X_theta,
             G_theta=G_theta,
-            NNZ_theta=np.count_nonzero(G_theta),
             X_gamma=X_gamma,
             G_gamma=G_gamma,
-            NNZ_gamma=np.count_nonzero(G_gamma),
             pa_2017=pa_2017,
-            beta_theta_prior_mean=theta_coe,
-            beta_theta_prior_vcov=theta_vcov_array,
-            beta_gamma_prior_mean=gamma_coe,
-            beta_gamma_prior_vcov=gamma_vcov_array,
+            **_prior_hyperparams(y, X_theta, "theta"),
+            **_prior_hyperparams(y_gamma, X_gamma, "gamma"),
         )
 
         # Compiling model
@@ -356,6 +356,19 @@ def sample_with_stan(
     return results
 
 
+def _prior_hyperparams(y, X, var):
+    inv_Lambda = np.linalg.inv(X.T @ X)
+    mu = inv_Lambda @ X.T @ y
+    a = (X.shape[0]) / 2
+    b = 0.5 * (y.T @ y - mu.T @ X.T @ X @ mu)
+    return {
+        f"inv_Lambda_{var}": inv_Lambda,
+        f"mu_{var}": mu,
+        f"a_{var}": a,
+        f"b_{var}": b,
+    }
+
+
 def _theta_reg_data(num_sites, theta_df):
     # Filter out null values
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
@@ -375,6 +388,12 @@ def _theta_reg_data(num_sites, theta_df):
 
 
 def _gamma_reg_data(num_sites, gamma_df):
+    # Filter out null values
+    gamma_df = gamma_df.dropna()
+
+    # Get outcome
+    y_gamma = gamma_df["log_co2e_ha_2017"].to_numpy()
+
     # Get regression design matrix and its dimensions
     X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
     N_gamma, K_gamma = X_gamma.shape
@@ -385,4 +404,4 @@ def _gamma_reg_data(num_sites, gamma_df):
     )
     G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
 
-    return X_gamma, N_gamma, K_gamma, G_gamma
+    return y_gamma, X_gamma, N_gamma, K_gamma, G_gamma
