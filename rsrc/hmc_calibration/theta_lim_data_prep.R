@@ -34,7 +34,7 @@ a <- muniTheta.prepData
 muniTheta.prepData_data <-
   as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
 muniTheta.prepData_data <-
-  muniTheta.prepData_data[-c(142, 106, 112), ]
+  muniTheta.prepData_data[-c(142, 106, 112),]
 
 # Remove geometries
 geo_backup <- st_geometry(muniTheta.prepData)
@@ -94,10 +94,10 @@ c <- muniTheta.prepData_filtered
 
 # Create the weight matrix
 weights <- muniTheta.prepData_filtered$pasture_area_2017
-W_half <- diag(sqrt(weights))
+W <- diag(sqrt(weights))
 
 # Select columns
-new_df <- muniTheta.prepData_filtered %>%
+df <- muniTheta.prepData %>%
   select(
     historical_precip,
     historical_temp,
@@ -109,15 +109,12 @@ new_df <- muniTheta.prepData_filtered %>%
   )
 
 # drop spatial feature
-new_df <- cbind(1, new_df)
-new_df <- new_df %>%
+df <- cbind(1, df)
+df <- df %>%
   mutate(
     I.historical_temp.2. = historical_temp ^ 2,
     I.lat.2. = lat ^ 2,
     log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017)
-  ) %>%
-  mutate(
-    log_cattleSlaughter_valuePerHa_2017 = W_half %*% as.matrix(log_cattleSlaughter_valuePerHa_2017)
   ) %>%
   select(
     1,
@@ -145,7 +142,7 @@ new_df <- new_df %>%
 
 
 
-st_write(new_df,
+st_write(df,
          "data/hmc/data_theta.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE)
