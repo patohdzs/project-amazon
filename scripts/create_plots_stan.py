@@ -25,7 +25,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="calibrated_coef_priors")
+parser.add_argument("--model", type=str, default="full_model")
 parser.add_argument("--xi", type=float, default=1.0)
 parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)

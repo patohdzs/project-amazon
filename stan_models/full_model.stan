@@ -92,16 +92,16 @@ data {
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta
   vector[K_theta] beta_theta; // Coefficients on theta
-  vector[N_theta] nabla_theta; // Fitted theta
+  vector<lower=0>[N_theta] nabla_theta; // Fitted theta
 
   real<lower=0> sigma_sq_gamma; // Variance of log_gamma
   vector[K_gamma] beta_gamma; // Coefficients on gamma
-  vector[N_gamma] nabla_gamma; // Fitted gamma
+  vector<lower=0>[N_gamma] nabla_gamma; // Fitted gamma
 }
 transformed parameters {
   // Grouped average
-  vector[S] theta = (G_theta * nabla_theta) / pa_2017;
-  vector[S] gamma = G_gamma * nabla_gamma;
+  vector<lower=0>[S] theta = (G_theta * nabla_theta) / pa_2017;
+  vector<lower=0>[S] gamma = G_gamma * nabla_gamma;
 }
 model {
   // Hierarchical priors
