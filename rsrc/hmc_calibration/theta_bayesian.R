@@ -313,7 +313,7 @@ index_vec<-NULL
 for(j in 1: 100000 )
 {
 
-  zeta_sample <- rgamma(1, shape = c_t1, rate = d_t1_value)
+  zeta_sample <- rgamma(1, shape = c_t1/2, rate = d_t1_value/2)
   cov_matrix <- solve(zeta_sample * Lambda_t1)
   beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)
   d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample
