@@ -41,5 +41,5 @@ stan_results = sample_with_stan(
     max_iter=50,
     sample_size=1000,
     final_sample_size=5_000,
-    num_chains=1,
+    num_chains=8,
 )

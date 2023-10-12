@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 
 import numpy as np
 import stan
@@ -7,32 +8,6 @@ import stan
 from ..services.data_service import load_site_data
 from ..services.file_service import stan_model_path
 from .casadi import solve_outer_optimization_problem
-
-
-def theta_reg_data(num_sites, theta_df):
-    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
-
-    X_theta = theta_df.iloc[:, 1:9].to_numpy()
-    N_theta, K_theta = X_theta.shape
-
-    G_theta = np.array(
-        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
-    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
-
-    return X_theta, N_theta, K_theta, G_theta
-
-
-def gamma_reg_data(num_sites, gamma_df):
-    X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
-    N_gamma, K_gamma = X_gamma.shape
-    G_gamma = np.array(
-        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
-
-    return X_gamma, N_gamma, K_gamma, G_gamma
 
 
 def sample_with_stan(
@@ -50,6 +25,7 @@ def sample_with_stan(
     alpha=0.045007414,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
+    pa_2017=44.9736197781184,
     # Sampling params
     max_iter=20000,
     tol=0.001,
@@ -74,9 +50,7 @@ def sample_with_stan(
         forestArea_2017_ha,
         theta_vals,
         gamma_coe,
-        gamma_coe_sd,
         theta_coe,
-        theta_coe_sd,
         gamma_vcov_array,
         theta_vcov_array,
         site_theta_2017_df,
@@ -86,8 +60,8 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Splitting data
-    X_theta, N_theta, K_theta, G_theta = theta_reg_data(num_sites, site_theta_2017_df)
-    X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(num_sites, site_gamma_2017_df)
+    X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, site_theta_2017_df)
+    X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, site_gamma_2017_df)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -109,6 +83,7 @@ def sample_with_stan(
     sol_val_Up_tracker = []
     sol_val_Um_tracker = []
     sol_val_Z_tracker = []
+    sampling_time_tracker = []
 
     # Update this parameter (leng) once figured out where it is coming from
     leng = 200
@@ -159,7 +134,7 @@ def sample_with_stan(
 
     # Loop until convergence
     while cntr < max_iter and percentage_error > tol:
-        print(f"Optimization Iteration[{cntr+1}/{max_iter}]")
+        print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
 
         # Flatten uncertain values
         uncertain_vals = np.asarray(uncertain_vals).flatten()
@@ -168,10 +143,10 @@ def sample_with_stan(
         theta_vals = uncertain_vals[:num_sites].copy()
         gamma_vals = uncertain_vals[num_sites:].copy()
 
-        print("Theta: ", theta_vals)
-        print("Gamma: ", gamma_vals)
+        print(f"Theta: {theta_vals}\n")
+        print(f"Gamma: {gamma_vals}\n")
 
-        # Unpacking uncertain values
+        # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
 
         # Solve outer optimization problem
@@ -205,7 +180,7 @@ def sample_with_stan(
         sol_val_Z_tracker.append(sol_val_Z)
 
         # HMC sampling
-        print("Starting HMC sampling...")
+        print("Starting HMC sampling...\n")
         model_data = dict(
             T=T,
             S=num_sites,
@@ -230,8 +205,11 @@ def sample_with_stan(
             pf=pf,
             X_theta=X_theta,
             G_theta=G_theta,
+            NNZ_theta=np.count_nonzero(G_theta),
             X_gamma=X_gamma,
             G_gamma=G_gamma,
+            NNZ_gamma=np.count_nonzero(G_gamma),
+            pa_2017=pa_2017,
             beta_theta_prior_mean=theta_coe,
             beta_theta_prior_vcov=theta_vcov_array,
             beta_gamma_prior_mean=gamma_coe,
@@ -243,11 +221,15 @@ def sample_with_stan(
         print("Model compiled!\n")
 
         # Posterior sampling
+        sampling_time = time.time()
         fit = sampler.sample(
             num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
         )
-        print("Finished sampling!\n")
+        sampling_time = time.time() - sampling_time
+        sampling_time_tracker.append(sampling_time)
+        print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
+        # Extract samples
         samples = fit.to_frame()
 
         theta_post_samples = np.asarray(
@@ -277,20 +259,22 @@ def sample_with_stan(
         # Update ensemble/tracker
         collected_ensembles.update({cntr: uncertainty_post_samples.copy()})
         coe_ensembles.update({cntr: uncertainty_coe_post_samples.copy()})
-        print("Parameters from last iteration: ", uncertain_vals_old)
+
+        print(f"Parameters from last iteration: {uncertain_vals_old}\n")
         print(
-            "Parameters from this iteration: ",
-            np.mean(uncertainty_post_samples, axis=0),
+            f"""Parameters from current iteration:
+            {np.mean(uncertainty_post_samples, axis=0)}\n"""
         )
 
+        # Compute exponentially-smoothened new params
         uncertain_vals = (
             weight * np.mean(uncertainty_post_samples, axis=0)
             + (1 - weight) * uncertain_vals_old
         )
 
-        print("Updated uncertain values: ", uncertain_vals)
-
         uncertain_vals_tracker.append(uncertain_vals.copy())
+        print(f"Updated uncertain values: {uncertain_vals}\n")
+
         # Evaluate error for convergence check
         # The percentage difference are changed to absolute difference
         abs_error = np.max(np.abs(uncertain_vals_old - uncertain_vals))
@@ -322,6 +306,7 @@ def sample_with_stan(
                 "percentage_error_tracker": np.asarray(percentage_error_tracker),
                 "log_diff_error_tracker": np.asarray(log_diff_error_tracker),
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
+                "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
                 "sol_val_X_tracker": sol_val_X_tracker,
                 "sol_val_Ua_tracker": sol_val_Ua_tracker,
@@ -337,7 +322,7 @@ def sample_with_stan(
         pickle.dump(results, open(saveto, "wb"))
 
     # Sample (densly) the final distribution
-    print("Terminated. Sampling the final distribution...")
+    print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
     samples = fit.to_frame()
 
@@ -370,3 +355,35 @@ def sample_with_stan(
     print(f"Results saved to {saveto}")
 
     return results
+
+
+def _theta_reg_data(num_sites, theta_df):
+    # Filter out null values
+    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
+
+    # Get regression design matrix and its dimensions
+    X_theta = theta_df.iloc[:, 1:9].to_numpy()
+    N_theta, K_theta = X_theta.shape
+
+    # Get weighted grouped average matrix
+    G_theta = np.array(
+        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
+    )
+    G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
+    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
+
+    return X_theta, N_theta, K_theta, G_theta
+
+
+def _gamma_reg_data(num_sites, gamma_df):
+    # Get regression design matrix and its dimensions
+    X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
+    N_gamma, K_gamma = X_gamma.shape
+
+    # Get grouped average matrix
+    G_gamma = np.array(
+        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
+    )
+    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
+
+    return X_gamma, N_gamma, K_gamma, G_gamma

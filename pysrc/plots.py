@@ -50,6 +50,26 @@ def traceplot_pct_error(results: dict, plots_dir: Path) -> None:
     plt.close()
 
 
+def traceplot_sampling_time(results: dict, plots_dir: Path) -> None:
+    # Make plot fig and axis
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+
+    plt.plot(results["sampling_time_tracker"], label=r"Sampling Time")
+    plt.xlabel("Iteration")
+    plt.ylabel("Sampling Time (s)")
+    plt.title(r"Trace Plot of Sampling Time")
+    legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+    fig.tight_layout()
+    plt.subplots_adjust(right=0.7)
+    fig.savefig(
+        plots_dir / "sampling_time.png",
+        bbox_extra_artists=(legend,),
+        bbox_inches="tight",
+        dpi=100,
+    )
+    plt.close()
+
+
 def traceplot_params_pct_error(results: dict, plots_dir: Path) -> None:
     num_sites = results["num_sites"]
     # Find pct change

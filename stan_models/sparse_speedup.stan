@@ -1,7 +1,8 @@
 functions {
-  vector grouped_fitted(matrix X, vector coef, matrix G) {
+  vector grouped_fitted(matrix X, vector coef, vector w, array[] int v,
+                        array[] int u, int S, int N) {
     // Compute fitted values
-    return G * exp(X * coef);
+    return csr_matrix_times_vector(S, N, w, v, u, exp(X * coef));
   }
 
   real log_density_function(vector gamma, vector theta, int T, int S,
@@ -74,8 +75,10 @@ data {
 
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
+  int NNZ_theta;
   matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
   matrix[S, N_gamma] G_gamma; // Groups for gamma
+  int NNZ_gamma;
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   vector[K_theta] beta_theta_prior_mean; // Prior hyperparam
@@ -83,13 +86,26 @@ data {
   vector[K_gamma] beta_gamma_prior_mean; // Prior hyperparam
   cov_matrix[K_gamma] beta_gamma_prior_vcov; // Prior hyperparam
 }
+transformed data {
+  // Transform into sparse matrices
+  vector[NNZ_theta] w_theta = csr_extract_w(G_theta);
+  array[NNZ_theta] int v_theta = csr_extract_v(G_theta);
+  array[S + 1] int u_theta = csr_extract_u(G_theta);
+
+  vector[NNZ_gamma] w_gamma = csr_extract_w(G_gamma);
+  array[NNZ_gamma] int v_gamma = csr_extract_v(G_gamma);
+  array[S + 1] int u_gamma = csr_extract_u(G_gamma);
+}
 parameters {
   vector[K_theta] beta_theta; // Coefficients on theta
   vector[K_gamma] beta_gamma; // Coefficients on gamma
 }
 transformed parameters {
-  vector[S] theta = grouped_fitted(X_theta, beta_theta, G_theta) / pa_2017;
-  vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, G_gamma);
+  vector[S] theta = grouped_fitted(X_theta, beta_theta, w_theta, v_theta,
+                                   u_theta, S, N_theta)
+                    / pa_2017;
+  vector[S] gamma = grouped_fitted(X_gamma, beta_gamma, w_gamma, v_gamma,
+                                   u_gamma, S, N_gamma);
 }
 model {
   // Priors

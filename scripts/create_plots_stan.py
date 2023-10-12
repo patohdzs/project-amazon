@@ -8,13 +8,11 @@ import pickle
 import sys
 
 import numpy as np
-import pandas as pd
 import seaborn as sns
 
 import pysrc.plots as plots
-from pysrc.services.data_service import load_site_data
+from pysrc.services.data_service import load_coef_prior_samples, load_site_data
 from pysrc.services.file_service import (
-    get_path,
     logs_dir_path,
     output_dir_path,
     plots_dir_path,
@@ -51,9 +49,7 @@ logs_dir = logs_dir_path(**vars(args))
     forestArea_2017_ha,
     theta,
     gamma_coe,
-    gamma_coe_sd,
     theta_coe,
-    theta_coe_sd,
     gamma_coef_vcov,
     theta_coef_vcov,
     site_theta_2017_df,
@@ -65,16 +61,11 @@ with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
-# Prior samples
+# Load coef prior samples
+beta_theta_prior_samples, beta_gamma_prior_samples = load_coef_prior_samples()
+
+# Compute params prior samples
 print("Transforming prior samples...")
-beta_theta_prior_samples = pd.read_csv(
-    get_path("data", "hmc", "theta_coe_ori.csv")
-).to_numpy()[:5000, :]
-
-beta_gamma_prior_samples = pd.read_csv(
-    get_path("data", "hmc", "gamma_coe_ori.csv")
-).to_numpy()
-
 theta_prior_samples = np.array(
     [theta_fitted(c, site_theta_2017_df) for c in beta_theta_prior_samples]
 )
@@ -84,10 +75,6 @@ gamma_prior_samples = np.array(
 
 prior_samples = np.concatenate((theta_prior_samples, gamma_prior_samples), axis=1)
 print("Done!")
-
-# Ploting historgam of prior samples
-# plots.prior_density(samples=prior_samples, plots_dir=plots_dir, num_sites=10)
-
 
 try:
     post_samples = results["final_sample"]
@@ -114,6 +101,8 @@ plots.overlap_prior_posterior(
 plots.traceplot_abs_error(results, plots_dir)
 plots.traceplot_pct_error(results, plots_dir)
 
+# Plot sampling time
+plots.traceplot_sampling_time(results, plots_dir)
 
 # Plot theta and gamma convergence
 plots.traceplot_params_pct_error(results, plots_dir)

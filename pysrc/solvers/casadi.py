@@ -484,12 +484,12 @@ def solve_outer_optimization_problem(
     print("Solving the outer optimization problem...")
     start_time = time.time()
     sol = opti.solve()
-    print(f"Done; time taken {time.time()-start_time} seconds...")
+    print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
-    print("sol.value(X)", sol.value(X))
-    print("sol.value(Ua)", sol.value(Ua))
-    print("sol.value(Up)", sol.value(Up))
-    print("sol.value(Um)", sol.value(Um))
+    print("sol.value(X)", sol.value(X), "\n")
+    print("sol.value(Ua)", sol.value(Ua), "\n")
+    print("sol.value(Up)", sol.value(Up), "\n")
+    print("sol.value(Um)", sol.value(Um), "\n")
 
     # Extract information from the solver
     sol_val_X = sol.value(X)
