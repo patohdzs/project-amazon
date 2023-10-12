@@ -331,7 +331,7 @@ for(j in 1: 100000 )
 
 
 beta_sample_df <- as.data.frame(beta_vec)
-readr::write_csv(beta_sample_df, file = paste(getwd(), "data/HMC_norm/", "theta_coe.csv", sep = "/"))
+readr::write_csv(beta_sample_df, file = paste(getwd(), "data/hmc/", "theta_coe.csv", sep = "/"))
 
 
 

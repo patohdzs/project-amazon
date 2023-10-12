@@ -227,4 +227,4 @@ new_df <- new_df %>%
 
 
 
-st_write(new_df, "data/HMC_norm/data_theta.geojson", driver = "GeoJSON",delete_dsn = TRUE)
+st_write(new_df, "data/hmc/data_theta.geojson", driver = "GeoJSON",delete_dsn = TRUE)

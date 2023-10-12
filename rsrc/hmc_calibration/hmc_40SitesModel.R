@@ -485,14 +485,14 @@ calibration.40SitesModel <-
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
 save(calibration.40SitesModel,
-     file = here::here("data/HMC_norm/40SitesModel",
-                       "calibration_40SitesModel.Rdata"))
+     file = here::here("data/hmc/40SitesModel",
+                       "hmc_40SitesModel.Rdata"))
 
 # remove spatial feature
 calibration.40SitesModel <- calibration.40SitesModel %>% sf::st_drop_geometry()
 
 readr::write_csv(calibration.40SitesModel,
-                 file = here::here("data/HMC_norm/40SitesModel", "calibration_40SitesModel.csv"))
+                 file = here::here("data/hmc/40SitesModel", "hmc_40SitesModel.csv"))
 
 
 # CLEAN TEMP DIR

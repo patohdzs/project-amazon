@@ -178,4 +178,4 @@ new_df <- new_df %>%
   select(1, log_historical_precip,log_historical_temp,log_lat,log_lon)
 
 
-st_write(new_df, "data/HMC_norm/data_gamma.geojson", driver = "GeoJSON",delete_dsn = TRUE)
+st_write(new_df, "data/hmc/data_gamma.geojson", driver = "GeoJSON",delete_dsn = TRUE)
