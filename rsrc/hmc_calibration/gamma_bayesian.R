@@ -102,7 +102,7 @@ calibration.25SitesModel$id <- 1:nrow(calibration.25SitesModel)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
+load("data/calibration/muniTheta_prepData_gamma.Rdata")
 
 
 
@@ -144,15 +144,12 @@ reg.gamma.2017 <-
 summary(reg.gamma.2017)
 
 
-muniTheta.prepData.filter  <-   muniTheta.prepData.filter %>%
-  dplyr::mutate(co2e_ha_2017_fitted = exp(predict(reg.gamma.2017, .)))
-
 regressand_df <- data.frame(log_co2e_ha_2017 = log(muniTheta.prepData.filter$co2e_ha_2017))
 regressor_df <- as.data.frame(reg.gamma.2017$model[-1])
 
 cols_to_scale <- setdiff(names(regressor_df), "(weights)")
 scaled_data <- regressor_df
-scaled_data[, cols_to_scale] <- scale(regressor_df[, cols_to_scale],center = TRUE,scale=TRUE)
+scaled_data[, cols_to_scale] <- scale(regressor_df[, cols_to_scale], center = TRUE, scale=TRUE)
 
 
 
