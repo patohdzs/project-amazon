@@ -49,16 +49,6 @@ def load_site_data(
     theta = df[f"theta_{n}Sites"].to_numpy()
 
     # mean and sd for coefficients
-
-    gamma_coe = np.array(
-        [
-            df["gamma_cons"].to_numpy()[0],
-            df["gamma_log_precip"].to_numpy()[0],
-            df["gamma_log_temp"].to_numpy()[0],
-            df["gamma_loglat"].to_numpy()[0],
-            df["gamma_loglon"].to_numpy()[0],
-        ]
-    )
     gamma_coe_sd = np.array(
         [
             df["gamma_sd_cons"].to_numpy()[0],
@@ -66,18 +56,6 @@ def load_site_data(
             df["gamma_sd_log_temp"].to_numpy()[0],
             df["gamma_sd_loglat"].to_numpy()[0],
             df["gamma_sd_loglon"].to_numpy()[0],
-        ]
-    )
-    theta_coe = np.array(
-        [
-            df["theta_cons"].to_numpy()[0],
-            df["theta_precip"].to_numpy()[0],
-            df["theta_temp"].to_numpy()[0],
-            df["theta_temp2"].to_numpy()[0],
-            df["theta_lat"].to_numpy()[0],
-            df["theta_lat2"].to_numpy()[0],
-            df["theta_gateprice"].to_numpy()[0],
-            df["theta_distance"].to_numpy()[0],
         ]
     )
     theta_coe_sd = np.array(
@@ -97,20 +75,21 @@ def load_site_data(
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
 
-    file_path_2 = data_folder / "gamma_coe.csv"
-    df2 = pd.read_csv(file_path_2).to_numpy()
-    
-    file_path_3 = data_folder / "theta_coe.csv"
-    df3 = pd.read_csv(file_path_3).to_numpy()
+    # Read in prior samples
+    gamma_coe_prior = pd.read_csv(data_folder / "gamma_coe.csv").to_numpy()
+    theta_coe_prior = pd.read_csv(data_folder / "theta_coe.csv").to_numpy()
 
-    gamma_vcov_array = np.cov(df2,rowvar=False)
-    theta_vcov_array = np.cov(df3,rowvar=False)
+    # Compute means
+    gamma_coe = gamma_coe_prior.mean(axis=0)
+    theta_coe = theta_coe_prior.mean(axis=0)
 
-    file_path_data_theta = data_folder / "data_theta.geojson"
-    data_theta = gpd.read_file(file_path_data_theta)
+    # Compute covariances
+    gamma_vcov = np.cov(gamma_coe_prior, rowvar=False)
+    theta_vcov = np.cov(theta_coe_prior, rowvar=False)
 
-    file_path_data_gamma = data_folder / "data_gamma.geojson"
-    data_gamma = gpd.read_file(file_path_data_gamma)
+    # Read geojson files
+    data_theta = gpd.read_file(data_folder / "data_theta.geojson")
+    data_gamma = gpd.read_file(data_folder / "data_gamma.geojson")
 
     file_path_id = data_folder / f"id_{n}.geojson"
     data_id = gpd.read_file(file_path_id)
@@ -131,8 +110,8 @@ def load_site_data(
         gamma_coe_sd,
         theta_coe,
         theta_coe_sd,
-        gamma_vcov_array,
-        theta_vcov_array,
+        gamma_vcov,
+        theta_vcov,
         site_theta_2017_df,
         site_gamma_2017_df,
     )
