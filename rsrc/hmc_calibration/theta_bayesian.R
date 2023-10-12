@@ -106,15 +106,15 @@ calibration.25SitesModel$id <- 1:nrow(calibration.25SitesModel)
 
 # PARAMETER THETA ------------------------------------------------------------------------------------------------------------------------------------
 
-my_data <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/ipeadata[21-08-2023-01-28].xls")
+my_data <- read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
 my_data$muni_code <- as.numeric(my_data$muni_code)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData.Rdata")
+load("data/calibration/muniTheta_prepData.Rdata")
 
 # load cattle price series
-load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
+load("data/calibration/seriesPriceCattle_prepData.Rdata")
 
 
 # DATA MANIPULATION
@@ -151,7 +151,7 @@ geo_backup <- st_geometry(muniTheta.prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
 
-predicted_values <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/farm_gate_price.xlsx")
+predicted_values <- read_excel("data/calibration/farm_gate_price.xlsx")
 
 # Combine back into an sf object
 muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
@@ -215,7 +215,7 @@ scaled_data <-scaled_data %>%
   mutate(lat = (lat-mean(muniTheta.prepData_filtered$lat))/sd(muniTheta.prepData_filtered$lat)) %>%
   mutate(`I(lat^2)` =(`I(lat^2)`-mean(muniTheta.prepData_filtered$lat^2))/sd(muniTheta.prepData_filtered$lat^2)) %>%
   mutate(cattleSlaughter_farmGatePrice_2017=(cattleSlaughter_farmGatePrice_2017-mean(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017))/sd(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017))%>%
-  mutate(distance = (distance-mean(muniTheta.prepData_filtered$distance))/sd(muniTheta.prepData_filtered$distance)) 
+  mutate(distance = (distance-mean(muniTheta.prepData_filtered$distance))/sd(muniTheta.prepData_filtered$distance))
 
 
 weights <- muniTheta.prepData_filtered $pasture_area_2017

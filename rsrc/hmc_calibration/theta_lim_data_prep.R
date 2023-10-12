@@ -114,7 +114,7 @@ df <- df %>%
   mutate(
     I.historical_temp.2. = historical_temp ^ 2,
     I.lat.2. = lat ^ 2,
-    log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017)
+    log_theta = log(cattleSlaughter_valuePerHa_2017)
   ) %>%
   select(
     1,
