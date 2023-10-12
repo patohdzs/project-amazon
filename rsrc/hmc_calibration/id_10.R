@@ -118,4 +118,4 @@ calibration.10SitesModel$id <- 1:nrow(calibration.10SitesModel)
 id <-calibration.10SitesModel %>%
   select(id)
 
-st_write(id, "data/id_10.geojson", driver = "GeoJSON",delete_dsn = TRUE)
+st_write(id, "data/hmc/id_10.geojson", driver = "GeoJSON",delete_dsn = TRUE)

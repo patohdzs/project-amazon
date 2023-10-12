@@ -209,19 +209,15 @@ regressor_df <- as.data.frame(reg.cattleValueperHa.2017$model[-1])
 cols_to_scale <- setdiff(names(regressor_df), "(weights)")
 scaled_data <- regressor_df
 scaled_data <-scaled_data %>%
-  mutate(historical_precip = historical_precip/sqrt(mean(muniTheta.prepData_filtered$historical_precip^2))) %>%
-  mutate(historical_temp = historical_temp/sqrt(mean(muniTheta.prepData_filtered$historical_temp^2))) %>%
-  mutate(`I(historical_temp^2)` = `I(historical_temp^2)`/sqrt(mean(muniTheta.prepData_filtered$historical_temp^4))) %>%
-  mutate(lat = lat/sqrt(mean(muniTheta.prepData_filtered$lat^2))) %>%
-  mutate(`I(lat^2)` =`I(lat^2)`/sqrt(mean(muniTheta.prepData_filtered$lat^4))) %>%
-  #mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/35.75924071280666)%>%
-  mutate(cattleSlaughter_farmGatePrice_2017=cattleSlaughter_farmGatePrice_2017/sqrt(mean(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017^2)))%>%
-  mutate(distance = distance/sqrt(mean(muniTheta.prepData_filtered$distance^2)))
-
-#scaled_data[, cols_to_scale] <- scale(regressor_df[, cols_to_scale],center = FALSE,scale=TRUE)
+  mutate(historical_precip = (historical_precip-mean(muniTheta.prepData_filtered$historical_precip))/sd(muniTheta.prepData_filtered$historical_precip)) %>%
+  mutate(historical_temp = (historical_temp-mean(muniTheta.prepData_filtered$historical_temp))/sd(muniTheta.prepData_filtered$historical_temp)) %>%
+  mutate(`I(historical_temp^2)` = (`I(historical_temp^2)`-mean(muniTheta.prepData_filtered$historical_temp^2))/sd(muniTheta.prepData_filtered$historical_temp^2)) %>%
+  mutate(lat = (lat-mean(muniTheta.prepData_filtered$lat))/sd(muniTheta.prepData_filtered$lat)) %>%
+  mutate(`I(lat^2)` =(`I(lat^2)`-mean(muniTheta.prepData_filtered$lat^2))/sd(muniTheta.prepData_filtered$lat^2)) %>%
+  mutate(cattleSlaughter_farmGatePrice_2017=(cattleSlaughter_farmGatePrice_2017-mean(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017))/sd(muniTheta.prepData_filtered$cattleSlaughter_farmGatePrice_2017))%>%
+  mutate(distance = (distance-mean(muniTheta.prepData_filtered$distance))/sd(muniTheta.prepData_filtered$distance)) 
 
 
-#scaled_data[["I(historical_precip^2)"]] <- scaled_data[["I(historical_precip^2)"]] * 5
 weights <- muniTheta.prepData_filtered $pasture_area_2017
 
 # Create the weight matrix
@@ -313,7 +309,7 @@ index_vec<-NULL
 for(j in 1: 100000 )
 {
 
-  zeta_sample <- rgamma(1, shape = c_t1, rate = d_t1_value)
+  zeta_sample <- rgamma(1, shape = c_t1/2, rate = d_t1_value/2)
   cov_matrix <- solve(zeta_sample * Lambda_t1)
   beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)
   d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample
@@ -335,7 +331,7 @@ for(j in 1: 100000 )
 
 
 beta_sample_df <- as.data.frame(beta_vec)
-readr::write_csv(beta_sample_df, file = paste(getwd(), "data/HMC_norm/", "theta_coe.csv", sep = "/"))
+readr::write_csv(beta_sample_df, file = paste(getwd(), "data/hmc/", "theta_coe.csv", sep = "/"))
 
 
 
