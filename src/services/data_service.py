@@ -97,14 +97,14 @@ def load_site_data(
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
 
-    file_path_2 = data_folder / "gamma_vcov.csv"
-    df2 = pd.read_csv(file_path_2, header=None)
+    file_path_2 = data_folder / "gamma_coe.csv"
+    df2 = pd.read_csv(file_path_2).to_numpy()
+    
+    file_path_3 = data_folder / "theta_coe.csv"
+    df3 = pd.read_csv(file_path_3).to_numpy()
 
-    file_path_3 = data_folder / "theta_vcov.csv"
-    df3 = pd.read_csv(file_path_3, header=None)
-
-    gamma_vcov_array = df2.values
-    theta_vcov_array = df3.values
+    gamma_vcov_array = np.cov(df2,rowvar=False)
+    theta_vcov_array = np.cov(df3,rowvar=False)
 
     file_path_data_theta = data_folder / "data_theta.geojson"
     data_theta = gpd.read_file(file_path_data_theta)
@@ -142,7 +142,7 @@ def load_coef_prior_samples():
     # Load coef prior samples
     beta_theta_prior_samples = pd.read_csv(
         get_path("data", "hmc", "theta_coe.csv")
-    ).to_numpy()[:5000, :]
+    ).to_numpy()
 
     beta_gamma_prior_samples = pd.read_csv(
         get_path("data", "hmc", "gamma_coe.csv")
