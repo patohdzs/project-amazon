@@ -59,7 +59,9 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, site_theta_2017_df)
+    y_theta, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
+        num_sites, site_theta_2017_df
+    )
     y_gamma, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
         num_sites, site_gamma_2017_df
     )
@@ -211,7 +213,7 @@ def sample_with_stan(
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
-            **_prior_hyperparams(y, X_theta, "theta"),
+            **_prior_hyperparams(y_theta, X_theta, "theta"),
             **_prior_hyperparams(y_gamma, X_gamma, "gamma"),
         )
 
@@ -371,7 +373,13 @@ def _prior_hyperparams(y, X, var):
 
 def _theta_reg_data(num_sites, theta_df):
     # Filter out null values
+    theta_df = theta_df.dropna()
+
+    # Filter out null values
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
+
+    # Get outcome
+    y_theta = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
 
     # Get regression design matrix and its dimensions
     X_theta = theta_df.iloc[:, 1:9].to_numpy()
@@ -384,7 +392,7 @@ def _theta_reg_data(num_sites, theta_df):
     G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
     G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
 
-    return X_theta, N_theta, K_theta, G_theta
+    return y_theta, X_theta, N_theta, K_theta, G_theta
 
 
 def _gamma_reg_data(num_sites, gamma_df):
