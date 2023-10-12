@@ -81,8 +81,8 @@ data {
   // Prior hyperparams
   cov_matrix[K_theta] inv_Lambda_theta;
   vector[K_theta] mu_theta;
-  real a_theta;
-  real b_theta;
+  real<lower=0> a_theta;
+  real<lower=0> b_theta;
 
   cov_matrix[K_gamma] inv_Lambda_gamma;
   vector[K_gamma] mu_gamma;
