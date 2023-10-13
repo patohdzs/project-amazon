@@ -46,7 +46,7 @@ with open(output_dir / "results.pcl", "rb") as f:
     results = pickle.load(f)
 
 # Load coef prior samples
-fit = sample_priors(args.model, args.sitenum)
+fit = sample_priors(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
 prior_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
 
 try:

@@ -4,7 +4,7 @@ from services.file_service import stan_model_path
 from solvers.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
 
 
-def sample_priors(model_name: str, num_sites: str):
+def sample_priors(model_name: str, num_samples: int, num_sites: int):
     # Load sites data
     (
         zbar_2017,
@@ -48,5 +48,5 @@ def sample_priors(model_name: str, num_sites: str):
     sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
 
     # Sampling
-    fit = sampler.fixed_param(num_samples=1000)
+    fit = sampler.fixed_param(num_samples=num_samples)
     return fit
