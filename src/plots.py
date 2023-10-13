@@ -311,10 +311,7 @@ def U_trajectory(results: dict, plots_dir: Path) -> None:
             plt.close()
 
 
-def prior_density(samples, plots_dir, num_sites=10):
-    theta_samples = samples[:, :num_sites]
-    gamma_samples = samples[:, num_sites:]
-
+def prior_density(theta_samples, gamma_samples, plots_dir, num_sites=10):
     for i in range(theta_samples.shape[1]):
         # Make paths
         path = plots_dir / "theta_prior"
@@ -322,7 +319,7 @@ def prior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(theta_samples[:, i], density=True, bins=30, alpha=0.7)
+        plt.hist(theta_samples[:, i], density=True, bins=60, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Prior density of $\theta_%d$" % i)
         fig.tight_layout()
@@ -341,7 +338,7 @@ def prior_density(samples, plots_dir, num_sites=10):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(gamma_samples[:, i], density=True, bins=30, alpha=0.7)
+        plt.hist(gamma_samples[:, i], density=True, bins=60, alpha=0.7)
         plt.ylabel(r"$Frequency$")
         plt.title(r"Prior density of $\gamma_%d$" % i)
         fig.tight_layout()
