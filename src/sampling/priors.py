@@ -1,7 +1,7 @@
 import stan
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
-from solvers.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
+from solvers.stan import _gamma_reg_data, _theta_reg_data
 
 
 def sample_priors(model_name: str, num_samples: int, num_sites: int):
@@ -35,13 +35,13 @@ def sample_priors(model_name: str, num_samples: int, num_sites: int):
         K_gamma=K_gamma,
         N_theta=N_theta,
         N_gamma=N_gamma,
+        y_theta=y_theta,
+        y_gamma=y_gamma,
         X_theta=X_theta,
         X_gamma=X_gamma,
         G_theta=G_theta,
         G_gamma=G_gamma,
         pa_2017=44.9736197781184,
-        **_prior_hyperparams(y_theta, X_theta, "theta"),
-        **_prior_hyperparams(y_gamma, X_gamma, "gamma"),
     )
 
     # Compiling model

@@ -1,5 +1,10 @@
 data {
   int<lower=0> S; // Number of sites
+  int<lower=0> N_theta;
+  int<lower=0> N_gamma;
+  int<lower=0> K_theta; // Number of coefficients on theta
+  int<lower=0> K_gamma; // Number of coefficients on gamma
+
   vector[N_theta] y_theta;
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
@@ -11,13 +16,13 @@ data {
 }
 transformed data {
   cov_matrix[K_theta] inv_Lambda_theta = inverse_spd(X_theta' * X_theta);
-  vector[K_theta] mu_theta = inv_Lambda_theta * X_theta' y_theta;
-  real<lower=0> a_theta = N_theta / 2;
-  real<lower=0> b_theta = (y_theta' * y_theta - mu_theta' * X' * X * mu_theta) / 2;
+  vector[K_theta] mu_theta = inv_Lambda_theta * X_theta' * y_theta;
+  real<lower=0> a_theta = N_theta / 2.0;
+  real<lower=0> b_theta = (y_theta' * y_theta - mu_theta' * X_theta' * X_theta * mu_theta) / 2;
 
   cov_matrix[K_gamma] inv_Lambda_gamma = inverse_spd(X_gamma' * X_gamma);
   vector[K_gamma] mu_gamma = inv_Lambda_gamma * X_gamma' * y_gamma ;
-  real<lower=0> a_gamma = N_gamma / 2;
+  real<lower=0> a_gamma = N_gamma / 2.0;
   real<lower=0> b_gamma = (y_gamma' * y_gamma - mu_gamma' * X_gamma' * X_gamma * mu_gamma) / 2;
 }
 generated quantities {
