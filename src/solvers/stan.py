@@ -189,10 +189,6 @@ def sample_with_stan(
         model_data = dict(
             T=T,
             S=num_sites,
-            K_theta=K_theta,
-            K_gamma=K_gamma,
-            N_theta=N_theta,
-            N_gamma=N_gamma,
             norm_fac=norm_fac,
             alpha=alpha,
             sol_val_X=sol_val_X,
@@ -208,13 +204,17 @@ def sample_with_stan(
             kappa=kappa,
             pa=pa,
             pf=pf,
+            K_theta=K_theta,
+            K_gamma=K_gamma,
+            N_theta=N_theta,
+            N_gamma=N_gamma,
+            y_theta=y_theta,
             X_theta=X_theta,
             G_theta=G_theta,
+            y_gamma=y_gamma,
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
-            **_prior_hyperparams(y_theta, X_theta, "theta"),
-            **_prior_hyperparams(y_gamma, X_gamma, "gamma"),
         )
 
         # Compiling model

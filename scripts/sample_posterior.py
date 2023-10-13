@@ -12,7 +12,7 @@ from solvers.stan import sample_with_stan
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="full_model_v2")
+parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--xi", type=float, default=1.0)
 parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)
