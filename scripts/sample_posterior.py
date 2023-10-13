@@ -30,7 +30,7 @@ logs_dir = logs_dir_path(**vars(args))
 
 # Solve model with Casadi
 stan_results = sample_with_stan(
-    model_name=args.model + ".stan",
+    model_name=args.model,
     output_dir=output_dir,
     xi=args.xi,
     pf=args.pf,

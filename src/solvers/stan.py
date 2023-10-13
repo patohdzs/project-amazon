@@ -38,7 +38,7 @@ def sample_with_stan(
         os.makedirs(output_dir)
 
     # Read model code
-    with open(stan_model_path(model_name)) as f:
+    with open(stan_model_path(model_name) / "posterior.stan") as f:
         model_code = f.read()
 
     # Load sites' data

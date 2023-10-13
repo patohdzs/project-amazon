@@ -21,7 +21,7 @@ def sample_priors(model_name: str, num_sites: str):
     ) = load_site_data(num_sites, norm_fac=1e11)
 
     # Read model code
-    with open(stan_model_path(model_name) / "priors.stan") as f:
+    with open(stan_model_path(model_name) / "prior.stan") as f:
         model_code = f.read()
 
     # Get regression data
