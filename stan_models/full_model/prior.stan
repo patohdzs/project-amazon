@@ -26,13 +26,13 @@ generated quantities {
   // Priors
   real<lower=0> sigma_sq_theta = inv_gamma_rng(a_theta, b_theta);
   vector[K_theta] beta_theta = multi_normal_rng(mu_theta, sigma_sq_theta * inv_Lambda_theta);
-  array[N_theta] real<lower=0> nabla_theta = lognormal_rng(X_theta * beta_theta, sqrt(sigma_sq_theta));
+  array[N_theta] real<lower=0> eta_theta = lognormal_rng(X_theta * beta_theta, sqrt(sigma_sq_theta));
 
   real<lower=0> sigma_sq_gamma = inv_gamma_rng(a_gamma, b_gamma);
   vector[K_gamma] beta_gamma = multi_normal_rng(mu_gamma, sigma_sq_gamma * inv_Lambda_gamma);
-  array[N_gamma] real<lower=0> nabla_gamma = lognormal_rng(X_gamma * beta_gamma, sqrt(sigma_sq_gamma));
+  array[N_gamma] real<lower=0> eta_gamma = lognormal_rng(X_gamma * beta_gamma, sqrt(sigma_sq_gamma));
 
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * to_vector(nabla_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * to_vector(nabla_gamma);
+  vector<lower=0>[S] theta = (G_theta * to_vector(eta_theta)) / pa_2017;
+  vector<lower=0>[S] gamma = G_gamma * to_vector(eta_gamma);
 }

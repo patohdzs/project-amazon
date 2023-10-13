@@ -92,26 +92,26 @@ data {
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta
   vector[K_theta] beta_theta; // Coefficients on theta
-  vector<lower=0>[N_theta] nabla_theta; // Fitted theta
+  vector<lower=0>[N_theta] eta_theta; // Fitted theta
 
   real<lower=0> sigma_sq_gamma; // Variance of log_gamma
   vector[K_gamma] beta_gamma; // Coefficients on gamma
-  vector<lower=0>[N_gamma] nabla_gamma; // Fitted gamma
+  vector<lower=0>[N_gamma] eta_gamma; // Fitted gamma
 }
 transformed parameters {
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * nabla_theta) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * nabla_gamma;
+  vector<lower=0>[S] theta = (G_theta * eta_theta) / pa_2017;
+  vector<lower=0>[S] gamma = G_gamma * eta_gamma;
 }
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
   beta_theta ~ multi_normal(mu_theta, sigma_sq_theta * inv_Lambda_theta);
-  nabla_theta ~ lognormal(X_theta * beta_theta, sqrt(sigma_sq_theta));
+  eta_theta ~ lognormal(X_theta * beta_theta, sqrt(sigma_sq_theta));
 
   sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
   beta_gamma ~ multi_normal(mu_gamma, sigma_sq_gamma * inv_Lambda_gamma);
-  nabla_gamma ~ lognormal(X_gamma * beta_gamma, sqrt(sigma_sq_gamma));
+  eta_gamma ~ lognormal(X_gamma * beta_gamma, sqrt(sigma_sq_gamma));
 
   // Value function
   target += log_density_function(gamma, theta, T, S, alpha, sol_val_X,
