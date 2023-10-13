@@ -18,7 +18,7 @@ args = parser.parse_args()
 plots_dir = plots_dir_path(**vars(args))
 
 # Sample prior
-fit = sample_priors(args.model, args.sitenum)
+fit = sample_priors(args.model, 1000, args.sitenum)
 
 # Plotting theta and gamma
 plots.prior_density(
