@@ -1,7 +1,7 @@
 import stan
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
-from solvers.stan import _gamma_reg_data, _theta_reg_data
+from solvers.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
 
 
 def sample_priors(model_name: str, num_samples: int, num_sites: int):
@@ -25,8 +25,8 @@ def sample_priors(model_name: str, num_samples: int, num_sites: int):
         model_code = f.read()
 
     # Get regression data
-    y_theta, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, theta_data)
-    y_gamma, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, gamma_data)
+    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, theta_data)
+    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, gamma_data)
 
     # Pack into model data
     model_data = dict(
@@ -35,13 +35,13 @@ def sample_priors(model_name: str, num_samples: int, num_sites: int):
         K_gamma=K_gamma,
         N_theta=N_theta,
         N_gamma=N_gamma,
-        y_theta=y_theta,
-        y_gamma=y_gamma,
         X_theta=X_theta,
         X_gamma=X_gamma,
         G_theta=G_theta,
         G_gamma=G_gamma,
         pa_2017=44.9736197781184,
+        **_prior_hyperparams(num_sites, theta_data, "theta"),
+        **_prior_hyperparams(num_sites, gamma_data, "gamma"),
     )
 
     # Compiling model

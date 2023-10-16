@@ -59,10 +59,10 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    y_theta, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
+    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
         num_sites, site_theta_2017_df
     )
-    y_gamma, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
+    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
         num_sites, site_gamma_2017_df
     )
 
@@ -208,13 +208,13 @@ def sample_with_stan(
             K_gamma=K_gamma,
             N_theta=N_theta,
             N_gamma=N_gamma,
-            y_theta=y_theta,
             X_theta=X_theta,
             G_theta=G_theta,
-            y_gamma=y_gamma,
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
+            **_prior_hyperparams(num_sites, site_theta_2017_df, "theta"),
+            **_prior_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
         )
 
         # Compiling model
@@ -334,7 +334,15 @@ def sample_with_stan(
     return results
 
 
-def _prior_hyperparams(y, X, var):
+def _prior_hyperparams(num_sites, df, var):
+    df = df.dropna()
+    if var == "theta":
+        y, X, _, _, _ = _theta_reg_data(num_sites, df)
+    elif var == "gamma":
+        y, X, _, _, _ = _gamma_reg_data(num_sites, df)
+    else:
+        raise Exception("Argument `var` should be one of `theta`, `gamma`")
+
     inv_Lambda = np.linalg.inv(X.T @ X)
     mu = inv_Lambda @ X.T @ y
     a = (X.shape[0]) / 2
@@ -348,9 +356,6 @@ def _prior_hyperparams(y, X, var):
 
 
 def _theta_reg_data(num_sites, theta_df):
-    # Filter out null values
-    theta_df = theta_df.dropna()
-
     # Filter out null values
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
 
@@ -372,9 +377,6 @@ def _theta_reg_data(num_sites, theta_df):
 
 
 def _gamma_reg_data(num_sites, gamma_df):
-    # Filter out null values
-    gamma_df = gamma_df.dropna()
-
     # Get outcome
     y_gamma = gamma_df["log_co2e_ha_2017"].to_numpy()
 
