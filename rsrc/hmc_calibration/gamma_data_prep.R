@@ -53,8 +53,6 @@ raster.25Sites <- terra::rast(list.files(paste(getwd(), "data/calibration/1055Si
 load(paste(getwd(), "data/calibration/prepData/sampleMuniSpatial_prepData.Rdata", sep = "/"))
 
 
-my_data <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/ipeadata[21-08-2023-01-28].xls")
-my_data$muni_code <- as.numeric(my_data$muni_code)
 
 
 # INITIAL CONDITIONS Z -------------------------------------------------------------------------------------------------------------------------------

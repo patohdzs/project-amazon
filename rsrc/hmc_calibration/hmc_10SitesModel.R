@@ -10,12 +10,12 @@
 # > NOTES
 # 1: -
 
-conflicts_prefer(dplyr::filter)
+
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -110,19 +110,6 @@ muniTheta.prepData<-muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
 
 
-#reg.share.2017 <-
-#  muniTheta.prepData  %>%
-#  lm(formula = log(share)  ~ log(lat)+log(lon), na.action = na.exclude)
-
-#summary(reg.share.2017)
-
-
-#residuals_values <- residuals(reg.share.2017)
-#residuals_values_df<-data.frame(residuals_values)
-
-
-#muniTheta.prepData<-muniTheta.prepData%>%
-#  dplyr::mutate(residuals=residuals_values_df$residuals_values)
 
 
 # DATA INPUT (2017)
@@ -164,7 +151,7 @@ aux.gamma2017 <-
 # add gamma_24Sites to spatial variables
 calibration.10SitesModel <- dplyr::left_join(calibration.10SitesModel, aux.gamma2017)
 # clean environment
-rm(pixelBiomass2017.prepData, aux.gamma2017)
+rm(aux.gamma2017)
 
 
 
@@ -270,8 +257,8 @@ calibration.10SitesModel <-
 # PARAMETER THETA ------------------------------------------------------------------------------------------------------------------------------------
 
 
-my_data <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/ipeadata[21-08-2023-01-28].xls")
-my_data$muni_code <- as.numeric(my_data$muni_code)
+distance_data <- read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
+distance_data$muni_code <- as.numeric(distance_data$muni_code)
 # DATA INPUT
 # load variables at the muni level to calibrate theta
 load("data/calibration/prepData/muniTheta_prepData.Rdata")
@@ -293,7 +280,7 @@ aux.price.2017 <-
 
 
 # Remove rows from attribute data
-a<-muniTheta.prepData
+
 muniTheta.prepData_data <- as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
 muniTheta.prepData_data <- muniTheta.prepData_data[-c(142, 106, 112), ]
 
@@ -301,7 +288,7 @@ muniTheta.prepData_data <- muniTheta.prepData_data[-c(142, 106, 112), ]
 geo_backup <- st_geometry(muniTheta.prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
-predicted_values <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/farm_gate_price.xlsx")
+predicted_values <- read_excel("data/calibration/farm_gate_price.xlsx")
 
 
 
@@ -314,7 +301,7 @@ muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
 muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
 
 # Perform the merge
-merged_data <- left_join(muniTheta_no_geo, my_data, by = "muni_code")
+merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
 merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
@@ -500,14 +487,14 @@ calibration.10SitesModel <-
 
 # Save calibration.24SitesModel
 save(calibration.10SitesModel,
-     file = paste(getwd(), "data/hmc/10SitesModel", "hmc_10SitesModel.Rdata", sep = "/"))
+     file = paste(getwd(), "data/hmc", "hmc_10SitesModel.Rdata", sep = "/"))
 
 # remove spatial feature
 calibration.10SitesModel <- calibration.10SitesModel %>% sf::st_drop_geometry()
 
 # Save calibration.24SitesModel as CSV
 readr::write_csv(calibration.10SitesModel,
-                 file = paste(getwd(), "data/hmc/10SitesModel", "hmc_10SitesModel.csv", sep = "/"))
+                 file = paste(getwd(), "data/hmc", "hmc_10SitesModel.csv", sep = "/"))
 
 
 # CLEAN TEMP DIR
@@ -518,11 +505,6 @@ gc()
 
 # END TIMER
 tictoc::toc(log = T)
-
-
-
-# export time to csv table
-ExportTimeProcessing("code/calibration")
 
 
 

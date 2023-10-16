@@ -4,10 +4,10 @@ library(readxl)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/muniTheta_prepData.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 # load cattle price series
-load("data/calibration/seriesPriceCattle_prepData.Rdata")
+load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 
 
 # DATA MANIPULATION
@@ -23,13 +23,12 @@ aux.price.2017 <-
 
 
 # REGRESSION - CATTLE VALUE (2017)
-my_data <-
+distance_data <-
   read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
 
-my_data$muni_code <- as.numeric(my_data$muni_code)
+distance_data$muni_code <- as.numeric(distance_data$muni_code)
 
 # Remove rows from attribute data
-a <- muniTheta.prepData
 
 muniTheta.prepData_data <-
   as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
@@ -48,14 +47,13 @@ predicted_values <-
 muniTheta.prepData <-
   st_sf(muniTheta.prepData_data, geometry = geo_backup)
 
-# 2. Merging the cleaned muniTheta.prepData with my_data
 
 # Convert to non-spatial dataframe for the merge
 muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
 
 # Perform the merge
 merged_data <-
-  left_join(muniTheta_no_geo, my_data, by = "muni_code")
+  left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
 merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
@@ -87,8 +85,6 @@ muniTheta.prepData_filtered <- muniTheta.prepData %>%
   filter(cattleSlaughter_valuePerHa_2017 > 0)
 
 
-b <- muniTheta.prepData
-c <- muniTheta.prepData_filtered
 
 
 
@@ -114,7 +110,7 @@ df <- df %>%
   mutate(
     I.historical_temp.2. = historical_temp ^ 2,
     I.lat.2. = lat ^ 2,
-    log_theta = log(cattleSlaughter_valuePerHa_2017)
+    log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017)
   ) %>%
   select(
     1,

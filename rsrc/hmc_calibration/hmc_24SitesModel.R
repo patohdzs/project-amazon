@@ -27,7 +27,7 @@ library(boot)
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -52,8 +52,7 @@ raster.24Sites <- terra::rast(list.files(paste(getwd(), "data/calibration/1055Si
 load(paste(getwd(), "data/calibration/prepData/sampleMuniSpatial_prepData.Rdata", sep = "/"))
 
 
-my_data <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/ipeadata[21-08-2023-01-28].xls")
-my_data$muni_code <- as.numeric(my_data$muni_code)
+
 
 
 # INITIAL CONDITIONS Z -------------------------------------------------------------------------------------------------------------------------------
@@ -121,20 +120,6 @@ muniTheta.prepData<-muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
 
 
-#reg.share.2017 <-
-#  muniTheta.prepData  %>%
-#  lm(formula = log(share)  ~ log(lat)+log(lon), na.action = na.exclude)
-
-#summary(reg.share.2017)
-
-
-#residuals_values <- residuals(reg.share.2017)
-#residuals_values_df<-data.frame(residuals_values)
-
-
-#muniTheta.prepData<-muniTheta.prepData%>%
-#  dplyr::mutate(residuals=residuals_values_df$residuals_values)
-
 
 # DATA INPUT (2017)
 # load pixel sample with biomass data
@@ -170,13 +155,13 @@ aux.gamma2017 <-
   dplyr::summarise(gamma2017_24Sites = mean(co2e_ha_2017_fitted, na.rm = T))
 
 
-stop()
+
 
 
 # add gamma_24Sites to spatial variables
 calibration.24SitesModel <- dplyr::left_join(calibration.24SitesModel, aux.gamma2017)
 # clean environment
-rm(pixelBiomass2017.prepData, aux.gamma2017)
+rm(aux.gamma2017)
 
 
 # identify adjacent neighbors
@@ -281,9 +266,13 @@ calibration.24SitesModel <-
 # PARAMETER THETA ------------------------------------------------------------------------------------------------------------------------------------
 
 
-my_data <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/ipeadata[21-08-2023-01-28].xls")
-my_data$muni_code <- as.numeric(my_data$muni_code)
 # DATA INPUT
+
+distance_data <-
+  read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
+distance_data$muni_code <- as.numeric(distance_data$muni_code)
+
+
 # load variables at the muni level to calibrate theta
 load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
@@ -311,10 +300,10 @@ muniTheta.prepData_data <- muniTheta.prepData_data[-c(142, 106, 112), ]
 geo_backup <- st_geometry(muniTheta.prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
-predicted_values <- read_excel("C:/Users/pengyu/Desktop/code_data_20230628/data/farm_gate_price.xlsx")
+predicted_values <-
+  read_excel("data/calibration/farm_gate_price.xlsx")
 
 
-a<-muniTheta.prepData
 
 # Combine back into an sf object
 muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
@@ -325,7 +314,7 @@ muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
 muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
 
 # Perform the merge
-merged_data <- left_join(muniTheta_no_geo, my_data, by = "muni_code")
+merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
 merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
@@ -511,16 +500,16 @@ calibration.24SitesModel <-
 
 # Save calibration.24SitesModel
 save(calibration.24SitesModel,
-     file = paste(getwd(), "data/hmc/24SitesModel", "hmc_24SitesModel.Rdata", sep = "/"))
+     file = paste(getwd(), "data/hmc", "hmc_24SitesModel.Rdata", sep = "/"))
 
 # remove spatial feature
 calibration.24SitesModel <- calibration.24SitesModel %>% sf::st_drop_geometry()
 
 # Save calibration.24SitesModel as CSV
 readr::write_csv(calibration.24SitesModel,
-                 file = paste(getwd(), "data/hmc/24SitesModel", "hmc_24SitesModel.csv", sep = "/"))
+                 file = paste(getwd(), "data/hmc", "hmc_24SitesModel.csv", sep = "/"))
 
-stop()
+
 # CLEAN TEMP DIR
 terra::tmpFiles(current = T, remove = T)
 gc()
@@ -530,8 +519,6 @@ gc()
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
 
 
 

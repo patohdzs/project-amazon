@@ -29,7 +29,7 @@ conflicts_prefer(dplyr::summarize)
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -57,64 +57,18 @@ load(paste(getwd(), "data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"
 
 
 
-# INITIAL CONDITIONS Z -------------------------------------------------------------------------------------------------------------------------------
-
-# AGGREGATE FROM 1000 Sites TO 25 Sites
-# transform shares to areas
-raster.25Sites$amazonBiomeArea_ha_25Sites <- raster.25Sites$share_amazonBiome*raster.25Sites$pixelArea_ha
-raster.25Sites$forestArea_1995_ha_25Sites <- raster.25Sites$share_forest_1995*raster.25Sites$pixelArea_ha
-raster.25Sites$agriculturalUseArea_1995_ha_25Sites <- raster.25Sites$share_agriculturalUse_1995*raster.25Sites$pixelArea_ha
-raster.25Sites$otherArea_1995_ha_25Sites <- raster.25Sites$share_other_1995*raster.25Sites$pixelArea_ha
-raster.25Sites$forestArea_2017_ha_25Sites <- raster.25Sites$share_forest_2017*raster.25Sites$pixelArea_ha
-raster.25Sites$agriculturalUseArea_2017_ha_25Sites <- raster.25Sites$share_agriculturalUse_2017*raster.25Sites$pixelArea_ha
-raster.25Sites$otherArea_2017_ha_25Sites <- raster.25Sites$share_other_2017*raster.25Sites$pixelArea_ha
-
-# select area variables
-raster.25Sites <- terra::subset(raster.25Sites,
-                                c("amazonBiomeArea_ha_25Sites", "pixelArea_ha",
-                                  "forestArea_1995_ha_25Sites", "agriculturalUseArea_1995_ha_25Sites", "otherArea_1995_ha_25Sites",
-                                  "forestArea_2017_ha_25Sites", "agriculturalUseArea_2017_ha_25Sites", "otherArea_2017_ha_25Sites"))
-
-# aggregate from 1000 Sites to 25
-raster.25Sites <- terra::aggregate(raster.25Sites, fact = 8, fun = sum, na.rm = T)
-
-# extract variables as polygons, transform to sf, and project data for faster spatial manipulation
-calibration.25SitesModel <- terra::as.polygons(raster.25Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
-
-# transform share aggregate in area (ha)
-calibration.25SitesModel <-
-  calibration.25SitesModel %>%
-  dplyr::mutate(zbar_1995_25Sites = agriculturalUseArea_1995_ha_25Sites + forestArea_1995_ha_25Sites,
-                zbar_2017_25Sites = agriculturalUseArea_2017_ha_25Sites + forestArea_2017_ha_25Sites) %>%
-  dplyr::select(amazonBiomeArea_ha_25Sites, siteArea_ha_25Sites = pixelArea_ha,
-                forestArea_1995_ha_25Sites,
-                z_1995_25Sites = agriculturalUseArea_1995_ha_25Sites, zbar_1995_25Sites,
-                forestArea_2017_ha_25Sites,
-                z_2017_25Sites = agriculturalUseArea_2017_ha_25Sites, zbar_2017_25Sites)
-
-# remove Sites with less than 1% of its are intersecting with the amazon biome
-calibration.25SitesModel <-
-  calibration.25SitesModel %>%
-  dplyr::filter(amazonBiomeArea_ha_25Sites/siteArea_ha_25Sites >= 0.03)
-
-# add id variable
-calibration.25SitesModel$id <- 1:nrow(calibration.25SitesModel)
-
-
-
-
 
 # PARAMETER THETA ------------------------------------------------------------------------------------------------------------------------------------
 
-my_data <- read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
-my_data$muni_code <- as.numeric(my_data$muni_code)
+distance_data <- read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
+distance_data$muni_code <- as.numeric(distance_data$muni_code)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/muniTheta_prepData.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 # load cattle price series
-load("data/calibration/seriesPriceCattle_prepData.Rdata")
+load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 
 
 # DATA MANIPULATION
@@ -142,7 +96,6 @@ aux.price.2017 <-
 
 
 # Remove rows from attribute data
-a<-muniTheta.prepData
 muniTheta.prepData_data <- as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
 muniTheta.prepData_data <- muniTheta.prepData_data[-c(142, 106, 112), ]
 
@@ -156,13 +109,13 @@ predicted_values <- read_excel("data/calibration/farm_gate_price.xlsx")
 # Combine back into an sf object
 muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
 
-# 2. Merging the cleaned muniTheta.prepData with my_data
+
 
 # Convert to non-spatial dataframe for the merge
 muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
 
 # Perform the merge
-merged_data <- left_join(muniTheta_no_geo, my_data, by = "muni_code")
+merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
 merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
@@ -312,7 +265,7 @@ for(j in 1: 100000 )
   zeta_sample <- rgamma(1, shape = c_t1/2, rate = d_t1_value/2)
   cov_matrix <- solve(zeta_sample * Lambda_t1)
   beta_sample <- mvrnorm(1, mu = as.vector(b_t1), Sigma = cov_matrix)
-  d_t1new<- d_t0+t(Y) %*% Y - t(beta_sample) %*% Lambda_t1 %*% beta_sample
+  d_t1new<- d_t0+t(Y) %*% Y - t(b_t1) %*% Lambda_t1 %*% b_t1
   if (d_t1new>0){
     d_t1<- d_t1new
   } else {
