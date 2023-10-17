@@ -12,7 +12,7 @@ from solvers.stan import sample_with_stan
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="calibrated_coef_priors")
+parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--xi", type=float, default=1.0)
 parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)
@@ -30,7 +30,7 @@ logs_dir = logs_dir_path(**vars(args))
 
 # Solve model with Casadi
 stan_results = sample_with_stan(
-    model_name=args.model + ".stan",
+    model_name=args.model,
     output_dir=output_dir,
     xi=args.xi,
     pf=args.pf,
@@ -38,8 +38,8 @@ stan_results = sample_with_stan(
     weight=args.weight,
     site_num=args.sitenum,
     T=args.timehzn,
-    max_iter=50,
+    max_iter=20,
     sample_size=1000,
     final_sample_size=5_000,
-    num_chains=8,
+    num_chains=4,
 )

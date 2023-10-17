@@ -38,7 +38,7 @@ def sample_with_stan(
         os.makedirs(output_dir)
 
     # Read model code
-    with open(stan_model_path(model_name)) as f:
+    with open(stan_model_path(model_name) / "posterior.stan") as f:
         model_code = f.read()
 
     # Load sites' data
@@ -58,9 +58,15 @@ def sample_with_stan(
 
     num_sites = gamma_vals.size
 
-    # Splitting data
-    X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, site_theta_2017_df)
-    X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, site_gamma_2017_df)
+    # Retrieving Stan data
+    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
+        num_sites, site_theta_2017_df
+    )
+    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
+        num_sites, site_gamma_2017_df
+    )
+
+    # Retrieving Stan prior hyperparams
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -183,10 +189,6 @@ def sample_with_stan(
         model_data = dict(
             T=T,
             S=num_sites,
-            K_theta=K_theta,
-            K_gamma=K_gamma,
-            N_theta=N_theta,
-            N_gamma=N_gamma,
             norm_fac=norm_fac,
             alpha=alpha,
             sol_val_X=sol_val_X,
@@ -202,17 +204,17 @@ def sample_with_stan(
             kappa=kappa,
             pa=pa,
             pf=pf,
+            K_theta=K_theta,
+            K_gamma=K_gamma,
+            N_theta=N_theta,
+            N_gamma=N_gamma,
             X_theta=X_theta,
             G_theta=G_theta,
-            NNZ_theta=np.count_nonzero(G_theta),
             X_gamma=X_gamma,
             G_gamma=G_gamma,
-            NNZ_gamma=np.count_nonzero(G_gamma),
             pa_2017=pa_2017,
-            beta_theta_prior_mean=theta_coe,
-            beta_theta_prior_vcov=theta_vcov_array,
-            beta_gamma_prior_mean=gamma_coe,
-            beta_gamma_prior_vcov=gamma_vcov_array,
+            **_prior_hyperparams(num_sites, site_theta_2017_df, "theta"),
+            **_prior_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
         )
 
         # Compiling model
@@ -229,23 +231,10 @@ def sample_with_stan(
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
         # Extract samples
-        samples = fit.to_frame()
-
-        theta_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("theta")]]
-        )
-
-        gamma_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("gamma")]]
-        )
-
-        theta_coe_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("beta_theta")]]
-        )
-
-        gamma_coe_post_samples = np.asarray(
-            samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
-        )
+        theta_post_samples = fit["theta"].T
+        gamma_post_samples = fit["gamma"].T
+        theta_coe_post_samples = fit["beta_theta"].T
+        gamma_coe_post_samples = fit["beta_gamma"].T
 
         uncertainty_post_samples = np.concatenate(
             (theta_post_samples, gamma_post_samples), axis=1
@@ -323,22 +312,11 @@ def sample_with_stan(
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
-    samples = fit.to_frame()
 
-    # Final sample!!!
-    theta_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("theta")]]
-    )
-    gamma_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("gamma")]]
-    )
-    theta_coe_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("beta_theta")]]
-    )
-
-    gamma_coe_post_samples = np.asarray(
-        samples[[s for s in samples.columns if s.startswith("beta_gamma")]]
-    )
+    theta_post_samples = fit["theta"].T
+    gamma_post_samples = fit["gamma"].T
+    theta_coe_post_samples = fit["beta_theta"].T
+    gamma_coe_post_samples = fit["beta_gamma"].T
 
     final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
     final_sample_coe = np.concatenate(
@@ -356,9 +334,33 @@ def sample_with_stan(
     return results
 
 
+def _prior_hyperparams(num_sites, df, var):
+    df = df.dropna()
+    if var == "theta":
+        y, X, _, _, _ = _theta_reg_data(num_sites, df)
+    elif var == "gamma":
+        y, X, _, _, _ = _gamma_reg_data(num_sites, df)
+    else:
+        raise Exception("Argument `var` should be one of `theta`, `gamma`")
+
+    inv_Lambda = np.linalg.inv(X.T @ X)
+    mu = inv_Lambda @ X.T @ y
+    a = (X.shape[0]) / 2
+    b = 0.5 * (y.T @ y - mu.T @ X.T @ X @ mu)
+    return {
+        f"inv_Lambda_{var}": inv_Lambda,
+        f"mu_{var}": mu,
+        f"a_{var}": a,
+        f"b_{var}": b,
+    }
+
+
 def _theta_reg_data(num_sites, theta_df):
     # Filter out null values
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
+
+    # Get outcome
+    y_theta = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
 
     # Get regression design matrix and its dimensions
     X_theta = theta_df.iloc[:, 1:9].to_numpy()
@@ -371,10 +373,13 @@ def _theta_reg_data(num_sites, theta_df):
     G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
     G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
 
-    return X_theta, N_theta, K_theta, G_theta
+    return y_theta, X_theta, N_theta, K_theta, G_theta
 
 
 def _gamma_reg_data(num_sites, gamma_df):
+    # Get outcome
+    y_gamma = gamma_df["log_co2e_ha_2017"].to_numpy()
+
     # Get regression design matrix and its dimensions
     X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
     N_gamma, K_gamma = X_gamma.shape
@@ -385,4 +390,4 @@ def _gamma_reg_data(num_sites, gamma_df):
     )
     G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
 
-    return X_gamma, N_gamma, K_gamma, G_gamma
+    return y_gamma, X_gamma, N_gamma, K_gamma, G_gamma

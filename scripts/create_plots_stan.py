@@ -9,13 +9,12 @@ import sys
 
 import numpy as np
 import seaborn as sns
-from services.data_service import load_coef_prior_samples, load_site_data
+from sampling.priors import sample_priors
 from services.file_service import (
     logs_dir_path,
     output_dir_path,
     plots_dir_path,
 )
-from solvers import gamma_fitted, theta_fitted
 
 import plots
 
@@ -25,7 +24,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="calibrated_coef_priors")
+parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--xi", type=float, default=1.0)
 parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)
@@ -41,40 +40,14 @@ output_dir = output_dir_path(**vars(args))
 plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
-# Load data
-(
-    zbar_2017,
-    gamma,
-    z_2017,
-    forestArea_2017_ha,
-    theta,
-    gamma_coe,
-    theta_coe,
-    gamma_coef_vcov,
-    theta_coef_vcov,
-    site_theta_2017_df,
-    site_gamma_2017_df,
-) = load_site_data(args.sitenum, norm_fac=1e11)
-
 
 with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
 # Load coef prior samples
-beta_theta_prior_samples, beta_gamma_prior_samples = load_coef_prior_samples()
-
-# Compute params prior samples
-print("Transforming prior samples...")
-theta_prior_samples = np.array(
-    [theta_fitted(c, site_theta_2017_df) for c in beta_theta_prior_samples]
-)
-gamma_prior_samples = np.array(
-    [gamma_fitted(c, site_gamma_2017_df) for c in beta_gamma_prior_samples]
-)
-
-prior_samples = np.concatenate((theta_prior_samples, gamma_prior_samples), axis=1)
-print("Done!")
+fit = sample_priors(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
+prior_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
 
 try:
     post_samples = results["final_sample"]
@@ -91,11 +64,7 @@ except KeyError:
 
 
 # Plot overlapped prior-posterior
-plots.overlap_prior_posterior(
-    prior_samples,
-    post_samples,
-    plots_dir,
-)
+plots.overlap_prior_posterior(prior_samples, post_samples, plots_dir, args.sitenum)
 
 # Plot absolute and percentage error
 plots.traceplot_abs_error(results, plots_dir)
