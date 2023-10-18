@@ -59,7 +59,7 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
+    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(
         num_sites, site_theta_2017_df
     )
     _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
