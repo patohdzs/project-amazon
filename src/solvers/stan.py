@@ -50,8 +50,8 @@ def sample_with_stan(
         theta_vals,
         gamma_coe,
         theta_coe,
-        gamma_vcov_array,
-        theta_vcov_array,
+        _,
+        _,
         site_theta_2017_df,
         site_gamma_2017_df,
     ) = load_site_data(site_num, norm_fac=norm_fac)
@@ -66,8 +66,6 @@ def sample_with_stan(
         num_sites, site_gamma_2017_df
     )
 
-    # Retrieving Stan prior hyperparams
-
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -78,6 +76,7 @@ def sample_with_stan(
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
     coe_ensembles = {}
+
     # Track error over iterations
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
@@ -90,15 +89,14 @@ def sample_with_stan(
     sol_val_Z_tracker = []
     sampling_time_tracker = []
 
-    # Update this parameter (leng) once figured out where it is coming from
-    leng = 200
+    # Create dynamics matrices
     arr = np.cumsum(
-        np.triu(np.ones((leng, leng))),
+        np.triu(np.ones((T, T))),
         axis=1,
     ).T
     Bdym = (1 - alpha) ** (arr - 1)
     Bdym[Bdym > 1] = 0.0
-    Adym = np.arange(1, leng + 1)
+    Adym = np.arange(1, T + 1)
     alpha_p_Adym = np.power(1 - alpha, Adym)
 
     # Time step
@@ -123,9 +121,7 @@ def sample_with_stan(
         xi=xi,
         zeta=zeta,
         beta_theta_prior_mean=theta_coe,
-        beta_theta_prior_vcov=theta_vcov_array,
         beta_gamma_prior_mean=gamma_coe,
-        beta_gamma_prior_vcov=gamma_vcov_array,
         sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
