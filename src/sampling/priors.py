@@ -25,7 +25,7 @@ def sample_priors(model_name: str, num_samples: int, num_sites: int):
         model_code = f.read()
 
     # Get regression data
-    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(num_sites, theta_data)
+    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(num_sites, theta_data)
     _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, gamma_data)
 
     # Pack into model data
