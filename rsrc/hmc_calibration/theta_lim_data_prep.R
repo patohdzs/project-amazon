@@ -28,12 +28,15 @@ distance_data <-
 
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 
-# Remove rows from attribute data
 
+
+# Convert to regular dataframe
 muniTheta.prepData_data <-
-  as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
+  as.data.frame(muniTheta.prepData)
+
+# Remove rows from attribute data
 muniTheta.prepData_data <-
-  muniTheta.prepData_data[-c(142, 106, 112),]
+  muniTheta.prepData_data[-c(142, 106, 112), ]
 
 # Remove geometries
 geo_backup <- st_geometry(muniTheta.prepData)
@@ -76,7 +79,6 @@ merged_data <- muniTheta.prepData %>%
 
 muniTheta.prepData <- merged_data
 
-
 muniTheta.prepData <- muniTheta.prepData %>%
   filter(!is.na(distance))
 
@@ -84,13 +86,6 @@ muniTheta.prepData <- muniTheta.prepData %>%
 muniTheta.prepData_filtered <- muniTheta.prepData %>%
   filter(cattleSlaughter_valuePerHa_2017 > 0)
 
-
-
-
-
-# Create the weight matrix
-weights <- muniTheta.prepData_filtered$pasture_area_2017
-W <- diag(sqrt(weights))
 
 # Select columns
 df <- muniTheta.prepData %>%
@@ -101,16 +96,18 @@ df <- muniTheta.prepData %>%
     cattleSlaughter_farmGatePrice_2017,
     distance,
     zbar_2017_muni,
-    cattleSlaughter_valuePerHa_2017
+    cattleSlaughter_valuePerHa_2017,
+    pasture_area_2017
   )
 
-# drop spatial feature
+# Add column of 1's and scale
 df <- cbind(1, df)
 df <- df %>%
   mutate(
     I.historical_temp.2. = historical_temp ^ 2,
     I.lat.2. = lat ^ 2,
-    log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017)
+    log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017),
+    weights = pasture_area_2017
   ) %>%
   select(
     1,
@@ -122,7 +119,8 @@ df <- df %>%
     cattleSlaughter_farmGatePrice_2017,
     distance,
     zbar_2017_muni,
-    log_cattleSlaughter_valuePerHa_2017
+    log_cattleSlaughter_valuePerHa_2017,
+    weights
   ) %>%
   mutate(X1 = X1) %>%
   mutate(
@@ -135,9 +133,7 @@ df <- df %>%
     distance = scale(distance)
   )
 
-
-
-
+# Write output
 st_write(df,
          "data/hmc/data_theta.geojson",
          driver = "GeoJSON",
