@@ -17,7 +17,7 @@ args = parser.parse_args()
 # Create plots directories
 plots_dir = plots_dir_path(**vars(args))
 
-# Sample prior
+# Sample baseline
 fit = baseline.sample(args.model, 1000, args.sitenum)
 
 # Plotting theta and gamma

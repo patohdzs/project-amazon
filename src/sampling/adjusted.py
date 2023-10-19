@@ -6,6 +6,7 @@ import numpy as np
 import stan
 from optimization.casadi import solve_outer_optimization_problem
 from sampling import gamma_reg_data, theta_reg_data
+from sampling.baseline import baseline_hyperparams
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
 
@@ -38,7 +39,7 @@ def sample(
         os.makedirs(output_dir)
 
     # Read model code
-    with open(stan_model_path(model_name) / "posterior.stan") as f:
+    with open(stan_model_path(model_name) / "adjusted.stan") as f:
         model_code = f.read()
 
     # Load sites' data
@@ -201,15 +202,15 @@ def sample(
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
-            **_prior_hyperparams(num_sites, site_theta_2017_df, "theta"),
-            **_prior_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
+            **baseline_hyperparams(num_sites, site_theta_2017_df, "theta"),
+            **baseline_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
         )
 
         # Compiling model
         sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
         print("Model compiled!\n")
 
-        # Posterior sampling
+        # Sampling from adjusted distribution
         sampling_time = time.time()
         fit = sampler.sample(
             num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
@@ -219,32 +220,32 @@ def sample(
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
         # Extract samples
-        theta_post_samples = fit["theta"].T
-        gamma_post_samples = fit["gamma"].T
-        theta_coe_post_samples = fit["beta_theta"].T
-        gamma_coe_post_samples = fit["beta_gamma"].T
+        theta_adj_samples = fit["theta"].T
+        gamma_adj_samples = fit["gamma"].T
+        theta_coe_adj_samples = fit["beta_theta"].T
+        gamma_coe_adj_samples = fit["beta_gamma"].T
 
-        uncertainty_post_samples = np.concatenate(
-            (theta_post_samples, gamma_post_samples), axis=1
+        uncertainty_adj_samples = np.concatenate(
+            (theta_adj_samples, gamma_adj_samples), axis=1
         )
 
-        uncertainty_coe_post_samples = np.concatenate(
-            (theta_coe_post_samples, gamma_coe_post_samples), axis=1
+        uncertainty_coe_adj_samples = np.concatenate(
+            (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
         )
 
         # Update ensemble/tracker
-        collected_ensembles.update({cntr: uncertainty_post_samples.copy()})
-        coe_ensembles.update({cntr: uncertainty_coe_post_samples.copy()})
+        collected_ensembles.update({cntr: uncertainty_adj_samples.copy()})
+        coe_ensembles.update({cntr: uncertainty_coe_adj_samples.copy()})
 
         print(f"Parameters from last iteration: {uncertain_vals_old}\n")
         print(
             f"""Parameters from current iteration:
-            {np.mean(uncertainty_post_samples, axis=0)}\n"""
+            {np.mean(uncertainty_adj_samples, axis=0)}\n"""
         )
 
         # Compute exponentially-smoothened new params
         uncertain_vals = (
-            weight * np.mean(uncertainty_post_samples, axis=0)
+            weight * np.mean(uncertainty_adj_samples, axis=0)
             + (1 - weight) * uncertain_vals_old
         )
 
@@ -301,14 +302,14 @@ def sample(
     print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
 
-    theta_post_samples = fit["theta"].T
-    gamma_post_samples = fit["gamma"].T
-    theta_coe_post_samples = fit["beta_theta"].T
-    gamma_coe_post_samples = fit["beta_gamma"].T
+    theta_adj_samples = fit["theta"].T
+    gamma_adj_samples = fit["gamma"].T
+    theta_coe_adj_samples = fit["beta_theta"].T
+    gamma_coe_adj_samples = fit["beta_gamma"].T
 
-    final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
+    final_sample = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_sample_coe = np.concatenate(
-        (theta_coe_post_samples, gamma_coe_post_samples), axis=1
+        (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
     )
 
     results.update({"final_sample": final_sample})
@@ -320,33 +321,3 @@ def sample(
     print(f"Results saved to {saveto}")
 
     return results
-
-
-def _prior_hyperparams(num_sites, df, var):
-    # Drop records with missing data
-    df = df.dropna()
-
-    if var == "theta":
-        # Get theta regression data
-        y, X, _, _, _, W = theta_reg_data(num_sites, df)
-
-        # Applying WLS weights
-        y = W @ y
-        X = W @ X
-
-    elif var == "gamma":
-        # Get gamma regression data
-        y, X, _, _, _ = gamma_reg_data(num_sites, df)
-    else:
-        raise ValueError("Argument `var` should be one of `theta`, `gamma`")
-
-    inv_Q = np.linalg.inv(X.T @ X)
-    m = inv_Q @ X.T @ y
-    a = (X.shape[0]) / 2
-    b = 0.5 * (y.T @ y - m.T @ X.T @ X @ m)
-    return {
-        f"inv_Q_{var}": inv_Q,
-        f"m_{var}": m,
-        f"a_{var}": a,
-        f"b_{var}": b,
-    }

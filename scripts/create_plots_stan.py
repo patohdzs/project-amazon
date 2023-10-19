@@ -45,26 +45,23 @@ with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
-# Load coef prior samples
+# Load coef baseline samples
 fit = baseline.sample(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
-prior_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
+base_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
 
 try:
-    post_samples = results["final_sample"]
+    adj_samples = results["final_sample"]
 except KeyError:
     print(
         """
         Algorithm did not finish converging.
-        Plotting posterior samples from last iteration...
+        Plotting adjusted samples from last iteration...
         """
     )
-    post_samples = results["collected_ensembles"][results["cntr"] - 1]
+    adj_samples = results["collected_ensembles"][results["cntr"] - 1]
 
-# plots.posterior_density(post_samples, plots_dir)
-
-
-# Plot overlapped prior-posterior
-plots.density_overlap(prior_samples, post_samples, plots_dir, args.sitenum)
+# Plot overlapped densities
+plots.density_overlap(base_samples, adj_samples, plots_dir, args.sitenum)
 
 # Plot absolute and percentage error
 plots.traceplot_abs_error(results, plots_dir)

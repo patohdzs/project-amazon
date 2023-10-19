@@ -27,7 +27,7 @@ output_dir = output_dir_path(**vars(args))
 plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
-# Solve model with Casadi
+# Sample from adjusted distribution
 stan_results = adjusted.sample(
     model_name=args.model,
     output_dir=output_dir,

@@ -394,26 +394,26 @@ def adjusted_density(samples, plots_dir, num_sites=10):
         plt.close()
 
 
-def density_overlap(prior_samples, post_samples, plots_dir, num_sites=10):
-    theta_prior_samples = prior_samples[:, :num_sites]
-    gamma_prior_samples = prior_samples[:, num_sites:]
+def density_overlap(base_samples, adj_samples, plots_dir, num_sites=10):
+    theta_base_samples = base_samples[:, :num_sites]
+    gamma_base_samples = base_samples[:, num_sites:]
 
-    theta_post_samples = post_samples[:, :num_sites]
-    gamma_post_samples = post_samples[:, num_sites:]
+    theta_adj_samples = adj_samples[:, :num_sites]
+    gamma_adj_samples = adj_samples[:, num_sites:]
 
-    for i in range(theta_prior_samples.shape[1]):
+    for i in range(theta_base_samples.shape[1]):
         # Make paths
         path = plots_dir / "theta_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
-        prior = theta_prior_samples[:, i]
-        post = theta_post_samples[:, i]
-        bins = np.histogram(np.hstack((prior, post)), bins=60)[1]
+        base = theta_base_samples[:, i]
+        adj = theta_adj_samples[:, i]
+        bins = np.histogram(np.hstack((base, adj)), bins=60)[1]
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(prior, density=True, bins=bins, alpha=0.7)
-        plt.hist(post, density=True, bins=bins, alpha=0.7, color="red")
+        plt.hist(base, density=True, bins=bins, alpha=0.7)
+        plt.hist(adj, density=True, bins=bins, alpha=0.7, color="red")
         plt.ylabel(r"$Frequency$")
         plt.title(r"Density of $\theta_%d$" % i)
         fig.tight_layout()
@@ -425,19 +425,19 @@ def density_overlap(prior_samples, post_samples, plots_dir, num_sites=10):
         )
         plt.close()
 
-    for i in range(gamma_prior_samples.shape[1]):
+    for i in range(gamma_base_samples.shape[1]):
         # Make paths
         path = plots_dir / "gamma_density"
         if not os.path.exists(path):
             os.makedirs(path)
 
-        prior = gamma_prior_samples[:, i]
-        post = gamma_post_samples[:, i]
-        bins = np.histogram(np.hstack((prior, post)), bins=60)[1]
+        base = gamma_base_samples[:, i]
+        adj = gamma_adj_samples[:, i]
+        bins = np.histogram(np.hstack((base, adj)), bins=60)[1]
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        plt.hist(prior, density=True, bins=bins, alpha=0.7)
-        plt.hist(post, density=True, bins=bins, alpha=0.7, color="red")
+        plt.hist(base, density=True, bins=bins, alpha=0.7)
+        plt.hist(adj, density=True, bins=bins, alpha=0.7, color="red")
         plt.ylabel(r"$Frequency$")
         plt.title(r"Density of $\gamma_%d$" % i)
         fig.tight_layout()
