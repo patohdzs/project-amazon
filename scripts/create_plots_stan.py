@@ -64,7 +64,7 @@ except KeyError:
 
 
 # Plot overlapped prior-posterior
-plots.overlap_prior_posterior(prior_samples, post_samples, plots_dir, args.sitenum)
+plots.density_overlap(prior_samples, post_samples, plots_dir, args.sitenum)
 
 # Plot absolute and percentage error
 plots.traceplot_abs_error(results, plots_dir)

@@ -9,7 +9,7 @@ from services.file_service import stan_model_path
 from solvers.casadi import solve_outer_optimization_problem
 
 
-def sample_with_stan(
+def sample(
     model_name,
     output_dir,
     xi,

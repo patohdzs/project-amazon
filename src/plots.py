@@ -351,20 +351,20 @@ def basline_density(theta_samples, gamma_samples, plots_dir, num_sites=10):
         plt.close()
 
 
-def posterior_density(samples, plots_dir, num_sites=10):
+def adjusted_density(samples, plots_dir, num_sites=10):
     theta_samples = samples[:, :num_sites]
     gamma_samples = samples[:, num_sites:]
 
     for i in range(theta_samples.shape[1]):
         # Make paths
-        path = plots_dir / "theta_posterior"
+        path = plots_dir / "theta_adjusted"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(theta_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Posterior density of $\theta_%d$" % i)
+        plt.title(r"Adjusted density of $\theta_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
@@ -376,14 +376,14 @@ def posterior_density(samples, plots_dir, num_sites=10):
 
     for i in range(gamma_samples.shape[1]):
         # Make paths
-        path = plots_dir / "gamma_posterior"
+        path = plots_dir / "gamma_adjusted"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(gamma_samples[:, i], density=True, bins=30, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Posterior density of $\gamma_%d$" % i)
+        plt.title(r"Adjusted density of $\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
@@ -394,7 +394,7 @@ def posterior_density(samples, plots_dir, num_sites=10):
         plt.close()
 
 
-def overlap_prior_posterior(prior_samples, post_samples, plots_dir, num_sites=10):
+def density_overlap(prior_samples, post_samples, plots_dir, num_sites=10):
     theta_prior_samples = prior_samples[:, :num_sites]
     gamma_prior_samples = prior_samples[:, num_sites:]
 
