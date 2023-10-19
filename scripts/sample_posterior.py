@@ -4,10 +4,9 @@
 # ========================
 import argparse
 
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
-
 # Import the solvers
-from solvers.stan import sample_with_stan
+from sampling.stan import sample_with_stan
+from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")

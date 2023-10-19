@@ -1,7 +1,7 @@
 import stan
+from sampling.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
-from solvers.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
 
 
 def sample_priors(model_name: str, num_samples: int, num_sites: int):
