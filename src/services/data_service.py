@@ -69,16 +69,3 @@ def load_site_data(
         site_theta_2017_df,
         site_gamma_2017_df,
     )
-
-
-def load_coef_prior_samples():
-    # Load coef prior samples
-    beta_theta_prior_samples = pd.read_csv(
-        get_path("data", "hmc", "theta_coe.csv")
-    ).to_numpy()
-
-    beta_gamma_prior_samples = pd.read_csv(
-        get_path("data", "hmc", "gamma_coe.csv")
-    ).to_numpy()
-
-    return beta_theta_prior_samples, beta_gamma_prior_samples
