@@ -7,15 +7,11 @@ from solvers.stan import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
 def sample_priors(model_name: str, num_samples: int, num_sites: int):
     # Load sites data
     (
-        zbar_2017,
-        gamma_vals,
-        z_2017,
-        forestArea_2017_ha,
-        theta_vals,
-        gamma_coe_mean,
-        theta_coe_mean,
-        gamma_coe_vcov,
-        theta_coe_vcov,
+        _,
+        _,
+        _,
+        _,
+        _,
         theta_data,
         gamma_data,
     ) = load_site_data(num_sites, norm_fac=1e11)
