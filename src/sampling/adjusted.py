@@ -307,13 +307,13 @@ def sample(
     theta_coe_adj_samples = fit["beta_theta"].T
     gamma_coe_adj_samples = fit["beta_gamma"].T
 
-    final_sample = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
-    final_sample_coe = np.concatenate(
+    final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
+    final_samples_coe = np.concatenate(
         (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
     )
 
-    results.update({"final_sample": final_sample})
-    results.update({"final_sample_coe": final_sample_coe})
+    results.update({"final_sample": final_samples})
+    results.update({"final_sample_coe": final_samples_coe})
 
     # Save results (overwrite existing file)
     saveto = os.path.join(output_dir, "results.pcl")
