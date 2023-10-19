@@ -15,7 +15,7 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         _,
         theta_data,
         gamma_data,
-    ) = load_site_data(num_sites, norm_fac=1e11)
+    ) = load_site_data(num_sites)
 
     # Read model code
     with open(stan_model_path(model_name) / "prior.stan") as f:

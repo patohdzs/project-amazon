@@ -109,7 +109,6 @@ def sample(
         tol=tol,
         T=T,
         N=N,
-        norm_fac=norm_fac,
         delta_t=delta_t,
         alpha=alpha,
         kappa=kappa,

@@ -18,7 +18,7 @@ _DATA_FOLDER = get_path("data", "hmc")
 
 def load_site_data(
     num_sites,
-    norm_fac=1.0,
+    norm_fac=1e9,
     data_folder=_DATA_FOLDER,
 ):
     """
