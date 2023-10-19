@@ -4,10 +4,9 @@
 # ========================
 import argparse
 
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
-
 # Import the solvers
-from solvers.casadi import solve_with_casadi
+from optimization.casadi import solve_with_casadi
+from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")

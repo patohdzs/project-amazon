@@ -9,9 +9,9 @@ import sys
 
 import numpy as np
 import seaborn as sns
+from optimization import coeff_vcov
 from services.data_service import load_site_data
 from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
-from solvers import coeff_vcov
 
 import plots
 
