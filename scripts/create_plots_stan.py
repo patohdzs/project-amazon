@@ -9,7 +9,7 @@ import sys
 
 import numpy as np
 import seaborn as sns
-from sampling.priors import sample_priors
+from sampling import baseline
 from services.file_service import (
     logs_dir_path,
     output_dir_path,
@@ -46,7 +46,7 @@ with open(output_dir / "results.pcl", "rb") as f:
     results = pickle.load(f)
 
 # Load coef prior samples
-fit = sample_priors(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
+fit = baseline.sample(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
 prior_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
 
 try:

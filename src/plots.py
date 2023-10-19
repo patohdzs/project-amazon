@@ -311,17 +311,17 @@ def U_trajectory(results: dict, plots_dir: Path) -> None:
             plt.close()
 
 
-def prior_density(theta_samples, gamma_samples, plots_dir, num_sites=10):
+def basline_density(theta_samples, gamma_samples, plots_dir, num_sites=10):
     for i in range(theta_samples.shape[1]):
         # Make paths
-        path = plots_dir / "theta_prior"
+        path = plots_dir / "theta_baseline"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(theta_samples[:, i], density=True, bins=60, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Prior density of $\theta_%d$" % i)
+        plt.title(r"Baseline density of $\theta_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(
@@ -333,14 +333,14 @@ def prior_density(theta_samples, gamma_samples, plots_dir, num_sites=10):
 
     for i in range(gamma_samples.shape[1]):
         # Make paths
-        path = plots_dir / "gamma_prior"
+        path = plots_dir / "gamma_baseline"
         if not os.path.exists(path):
             os.makedirs(path)
 
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         plt.hist(gamma_samples[:, i], density=True, bins=60, alpha=0.7)
         plt.ylabel(r"$Frequency$")
-        plt.title(r"Prior density of $\gamma_%d$" % i)
+        plt.title(r"Baseline density of $\gamma_%d$" % i)
         fig.tight_layout()
         plt.subplots_adjust(right=0.7)
         fig.savefig(

@@ -4,7 +4,7 @@ from services.data_service import load_site_data
 from services.file_service import stan_model_path
 
 
-def sample_priors(model_name: str, num_samples: int, num_sites: int):
+def sample(model_name: str, num_samples: int, num_sites: int):
     # Load sites data
     (
         _,
