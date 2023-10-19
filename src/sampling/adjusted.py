@@ -340,13 +340,13 @@ def _prior_hyperparams(num_sites, df, var):
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
-    inv_Lambda = np.linalg.inv(X.T @ X)
-    mu = inv_Lambda @ X.T @ y
+    inv_Q = np.linalg.inv(X.T @ X)
+    m = inv_Q @ X.T @ y
     a = (X.shape[0]) / 2
-    b = 0.5 * (y.T @ y - mu.T @ X.T @ X @ mu)
+    b = 0.5 * (y.T @ y - m.T @ X.T @ X @ m)
     return {
-        f"inv_Lambda_{var}": inv_Lambda,
-        f"mu_{var}": mu,
+        f"inv_Q_{var}": inv_Q,
+        f"m_{var}": m,
         f"a_{var}": a,
         f"b_{var}": b,
     }

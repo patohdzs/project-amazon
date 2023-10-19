@@ -74,13 +74,13 @@ data {
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
-  cov_matrix[K_theta] inv_Lambda_theta;
-  vector[K_theta] mu_theta;
+  cov_matrix[K_theta] inv_Q_theta;
+  vector[K_theta] m_theta;
   real<lower=0> a_theta;
   real<lower=0> b_theta;
 
-  cov_matrix[K_gamma] inv_Lambda_gamma;
-  vector[K_gamma] mu_gamma;
+  cov_matrix[K_gamma] inv_Q_gamma;
+  vector[K_gamma] m_gamma;
   real<lower=0> a_gamma;
   real<lower=0> b_gamma;
 }
@@ -99,14 +99,14 @@ transformed parameters {
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  beta_theta ~ multi_normal(mu_theta, sigma_sq_theta * inv_Lambda_theta);
+  beta_theta ~ multi_normal(m_theta, sigma_sq_theta * inv_Q_theta);
 
   sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
-  beta_gamma ~ multi_normal(mu_gamma, sigma_sq_gamma * inv_Lambda_gamma);
+  beta_gamma ~ multi_normal(m_gamma, sigma_sq_gamma * inv_Q_gamma);
 
   // Value function
   target += log_density_function(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forestArea_2017_ha, alpha_p_Adym,
-                                 Bdym, ds_vect, zeta, xi, kappa, pa, pf);
+                                 forestArea_2017_ha, alpha_p_Adym, Bdym,
+                                 ds_vect, zeta, xi, kappa, pa, pf);
 }
