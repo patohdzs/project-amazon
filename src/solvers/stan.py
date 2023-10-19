@@ -50,8 +50,8 @@ def sample_with_stan(
         theta_vals,
         gamma_coe,
         theta_coe,
-        gamma_vcov_array,
-        theta_vcov_array,
+        _,
+        _,
         site_theta_2017_df,
         site_gamma_2017_df,
     ) = load_site_data(site_num, norm_fac=norm_fac)
@@ -59,14 +59,12 @@ def sample_with_stan(
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta = _theta_reg_data(
+    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(
         num_sites, site_theta_2017_df
     )
     _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
         num_sites, site_gamma_2017_df
     )
-
-    # Retrieving Stan prior hyperparams
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -78,6 +76,7 @@ def sample_with_stan(
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
     coe_ensembles = {}
+
     # Track error over iterations
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
@@ -90,15 +89,14 @@ def sample_with_stan(
     sol_val_Z_tracker = []
     sampling_time_tracker = []
 
-    # Update this parameter (leng) once figured out where it is coming from
-    leng = 200
+    # Create dynamics matrices
     arr = np.cumsum(
-        np.triu(np.ones((leng, leng))),
+        np.triu(np.ones((T, T))),
         axis=1,
     ).T
     Bdym = (1 - alpha) ** (arr - 1)
     Bdym[Bdym > 1] = 0.0
-    Adym = np.arange(1, leng + 1)
+    Adym = np.arange(1, T + 1)
     alpha_p_Adym = np.power(1 - alpha, Adym)
 
     # Time step
@@ -123,9 +121,7 @@ def sample_with_stan(
         xi=xi,
         zeta=zeta,
         beta_theta_prior_mean=theta_coe,
-        beta_theta_prior_vcov=theta_vcov_array,
         beta_gamma_prior_mean=gamma_coe,
-        beta_gamma_prior_vcov=gamma_vcov_array,
         sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
@@ -337,8 +333,15 @@ def sample_with_stan(
 def _prior_hyperparams(num_sites, df, var):
     df = df.dropna()
     if var == "theta":
-        y, X, _, _, _ = _theta_reg_data(num_sites, df)
+        # Get theta data
+        y, X, _, _, _, W = _theta_reg_data(num_sites, df)
+
+        # Applying WLS weights
+        y = W @ y
+        X = W @ X
+
     elif var == "gamma":
+        # Get gamma data
         y, X, _, _, _ = _gamma_reg_data(num_sites, df)
     else:
         raise Exception("Argument `var` should be one of `theta`, `gamma`")
@@ -360,34 +363,37 @@ def _theta_reg_data(num_sites, theta_df):
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
 
     # Get outcome
-    y_theta = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+    y = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+
+    # Get weights matrix
+    W = np.diag(np.sqrt(theta_df["weights"]))
 
     # Get regression design matrix and its dimensions
-    X_theta = theta_df.iloc[:, 1:9].to_numpy()
-    N_theta, K_theta = X_theta.shape
+    X = theta_df.iloc[:, 1:9].to_numpy()
+    N, K = X.shape
 
     # Get weighted grouped average matrix
-    G_theta = np.array(
+    G = np.array(
         [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
     )
-    G_theta = theta_df["zbar_2017_muni"].to_numpy() * G_theta
-    G_theta = G_theta / G_theta.sum(axis=1, keepdims=True)
+    G = theta_df["zbar_2017_muni"].to_numpy() * G
+    G = G / G.sum(axis=1, keepdims=True)
 
-    return y_theta, X_theta, N_theta, K_theta, G_theta
+    return y, X, N, K, G, W
 
 
 def _gamma_reg_data(num_sites, gamma_df):
     # Get outcome
-    y_gamma = gamma_df["log_co2e_ha_2017"].to_numpy()
+    y = gamma_df["log_co2e_ha_2017"].to_numpy()
 
     # Get regression design matrix and its dimensions
-    X_gamma = gamma_df.iloc[:, 1:6].to_numpy()
-    N_gamma, K_gamma = X_gamma.shape
+    X = gamma_df.iloc[:, 1:6].to_numpy()
+    N, K = X.shape
 
     # Get grouped average matrix
-    G_gamma = np.array(
+    G = np.array(
         [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
     )
-    G_gamma = G_gamma / G_gamma.sum(axis=1, keepdims=True)
+    G = G / G.sum(axis=1, keepdims=True)
 
-    return y_gamma, X_gamma, N_gamma, K_gamma, G_gamma
+    return y, X, N, K, G
