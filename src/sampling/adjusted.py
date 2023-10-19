@@ -326,9 +326,11 @@ def sample(
 
 
 def _prior_hyperparams(num_sites, df, var):
+    # Drop records with missing data
     df = df.dropna()
+
     if var == "theta":
-        # Get theta data
+        # Get theta regression data
         y, X, _, _, _, W = theta_reg_data(num_sites, df)
 
         # Applying WLS weights
@@ -336,10 +338,10 @@ def _prior_hyperparams(num_sites, df, var):
         X = W @ X
 
     elif var == "gamma":
-        # Get gamma data
+        # Get gamma regression data
         y, X, _, _, _ = gamma_reg_data(num_sites, df)
     else:
-        raise Exception("Argument `var` should be one of `theta`, `gamma`")
+        raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
     inv_Lambda = np.linalg.inv(X.T @ X)
     mu = inv_Lambda @ X.T @ y
