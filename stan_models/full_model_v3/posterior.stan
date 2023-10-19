@@ -2,11 +2,11 @@ functions {
   real log_density_function(vector gamma, vector theta, int T, int S,
                             real alpha, matrix sol_val_X, vector sol_val_Ua,
                             matrix sol_val_Up, vector zbar_2017,
-                            vector forestArea_2017_ha, real norm_fac,
-                            vector alpha_p_Adym, matrix Bdym, vector ds_vect,
-                            real zeta, real xi, real kappa, real pa, real pf) {
+                            vector forestArea_2017_ha, vector alpha_p_Adym,
+                            matrix Bdym, vector ds_vect, real zeta, real xi,
+                            real kappa, real pa, real pf) {
     // Carbon captured at time zero
-    real x0 = (gamma' * forestArea_2017_ha) / norm_fac;
+    real x0 = (gamma' * forestArea_2017_ha);
 
     // Aggregate carbon captured
     vector[T] X_zero = x0 * rep_vector(1.0, T);
@@ -47,7 +47,6 @@ functions {
 data {
   int<lower=0> T; // Time horizon
   int<lower=0> S; // Number of sites
-  real<lower=0> norm_fac; // Normalization factor
   real<lower=0> alpha; // Mean reversion coefficient
   matrix[S + 2, T + 1] sol_val_X; // Sate trajectories
   vector[T] sol_val_Ua; // Squared total control adjustments; dimensions T x 1
@@ -108,6 +107,6 @@ model {
   // Value function
   target += log_density_function(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forestArea_2017_ha, norm_fac, alpha_p_Adym,
+                                 forestArea_2017_ha, alpha_p_Adym,
                                  Bdym, ds_vect, zeta, xi, kappa, pa, pf);
 }

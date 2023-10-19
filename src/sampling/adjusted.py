@@ -20,7 +20,6 @@ def sample(
     site_num,
     T,
     N=200,
-    norm_fac=1e9,
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
@@ -51,7 +50,7 @@ def sample(
         theta_vals,
         site_theta_2017_df,
         site_gamma_2017_df,
-    ) = load_site_data(site_num, norm_fac=norm_fac)
+    ) = load_site_data(site_num)
 
     num_sites = gamma_vals.size
 
@@ -142,7 +141,7 @@ def sample(
         print(f"Gamma: {gamma_vals}\n")
 
         # Computing carbon absorbed in start period
-        x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
+        x0_vals = gamma_vals * forestArea_2017_ha
 
         # Solve outer optimization problem
         (
@@ -179,7 +178,6 @@ def sample(
         model_data = dict(
             T=T,
             S=num_sites,
-            norm_fac=norm_fac,
             alpha=alpha,
             sol_val_X=sol_val_X,
             sol_val_Ua=sol_val_Ua,

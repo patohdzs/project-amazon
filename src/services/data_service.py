@@ -48,6 +48,7 @@ def load_site_data(
     # Normalize Z data
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
+    forestArea_2017_ha /= norm_fac
 
     # Read geojson files
     theta_data = gpd.read_file(data_folder / "data_theta.geojson")
