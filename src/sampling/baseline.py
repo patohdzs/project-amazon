@@ -1,5 +1,6 @@
 import stan
-from sampling.adjusted import _gamma_reg_data, _prior_hyperparams, _theta_reg_data
+from sampling import gamma_reg_data, theta_reg_data
+from sampling.adjusted import _prior_hyperparams
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
 
@@ -21,8 +22,8 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         model_code = f.read()
 
     # Get regression data
-    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(num_sites, theta_data)
-    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(num_sites, gamma_data)
+    _, X_theta, N_theta, K_theta, G_theta, _ = theta_reg_data(num_sites, theta_data)
+    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(num_sites, gamma_data)
 
     # Pack into model data
     model_data = dict(

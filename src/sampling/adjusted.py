@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import stan
+from sampling import gamma_reg_data, theta_reg_data
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
 from solvers.casadi import solve_outer_optimization_problem
@@ -55,10 +56,10 @@ def sample(
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(
+    _, X_theta, N_theta, K_theta, G_theta, _ = theta_reg_data(
         num_sites, site_theta_2017_df
     )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
+    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(
         num_sites, site_gamma_2017_df
     )
 
@@ -328,7 +329,7 @@ def _prior_hyperparams(num_sites, df, var):
     df = df.dropna()
     if var == "theta":
         # Get theta data
-        y, X, _, _, _, W = _theta_reg_data(num_sites, df)
+        y, X, _, _, _, W = theta_reg_data(num_sites, df)
 
         # Applying WLS weights
         y = W @ y
@@ -336,7 +337,7 @@ def _prior_hyperparams(num_sites, df, var):
 
     elif var == "gamma":
         # Get gamma data
-        y, X, _, _, _ = _gamma_reg_data(num_sites, df)
+        y, X, _, _, _ = gamma_reg_data(num_sites, df)
     else:
         raise Exception("Argument `var` should be one of `theta`, `gamma`")
 
@@ -350,44 +351,3 @@ def _prior_hyperparams(num_sites, df, var):
         f"a_{var}": a,
         f"b_{var}": b,
     }
-
-
-def _theta_reg_data(num_sites, theta_df):
-    # Filter out null values
-    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
-
-    # Get outcome
-    y = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
-
-    # Get weights matrix
-    W = np.diag(np.sqrt(theta_df["weights"]))
-
-    # Get regression design matrix and its dimensions
-    X = theta_df.iloc[:, 1:9].to_numpy()
-    N, K = X.shape
-
-    # Get weighted grouped average matrix
-    G = np.array(
-        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G = theta_df["zbar_2017_muni"].to_numpy() * G
-    G = G / G.sum(axis=1, keepdims=True)
-
-    return y, X, N, K, G, W
-
-
-def _gamma_reg_data(num_sites, gamma_df):
-    # Get outcome
-    y = gamma_df["log_co2e_ha_2017"].to_numpy()
-
-    # Get regression design matrix and its dimensions
-    X = gamma_df.iloc[:, 1:6].to_numpy()
-    N, K = X.shape
-
-    # Get grouped average matrix
-    G = np.array(
-        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G = G / G.sum(axis=1, keepdims=True)
-
-    return y, X, N, K, G
