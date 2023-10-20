@@ -5,7 +5,7 @@ import time
 import numpy as np
 import stan
 from optimization.casadi import solve_outer_optimization_problem
-from sampling import gamma_reg_data, theta_reg_data
+from sampling import gamma_adj_reg_data, theta_adj_reg_data
 from sampling.baseline import baseline_hyperparams
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
@@ -49,19 +49,19 @@ def sample(
         z_2017,
         forestArea_2017_ha,
         theta_vals,
-        site_theta_2017_df,
-        site_gamma_2017_df,
+        site_theta_df,
+        site_gamma_df,
+        municipal_theta_df,
+        municipal_gamma_df,
     ) = load_site_data(site_num)
 
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_reg_data(
-        num_sites, site_theta_2017_df
+    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
+        num_sites, site_theta_df
     )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(
-        num_sites, site_gamma_2017_df
-    )
+    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -202,8 +202,8 @@ def sample(
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
-            **baseline_hyperparams(num_sites, site_theta_2017_df, "theta"),
-            **baseline_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
+            **baseline_hyperparams(municipal_theta_df, "theta"),
+            **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
 
         # Compiling model
