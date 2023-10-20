@@ -1,6 +1,6 @@
 import argparse
 
-from sampling.priors import sample_priors
+from sampling import baseline
 from services.file_service import plots_dir_path
 
 import plots
@@ -17,10 +17,10 @@ args = parser.parse_args()
 # Create plots directories
 plots_dir = plots_dir_path(**vars(args))
 
-# Sample prior
-fit = sample_priors(args.model, 1000, args.sitenum)
+# Sample baseline
+fit = baseline.sample(args.model, 1000, args.sitenum)
 
 # Plotting theta and gamma
-plots.prior_density(
+plots.basline_density(
     fit["theta"].T, fit["gamma"].T, num_sites=args.sitenum, plots_dir=plots_dir
 )

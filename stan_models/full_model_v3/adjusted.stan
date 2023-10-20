@@ -2,11 +2,11 @@ functions {
   real log_density_function(vector gamma, vector theta, int T, int S,
                             real alpha, matrix sol_val_X, vector sol_val_Ua,
                             matrix sol_val_Up, vector zbar_2017,
-                            vector forestArea_2017_ha, real norm_fac,
-                            vector alpha_p_Adym, matrix Bdym, vector ds_vect,
-                            real zeta, real xi, real kappa, real pa, real pf) {
+                            vector forestArea_2017_ha, vector alpha_p_Adym,
+                            matrix Bdym, vector ds_vect, real zeta, real xi,
+                            real kappa, real pa, real pf) {
     // Carbon captured at time zero
-    real x0 = (gamma' * forestArea_2017_ha) / norm_fac;
+    real x0 = (gamma' * forestArea_2017_ha);
 
     // Aggregate carbon captured
     vector[T] X_zero = x0 * rep_vector(1.0, T);
@@ -47,7 +47,6 @@ functions {
 data {
   int<lower=0> T; // Time horizon
   int<lower=0> S; // Number of sites
-  real<lower=0> norm_fac; // Normalization factor
   real<lower=0> alpha; // Mean reversion coefficient
   matrix[S + 2, T + 1] sol_val_X; // Sate trajectories
   vector[T] sol_val_Ua; // Squared total control adjustments; dimensions T x 1
@@ -75,13 +74,13 @@ data {
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
-  cov_matrix[K_theta] inv_Lambda_theta;
-  vector[K_theta] mu_theta;
+  cov_matrix[K_theta] inv_Q_theta;
+  vector[K_theta] m_theta;
   real<lower=0> a_theta;
   real<lower=0> b_theta;
 
-  cov_matrix[K_gamma] inv_Lambda_gamma;
-  vector[K_gamma] mu_gamma;
+  cov_matrix[K_gamma] inv_Q_gamma;
+  vector[K_gamma] m_gamma;
   real<lower=0> a_gamma;
   real<lower=0> b_gamma;
 }
@@ -100,14 +99,14 @@ transformed parameters {
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  beta_theta ~ multi_normal(mu_theta, sigma_sq_theta * inv_Lambda_theta);
+  beta_theta ~ multi_normal(m_theta, sigma_sq_theta * inv_Q_theta);
 
   sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
-  beta_gamma ~ multi_normal(mu_gamma, sigma_sq_gamma * inv_Lambda_gamma);
+  beta_gamma ~ multi_normal(m_gamma, sigma_sq_gamma * inv_Q_gamma);
 
   // Value function
   target += log_density_function(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forestArea_2017_ha, norm_fac, alpha_p_Adym,
-                                 Bdym, ds_vect, zeta, xi, kappa, pa, pf);
+                                 forestArea_2017_ha, alpha_p_Adym, Bdym,
+                                 ds_vect, zeta, xi, kappa, pa, pf);
 }

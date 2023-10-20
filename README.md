@@ -7,19 +7,22 @@
 ```
 .
 └── data
+    ├── calibration
+    │   ├── farm_gate_price.xlsx
+    │   ├── ipeadata[21-08-2023-01-28].xls
+    │   └── prepData
+    │       ├── muniTheta_prepData.Rdata
+    │       ├── muniTheta_prepData_gamma.Rdata
+    │       └── seriesPriceCattle_prepData.Rdata
     └── hmc
-        ├── calibration_10SitesModel.csv
-        ├── calibration_24SitesModel.csv
-        ├── calibration_40SitesModel.csv
         ├── data_gamma.geojson
         ├── data_theta.geojson
-        ├── gamma_coe_ori.csv
-        ├── gamma_vcov.csv
+        ├── hmc_10SitesModel.csv
+        ├── hmc_24SitesModel.csv
+        ├── hmc_40SitesModel.csv
         ├── id_10.geojson
         ├── id_24.geojson
-        ├── id_40.geojson
-        ├── theta_coe_ori.csv
-        └── theta_vcov.csv
+        └── id_40.geojson
 ```
 
 

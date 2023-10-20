@@ -4,10 +4,9 @@
 # ========================
 import argparse
 
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
-
 # Import the solvers
-from solvers.stan import sample_with_stan
+from sampling import adjusted
+from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
@@ -28,8 +27,8 @@ output_dir = output_dir_path(**vars(args))
 plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
-# Solve model with Casadi
-stan_results = sample_with_stan(
+# Sample from adjusted distribution
+stan_results = adjusted.sample(
     model_name=args.model,
     output_dir=output_dir,
     xi=args.xi,

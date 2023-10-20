@@ -4,12 +4,14 @@ import time
 
 import numpy as np
 import stan
+from optimization.casadi import solve_outer_optimization_problem
+from sampling import gamma_reg_data, theta_reg_data
+from sampling.baseline import baseline_hyperparams
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
-from solvers.casadi import solve_outer_optimization_problem
 
 
-def sample_with_stan(
+def sample(
     model_name,
     output_dir,
     xi,
@@ -19,7 +21,6 @@ def sample_with_stan(
     site_num,
     T,
     N=200,
-    norm_fac=1e9,
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
@@ -38,7 +39,7 @@ def sample_with_stan(
         os.makedirs(output_dir)
 
     # Read model code
-    with open(stan_model_path(model_name) / "posterior.stan") as f:
+    with open(stan_model_path(model_name) / "adjusted.stan") as f:
         model_code = f.read()
 
     # Load sites' data
@@ -48,21 +49,17 @@ def sample_with_stan(
         z_2017,
         forestArea_2017_ha,
         theta_vals,
-        gamma_coe,
-        theta_coe,
-        _,
-        _,
         site_theta_2017_df,
         site_gamma_2017_df,
-    ) = load_site_data(site_num, norm_fac=norm_fac)
+    ) = load_site_data(site_num)
 
     num_sites = gamma_vals.size
 
     # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta, _ = _theta_reg_data(
+    _, X_theta, N_theta, K_theta, G_theta, _ = theta_reg_data(
         num_sites, site_theta_2017_df
     )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = _gamma_reg_data(
+    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(
         num_sites, site_gamma_2017_df
     )
 
@@ -112,7 +109,6 @@ def sample_with_stan(
         tol=tol,
         T=T,
         N=N,
-        norm_fac=norm_fac,
         delta_t=delta_t,
         alpha=alpha,
         kappa=kappa,
@@ -120,8 +116,6 @@ def sample_with_stan(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        beta_theta_prior_mean=theta_coe,
-        beta_gamma_prior_mean=gamma_coe,
         sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
@@ -148,7 +142,7 @@ def sample_with_stan(
         print(f"Gamma: {gamma_vals}\n")
 
         # Computing carbon absorbed in start period
-        x0_vals = gamma_vals * forestArea_2017_ha / norm_fac
+        x0_vals = gamma_vals * forestArea_2017_ha
 
         # Solve outer optimization problem
         (
@@ -185,7 +179,6 @@ def sample_with_stan(
         model_data = dict(
             T=T,
             S=num_sites,
-            norm_fac=norm_fac,
             alpha=alpha,
             sol_val_X=sol_val_X,
             sol_val_Ua=sol_val_Ua,
@@ -209,15 +202,15 @@ def sample_with_stan(
             X_gamma=X_gamma,
             G_gamma=G_gamma,
             pa_2017=pa_2017,
-            **_prior_hyperparams(num_sites, site_theta_2017_df, "theta"),
-            **_prior_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
+            **baseline_hyperparams(num_sites, site_theta_2017_df, "theta"),
+            **baseline_hyperparams(num_sites, site_gamma_2017_df, "gamma"),
         )
 
         # Compiling model
         sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
         print("Model compiled!\n")
 
-        # Posterior sampling
+        # Sampling from adjusted distribution
         sampling_time = time.time()
         fit = sampler.sample(
             num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
@@ -227,32 +220,32 @@ def sample_with_stan(
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
 
         # Extract samples
-        theta_post_samples = fit["theta"].T
-        gamma_post_samples = fit["gamma"].T
-        theta_coe_post_samples = fit["beta_theta"].T
-        gamma_coe_post_samples = fit["beta_gamma"].T
+        theta_adj_samples = fit["theta"].T
+        gamma_adj_samples = fit["gamma"].T
+        theta_coe_adj_samples = fit["beta_theta"].T
+        gamma_coe_adj_samples = fit["beta_gamma"].T
 
-        uncertainty_post_samples = np.concatenate(
-            (theta_post_samples, gamma_post_samples), axis=1
+        uncertainty_adj_samples = np.concatenate(
+            (theta_adj_samples, gamma_adj_samples), axis=1
         )
 
-        uncertainty_coe_post_samples = np.concatenate(
-            (theta_coe_post_samples, gamma_coe_post_samples), axis=1
+        uncertainty_coe_adj_samples = np.concatenate(
+            (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
         )
 
         # Update ensemble/tracker
-        collected_ensembles.update({cntr: uncertainty_post_samples.copy()})
-        coe_ensembles.update({cntr: uncertainty_coe_post_samples.copy()})
+        collected_ensembles.update({cntr: uncertainty_adj_samples.copy()})
+        coe_ensembles.update({cntr: uncertainty_coe_adj_samples.copy()})
 
         print(f"Parameters from last iteration: {uncertain_vals_old}\n")
         print(
             f"""Parameters from current iteration:
-            {np.mean(uncertainty_post_samples, axis=0)}\n"""
+            {np.mean(uncertainty_adj_samples, axis=0)}\n"""
         )
 
         # Compute exponentially-smoothened new params
         uncertain_vals = (
-            weight * np.mean(uncertainty_post_samples, axis=0)
+            weight * np.mean(uncertainty_adj_samples, axis=0)
             + (1 - weight) * uncertain_vals_old
         )
 
@@ -309,18 +302,18 @@ def sample_with_stan(
     print("Terminated. Sampling the final distribution...\n")
     fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
 
-    theta_post_samples = fit["theta"].T
-    gamma_post_samples = fit["gamma"].T
-    theta_coe_post_samples = fit["beta_theta"].T
-    gamma_coe_post_samples = fit["beta_gamma"].T
+    theta_adj_samples = fit["theta"].T
+    gamma_adj_samples = fit["gamma"].T
+    theta_coe_adj_samples = fit["beta_theta"].T
+    gamma_coe_adj_samples = fit["beta_gamma"].T
 
-    final_sample = np.concatenate((theta_post_samples, gamma_post_samples), axis=1)
-    final_sample_coe = np.concatenate(
-        (theta_coe_post_samples, gamma_coe_post_samples), axis=1
+    final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
+    final_samples_coe = np.concatenate(
+        (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
     )
 
-    results.update({"final_sample": final_sample})
-    results.update({"final_sample_coe": final_sample_coe})
+    results.update({"final_sample": final_samples})
+    results.update({"final_sample_coe": final_samples_coe})
 
     # Save results (overwrite existing file)
     saveto = os.path.join(output_dir, "results.pcl")
@@ -328,72 +321,3 @@ def sample_with_stan(
     print(f"Results saved to {saveto}")
 
     return results
-
-
-def _prior_hyperparams(num_sites, df, var):
-    df = df.dropna()
-    if var == "theta":
-        # Get theta data
-        y, X, _, _, _, W = _theta_reg_data(num_sites, df)
-
-        # Applying WLS weights
-        y = W @ y
-        X = W @ X
-
-    elif var == "gamma":
-        # Get gamma data
-        y, X, _, _, _ = _gamma_reg_data(num_sites, df)
-    else:
-        raise Exception("Argument `var` should be one of `theta`, `gamma`")
-
-    inv_Lambda = np.linalg.inv(X.T @ X)
-    mu = inv_Lambda @ X.T @ y
-    a = (X.shape[0]) / 2
-    b = 0.5 * (y.T @ y - mu.T @ X.T @ X @ mu)
-    return {
-        f"inv_Lambda_{var}": inv_Lambda,
-        f"mu_{var}": mu,
-        f"a_{var}": a,
-        f"b_{var}": b,
-    }
-
-
-def _theta_reg_data(num_sites, theta_df):
-    # Filter out null values
-    theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
-
-    # Get outcome
-    y = theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
-
-    # Get weights matrix
-    W = np.diag(np.sqrt(theta_df["weights"]))
-
-    # Get regression design matrix and its dimensions
-    X = theta_df.iloc[:, 1:9].to_numpy()
-    N, K = X.shape
-
-    # Get weighted grouped average matrix
-    G = np.array(
-        [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G = theta_df["zbar_2017_muni"].to_numpy() * G
-    G = G / G.sum(axis=1, keepdims=True)
-
-    return y, X, N, K, G, W
-
-
-def _gamma_reg_data(num_sites, gamma_df):
-    # Get outcome
-    y = gamma_df["log_co2e_ha_2017"].to_numpy()
-
-    # Get regression design matrix and its dimensions
-    X = gamma_df.iloc[:, 1:6].to_numpy()
-    N, K = X.shape
-
-    # Get grouped average matrix
-    G = np.array(
-        [(gamma_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-    )
-    G = G / G.sum(axis=1, keepdims=True)
-
-    return y, X, N, K, G
