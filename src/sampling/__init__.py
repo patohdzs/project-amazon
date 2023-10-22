@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def theta_reg_data(num_sites, theta_df):
+def theta_adj_reg_data(num_sites, theta_df):
     # Filter out null values
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
 
@@ -25,7 +25,7 @@ def theta_reg_data(num_sites, theta_df):
     return y, X, N, K, G, W
 
 
-def gamma_reg_data(num_sites, gamma_df):
+def gamma_adj_reg_data(num_sites, gamma_df):
     # Get outcome
     y = gamma_df["log_co2e_ha_2017"].to_numpy()
 

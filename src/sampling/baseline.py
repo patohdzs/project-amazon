@@ -1,6 +1,6 @@
 import numpy as np
 import stan
-from sampling import gamma_reg_data, theta_reg_data
+from sampling import gamma_adj_reg_data, theta_adj_reg_data
 from services.data_service import load_site_data
 from services.file_service import stan_model_path
 
@@ -13,8 +13,10 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         _,
         _,
         _,
-        theta_data,
-        gamma_data,
+        site_theta_df,
+        site_gamma_df,
+        municipal_theta_df,
+        municipal_gamma_df,
     ) = load_site_data(num_sites)
 
     # Read model code
@@ -22,8 +24,10 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         model_code = f.read()
 
     # Get regression data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_reg_data(num_sites, theta_data)
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_reg_data(num_sites, gamma_data)
+    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
+        num_sites, site_theta_df
+    )
+    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
 
     # Pack into model data
     model_data = dict(
@@ -37,8 +41,8 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         G_theta=G_theta,
         G_gamma=G_gamma,
         pa_2017=44.9736197781184,
-        **baseline_hyperparams(num_sites, theta_data, "theta"),
-        **baseline_hyperparams(num_sites, gamma_data, "gamma"),
+        **baseline_hyperparams(municipal_theta_df, "theta"),
+        **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )
 
     # Compiling model
@@ -49,13 +53,13 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     return fit
 
 
-def baseline_hyperparams(num_sites, df, var):
+def baseline_hyperparams(municipal_df, var):
     # Drop records with missing data
-    df = df.dropna()
+    municipal_df = municipal_df.dropna()
 
     if var == "theta":
         # Get theta regression data
-        y, X, _, _, _, W = theta_reg_data(num_sites, df)
+        y, X, W = theta_baseline_reg_data(municipal_df)
 
         # Applying WLS weights
         y = W @ y
@@ -63,7 +67,7 @@ def baseline_hyperparams(num_sites, df, var):
 
     elif var == "gamma":
         # Get gamma regression data
-        y, X, _, _, _ = gamma_reg_data(num_sites, df)
+        y, X = gamma_baseline_reg_data(municipal_df)
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
@@ -77,3 +81,25 @@ def baseline_hyperparams(num_sites, df, var):
         f"a_{var}": a,
         f"b_{var}": b,
     }
+
+
+def theta_baseline_reg_data(municipal_theta_df):
+    # Get outcome
+    y = municipal_theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+
+    # Get weights matrix
+    W = np.diag(np.sqrt(municipal_theta_df["weights"]))
+
+    # Get regression design matrix and its dimensions
+    X = municipal_theta_df.iloc[:, :8].to_numpy()
+
+    return y, X, W
+
+
+def gamma_baseline_reg_data(municipal_gamma_df):
+    # Get outcome
+    y = municipal_gamma_df["log_co2e_ha_2017"].to_numpy()
+
+    # Get regression design matrix and its dimensions
+    X = municipal_gamma_df.iloc[:, :5].to_numpy()
+    return y, X
