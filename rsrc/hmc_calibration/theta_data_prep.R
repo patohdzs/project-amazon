@@ -9,17 +9,15 @@ load("data/calibration/prepData/muniTheta_prepData.Rdata")
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 
-
 # DATA MANIPULATION
-
 # EXTRACT AVERAGE 2017 PRICE (use real prices because it is normalized to 2017 )
-aux.price.2017 <-
+# BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
+aux_price_2017 <-
   seriesPriceCattle.prepData %>%
-  dplyr::filter(year == 2017) %>%
-  dplyr::group_by(year) %>%
-  dplyr::summarise(mean_price_2017 = mean(price_real_mon_cattle) / 3.192) %>% # BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
-  dplyr::pull(mean_price_2017)
-
+  filter(year == 2017) %>%
+  group_by(year) %>%
+  summarise(mean_price_2017 = mean(price_real_mon_cattle) / 3.192) %>%
+  pull(mean_price_2017)
 
 
 # REGRESSION - CATTLE VALUE (2017)
@@ -29,44 +27,39 @@ distance_data <-
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 
 
-
 # Convert to regular dataframe
-muniTheta.prepData_data <-
+muni_theta_prepData_data <-
   as.data.frame(muniTheta.prepData)
 
 # Remove rows from attribute data
-muniTheta.prepData_data <-
-  muniTheta.prepData_data[-c(142, 106, 112), ]
+muni_theta_prepData_data <-
+  muni_theta_prepData_data[-c(142, 106, 112),]
 
 # Remove geometries
-geo_backup <- st_geometry(muniTheta.prepData)
-geo_backup <- geo_backup[-c(142, 106, 112)]
+geo_backup <- st_geometry(muniTheta.prepData)[-c(142, 106, 112)]
 
 
 predicted_values <-
   read_excel("data/calibration/farm_gate_price.xlsx")
 
 # Combine back into an sf object
-muniTheta.prepData <-
-  st_sf(muniTheta.prepData_data, geometry = geo_backup)
+muni_theta_prep_data <-
+  st_sf(muni_theta_prepData_data, geometry = geo_backup)
 
 
 # Convert to non-spatial dataframe for the merge
-muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
+muni_theta_no_geo <- as.data.frame(muni_theta_prep_data)
 
 # Perform the merge
 merged_data <-
-  left_join(muniTheta_no_geo, distance_data, by = "muni_code")
+  left_join(muni_theta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
 merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
 
+muni_theta_prep_data <- merged_data_sf
 
-muniTheta.prepData <- merged_data_sf
-
-
-
-merged_data <- muniTheta.prepData %>%
+merged_data <- muni_theta_prep_data %>%
   left_join(predicted_values, by = "muni_code") %>%
   mutate(
     cattleSlaughter_farmGatePrice_2017 = ifelse(
@@ -76,19 +69,13 @@ merged_data <- muniTheta.prepData %>%
     )
   )
 
+muni_theta_prep_data <- merged_data
 
-muniTheta.prepData <- merged_data
-
-muniTheta.prepData <- muniTheta.prepData %>%
+muni_theta_prep_data <- muni_theta_prep_data %>%
   filter(!is.na(distance))
 
-# Exclude zeros
-muniTheta.prepData_filtered <- muniTheta.prepData %>%
-  filter(cattleSlaughter_valuePerHa_2017 > 0)
-
-
 # Select columns
-df <- muniTheta.prepData %>%
+df <- muni_theta_prep_data %>%
   select(
     historical_precip,
     historical_temp,
@@ -100,7 +87,7 @@ df <- muniTheta.prepData %>%
     pasture_area_2017
   )
 
-# Add column of 1's and scale
+# Add column of 1's, add polynomial terms, and scale
 df <- cbind(1, df)
 df <- df %>%
   mutate(
