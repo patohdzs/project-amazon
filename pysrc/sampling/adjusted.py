@@ -4,11 +4,12 @@ import time
 
 import numpy as np
 import stan
-from optimization.casadi import solve_outer_optimization_problem
-from sampling import gamma_adj_reg_data, theta_adj_reg_data
-from sampling.baseline import baseline_hyperparams
-from services.data_service import load_site_data
-from services.file_service import stan_model_path
+
+from ..optimization.casadi import solve_outer_optimization_problem
+from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
+from ..sampling.baseline import baseline_hyperparams
+from ..services.data_service import load_site_data
+from ..services.file_service import stan_model_path
 
 
 def sample(

@@ -1,9 +1,8 @@
 import argparse
 
-from sampling import baseline
-from services.file_service import plots_dir_path
-
-import plots
+from pysrc import plots
+from pysrc.sampling import baseline
+from pysrc.services.file_service import plots_dir_path
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")

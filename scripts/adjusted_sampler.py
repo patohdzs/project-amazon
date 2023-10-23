@@ -1,12 +1,7 @@
-#!/usr/bin/env python
-
-# Import Required Packages
-# ========================
 import argparse
 
-# Import the solvers
-from sampling import adjusted
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
+from pysrc.sampling import adjusted
+from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
