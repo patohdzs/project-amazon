@@ -5,6 +5,7 @@ import time
 import numpy as np
 import stan
 from optimization.casadi import solve_outer_optimization_problem
+from optimization.gams import solve_outer_optimization_problem_gams
 from sampling import gamma_adj_reg_data, theta_adj_reg_data
 from sampling.baseline import baseline_hyperparams
 from services.data_service import load_site_data
@@ -151,7 +152,7 @@ def sample(
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = solve_outer_optimization_problem(
+        ) = solve_outer_optimization_problem_gams(
             N=N,
             dt=dt,
             ds_vect=ds_vect,

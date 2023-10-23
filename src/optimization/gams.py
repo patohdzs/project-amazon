@@ -2,7 +2,7 @@ import getpass
 import os
 import pickle
 import shutil
-
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from mcmc.hmc import create_hmc_sampler
 from optimization import log_density_function
 from services.data_service import load_site_data
 from utils.text import decorate_text
-
+import time
 # Check if gams is available; delay exception raise to the call
 try:
     from gams import GamsWorkspace
@@ -23,70 +23,70 @@ except ImportError:
     gams = None
 
 
-_GAMS_SYSTEM_LOADER = os.path.join(
-    os.path.dirname(__file__), "_gams_system_directory.dat"
-)
+# _GAMS_SYSTEM_LOADER = os.path.join(
+#     os.path.dirname(__file__), "_gams_system_directory.dat"
+# )
 
 
-def get_gams_system_directory(
-    filepath=_GAMS_SYSTEM_LOADER,
-):
-    """
-    Load the GAMS system directory from file or ask the user about it
+# def get_gams_system_directory(
+#     filepath=_GAMS_SYSTEM_LOADER,
+# ):
+#     """
+#     Load the GAMS system directory from file or ask the user about it
 
-    An example is that the GAMS System Directory could be (this is what Was hard coded):
-    `/Library/Frameworks/GAMS.framework/Versions/43/Resources`
-    """
-    if not os.path.isfile(filepath):
-        gams_sys_dir = None
+#     An example is that the GAMS System Directory could be (this is what Was hard coded):
+#     `/Library/Frameworks/GAMS.framework/Versions/43/Resources`
+#     """
+#     if not os.path.isfile(filepath):
+#         gams_sys_dir = None
 
-    else:
-        # Load the path from file and validate
-        with open(filepath, "r") as f_id:
-            gams_sys_dir = f_id.read().strip(" \n")
+#     else:
+#         # Load the path from file and validate
+#         with open(filepath, "r") as f_id:
+#             gams_sys_dir = f_id.read().strip(" \n")
 
-        if not gams_sys_dir:
-            # The filepath is empty and will be overwritten
-            # os.remove(filepath)
-            gams_sys_dir = None
+#         if not gams_sys_dir:
+#             # The filepath is empty and will be overwritten
+#             # os.remove(filepath)
+#             gams_sys_dir = None
 
-        elif not os.path.isdir(gams_sys_dir):
-            # The file contains a path to an invalid directory
-            print(
-                f"The GAMS system directory below is not valid\n"
-                f"Invalid GAMS System Dir: '{gams_sys_dir}'"
-            )
-            gams_sys_dir = None
+#         elif not os.path.isdir(gams_sys_dir):
+#             # The file contains a path to an invalid directory
+#             print(
+#                 f"The GAMS system directory below is not valid\n"
+#                 f"Invalid GAMS System Dir: '{gams_sys_dir}'"
+#             )
+#             gams_sys_dir = None
 
-    if gams_sys_dir is None:
-        # Either file does not exist or path in it is invalid.
-        # Ask user for a valid path, then write it to file and validate
-        prompt = "\n**\nPlease input FULL path to GAMS system directory/resources.\n"
-        prompt += """For example:
-                    '/Library/Frameworks/GAMS.framework/Versions/43/Resources'\n"""
-        gams_sys_dir = input(prompt).strip(""" \n" '  """)
-        # Write it to file and recurse
-        with open(filepath, "w") as f_id:
-            f_id.write(gams_sys_dir)
+#     if gams_sys_dir is None:
+#         # Either file does not exist or path in it is invalid.
+#         # Ask user for a valid path, then write it to file and validate
+#         prompt = "\n**\nPlease input FULL path to GAMS system directory/resources.\n"
+#         prompt += """For example:
+#                     '/Library/Frameworks/GAMS.framework/Versions/43/Resources'\n"""
+#         gams_sys_dir = input(prompt).strip(""" \n" '  """)
+#         # Write it to file and recurse
+#         with open(filepath, "w") as f_id:
+#             f_id.write(gams_sys_dir)
 
-        # Recurse to validate the path
-        return get_gams_system_directory(
-            filepath=filepath,
-        )
+#         # Recurse to validate the path
+#         return get_gams_system_directory(
+#             filepath=filepath,
+#         )
 
-    return gams_sys_dir
+#     return gams_sys_dir
 
 
 def solve_with_gams(
     # Configurations/Settings
-    site_num=25,  # Number of sites(10, 25, 100, 1000)
-    norm_fac=1e12,
+    site_num=24,  # Number of sites(10, 25, 100, 1000)
+    norm_fac=1e9,
     delta_t=0.02,
     alpha=0.045007414,
     kappa=2.094215255,
-    pf=20.76,
+    pf=25,
     pa=44.75,
-    xi=0.01,
+    xi=1.0,
     zeta=1.66e-4 * 1e9,  # zeta := 1.66e-4*norm_fac  #
     #
     max_iter=20000,
@@ -352,19 +352,12 @@ def solve_with_gams(
             thetadata.to_csv(saveto)
 
             # Create Gams Workspace
-            username = getpass.getuser()
-            if username == "hqin":
-                ws = GamsWorkspace(
-                    system_directory="/home/hqin/gams/gams43.4_linux_x64_64_sfx/",
-                    working_directory=output_dir,
-                )
 
-            elif username == "pengyu":
-                ws = GamsWorkspace(
-                    system_directory="/home/pengyu/gams43.4_linux_x64_64_sfx",
-                    working_directory=output_dir,
-                )
-            print("GAMS workspace created: " + username)
+            ws = GamsWorkspace(
+                system_directory="/project/lhansen/gams/gams43.4_linux_x64_64_sfx",
+                working_directory="gams",
+            )
+            print("GAMS workspace created: " + ws)
 
             gams_file = f"amazon_{size}sites.gms"
             shutil.copy(gams_file, output_dir)
@@ -566,3 +559,96 @@ def solve_with_gams(
     print(f"Results saved to {saveto}")
 
     return results
+
+
+
+
+def solve_outer_optimization_problem_gams(
+    N,
+    dt,
+    ds_vect,
+    theta_vals,
+    gamma_vals,
+    x0_vals,
+    zbar_2017,
+    site_z_vals,
+    alpha=0.045007414,
+    kappa=2.094215255,
+    pf=20.76,
+    pa=44.75,
+    zeta=1.66e-4 * 1e9,  # use the same normalization factor
+):
+    
+    x0_vals=x0_vals*1e9
+    
+    working_directory="gams"
+    
+    x0data = pd.DataFrame(x0_vals)
+    saveto = os.path.join(working_directory, "X0Data.csv")
+    x0data.to_csv(saveto)
+
+    gammadata = pd.DataFrame(gamma_vals)
+    saveto = os.path.join(working_directory, "GammaData.csv")
+    gammadata.to_csv(saveto)
+
+    thetadata = pd.DataFrame(theta_vals)
+    saveto = os.path.join(working_directory, "ThetaData.csv")
+    thetadata.to_csv(saveto)
+
+    # Create Gams Workspace
+    print("os.getcwd()",os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx")
+    ws = GamsWorkspace(
+        system_directory=os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx",
+        working_directory=os.getcwd()+"/gams/",
+    )
+    # print("GAMS workspace created: " + ws)
+
+    print("System directory:", os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx")
+    print("Working directory:", os.getcwd()+"/gams/")
+   
+    start_time = time.time()
+    gams_file = "hmc_24sites.gms"
+    # shutil.copy(gams_file, working_directory)
+    t1 = ws.add_job_from_file(
+        gams_file
+    )
+    t1.run()
+
+
+
+
+    readfrom = os.path.join(working_directory+"/results/", "amazon_data_u.dat")
+    dfu = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1).to_numpy()[:-1,:]
+    sol_val_Up = dfu.T
+    
+    readfrom = os.path.join(working_directory+"/results/", "amazon_data_v.dat")
+    dfv = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1).to_numpy()[:-1,:]
+    sol_val_Um = dfv.T
+
+    readfrom = os.path.join(working_directory+"/results/", "amazon_data_w.dat")
+    dfw = pd.read_csv(readfrom, delimiter="\t")
+    dfw = dfw.drop("T   ", axis=1)
+    dfw_np = dfw.to_numpy()[:-1,:]
+
+    readfrom = os.path.join(working_directory+"/results/", "amazon_data_x.dat")
+    dfx = pd.read_csv(readfrom, delimiter="\t")
+    dfx = dfx.drop("T   ", axis=1)
+    dfx_np = dfx.to_numpy()
+
+    readfrom = os.path.join(working_directory+"/results/", "amazon_data_z.dat")
+    dfz = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1)
+    dfz_np = dfz.to_numpy()
+
+    sol_val_Ua = (dfw_np**2).T.flatten()
+    sol_val_X = np.concatenate((dfz_np.T, dfx_np.T,np.ones((1,dfz_np.T.shape[1]))))
+    sol_val_Z = sol_val_Up - sol_val_Um
+    
+    print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
+
+    print("sol.value(X)", sol_val_X, "\n")
+    print("sol.value(Ua)", sol_val_Ua, "\n")
+    print("sol.value(Up)", sol_val_Up, "\n")
+    print("sol.value(Um)", sol_val_Um, "\n")
+    
+
+    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
