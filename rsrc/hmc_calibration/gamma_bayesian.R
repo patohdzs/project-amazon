@@ -124,11 +124,11 @@ sigma2<-reg_summary$sigma^2
 N <- nrow(X)
 Lambda_t0 <- matrix(0, nrow=5, ncol=5)
 b_t0 <- as.matrix(prior_coe)
-c_t0<- 533
+c_t0<- 538
 #zeta_ini <- rgamma(1, shape = c_t0, rate = d_t0)
 #zeta=1/variances
 zeta_ini <- 1/sigma2
-d_t0 <-c_t0/zeta_ini
+d_t0 <-0
 
 Lambda_t1 <- Lambda_t0+t(X)%*%  X
 b_t1 <- tryCatch({
@@ -148,6 +148,8 @@ p <- length(b_t1)  # Assuming b_t1 is the same size as beta_sample
 beta_vec <- matrix(nrow = 0, ncol = p)
 zeta_vec <- NULL
 index_vec<-NULL
+
+
 
 
 
