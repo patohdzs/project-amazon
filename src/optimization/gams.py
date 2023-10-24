@@ -581,7 +581,7 @@ def solve_outer_optimization_problem_gams(
     
     x0_vals=x0_vals*1e9
     
-    working_directory="gams"
+    working_directory=os.getcwd()+"/gams/78sites/"
     
     x0data = pd.DataFrame(x0_vals)
     saveto = os.path.join(working_directory, "X0Data.csv")
@@ -596,18 +596,15 @@ def solve_outer_optimization_problem_gams(
     thetadata.to_csv(saveto)
 
     # Create Gams Workspace
-    print("os.getcwd()",os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx")
+
     ws = GamsWorkspace(
         system_directory=os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx",
-        working_directory=os.getcwd()+"/gams/",
+        working_directory=os.getcwd()+"/gams/78sites/",
     )
-    # print("GAMS workspace created: " + ws)
 
-    print("System directory:", os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx")
-    print("Working directory:", os.getcwd()+"/gams/")
    
     start_time = time.time()
-    gams_file = "hmc_24sites.gms"
+    gams_file = "hmc_78sites.gms"
     # shutil.copy(gams_file, working_directory)
     t1 = ws.add_job_from_file(
         gams_file
