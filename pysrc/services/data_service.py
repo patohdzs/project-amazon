@@ -1,16 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-"""
-This module provides essential tools to handle data files related to this project.
-"""
-
-# Import Required Packages
-# ========================
-
 import geopandas as gpd
 import pandas as pd
-from services.file_service import get_path
+
+from ..services.file_service import get_path
 
 # Default Path to the data folder
 _DATA_FOLDER = get_path("data", "hmc")

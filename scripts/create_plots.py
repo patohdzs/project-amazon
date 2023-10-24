@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-
-# Import Required Packages
-# ========================
 import argparse
 import os
 import pickle
@@ -9,11 +5,11 @@ import sys
 
 import numpy as np
 import seaborn as sns
-from optimization import coeff_vcov
-from services.data_service import load_site_data
-from services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
-import plots
+from pysrc import plots
+from pysrc.optimization import coeff_vcov
+from pysrc.services.data_service import load_site_data
+from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
 sys.path.append(os.path.abspath("src"))
 sns.set(font_scale=1.2)

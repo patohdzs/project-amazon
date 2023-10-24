@@ -1,8 +1,9 @@
 import numpy as np
 import stan
-from sampling import gamma_adj_reg_data, theta_adj_reg_data
-from services.data_service import load_site_data
-from services.file_service import stan_model_path
+
+from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
+from ..services.data_service import load_site_data
+from ..services.file_service import stan_model_path
 
 
 def sample(model_name: str, num_samples: int, num_sites: int):
