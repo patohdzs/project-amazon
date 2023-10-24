@@ -150,6 +150,43 @@ def traceplot_thetas(results: dict, plots_dir: Path) -> None:
     plt.close()
 
 
+def agg_Z_trajectory(
+    z_2017, zbar_2017, results: dict, num_sites: int, plots_dir: Path
+) -> None:
+    # Get delta_z
+    delta_z = results["sol_val_Z_tracker"][-1][:, :50]
+
+    # Sum zdot and add it to the z_2017
+    z_2017 = z_2017.reshape(num_sites, 1)
+    zbar_2017 = zbar_2017
+    cum_delta_z = np.cumsum(delta_z, axis=1) + z_2017
+
+    # Load deterministic z solved
+    z_det = results["sol_val_Z_tracker"][0][:, :50]
+    cumulative_det_z = np.cumsum(z_det, axis=1) + z_2017
+
+    # Add t=0 for hmc solution
+    cum_delta_z = np.hstack((z_2017, cum_delta_z))
+    cumulative_det_z = np.hstack((z_2017, cumulative_det_z))
+
+    pct_delta_z = np.sum(cum_delta_z, axis=0) / (np.sum(zbar_2017)) * 100
+    pct_z_det = np.sum(cumulative_det_z, axis=0) / (np.sum(zbar_2017)) * 100
+    time = np.arange(1, 51)
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+
+    plt.plot(time, pct_z_det[:50], label="deterministic")
+    plt.plot(time, pct_delta_z[:50], label=r"adjusted")
+
+    plt.xlabel("Time period")
+    plt.ylabel("Z(%)")
+    plt.title("Aggregate percentage Z over 50 years")
+
+    # Display the legend
+    plt.legend()
+    fig.savefig(plots_dir / "agg_pct_Z.png", dpi=100)
+
+
 def Z_trajectory(results: dict, plots_dir: Path) -> None:
     for site in range(results["num_sites"]):
         path = plots_dir / "Z_trajectory" / f"site_{site}"
