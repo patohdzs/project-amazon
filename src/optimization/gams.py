@@ -92,29 +92,29 @@ def solve_outer_optimization_problem_gams(
 
 
 
-    readfrom = os.path.join(working_directory+"/results/", "amazon_data_u.dat")
+    readfrom = os.path.join(working_directory, "amazon_data_u.dat")
     dfu = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1).to_numpy()[:-1,:]
     sol_val_Up = dfu.T
     os.remove(readfrom)
     
-    readfrom = os.path.join(working_directory+"/results/", "amazon_data_v.dat")
+    readfrom = os.path.join(working_directory, "amazon_data_v.dat")
     dfv = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1).to_numpy()[:-1,:]
     sol_val_Um = dfv.T
     os.remove(readfrom)
     
-    readfrom = os.path.join(working_directory+"/results/", "amazon_data_w.dat")
+    readfrom = os.path.join(working_directory, "amazon_data_w.dat")
     dfw = pd.read_csv(readfrom, delimiter="\t")
     dfw = dfw.drop("T   ", axis=1)
     dfw_np = dfw.to_numpy()[:-1,:]
     os.remove(readfrom)
 
-    readfrom = os.path.join(working_directory+"/results/", "amazon_data_x.dat")
+    readfrom = os.path.join(working_directory, "amazon_data_x.dat")
     dfx = pd.read_csv(readfrom, delimiter="\t")
     dfx = dfx.drop("T   ", axis=1)
     dfx_np = dfx.to_numpy()
     os.remove(readfrom)
 
-    readfrom = os.path.join(working_directory+"/results/", "amazon_data_z.dat")
+    readfrom = os.path.join(working_directory, "amazon_data_z.dat")
     dfz = pd.read_csv(readfrom, delimiter="\t").drop('T/R ', axis=1)
     dfz_np = dfz.to_numpy()
     os.remove(readfrom)

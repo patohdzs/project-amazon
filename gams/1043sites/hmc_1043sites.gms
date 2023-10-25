@@ -98,12 +98,12 @@ obj_def..
 model amazon / all /;
 
 
-file results_x / "results/amazon_data_x.dat" /;
-file results_w / "results/amazon_data_w.dat" /;
+file results_x / "amazon_data_x.dat" /;
+file results_w / "amazon_data_w.dat" /;
 
-file regionresults_z / "results/amazon_data_z.dat" /;
-file regionresults_u / "results/amazon_data_u.dat" /;
-file regionresults_v / "results/amazon_data_v.dat" /;
+file regionresults_z / "amazon_data_z.dat" /;
+file regionresults_u / "amazon_data_u.dat" /;
+file regionresults_v / "amazon_data_v.dat" /;
 
 regionresults_u.pw = 163840000;
 regionresults_v.pw = 163840000;
