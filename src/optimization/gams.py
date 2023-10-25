@@ -581,6 +581,8 @@ def solve_outer_optimization_problem_gams(
     num_sites=theta_vals.shape[0]
 
     x0_vals=x0_vals*1e9
+    site_z_vals=site_z_vals*1e9
+    zbar_2017=zbar_2017*1e9
     
     working_directory = os.getcwd() + f"/gams/{num_sites}sites/"
 
@@ -588,6 +590,15 @@ def solve_outer_optimization_problem_gams(
     x0data = pd.DataFrame(x0_vals)
     saveto = os.path.join(working_directory, "X0Data.csv")
     x0data.to_csv(saveto)
+    
+    z0data = pd.DataFrame(site_z_vals)
+    saveto = os.path.join(working_directory, "Z0Data.csv")
+    z0data.to_csv(saveto)
+    
+    zbardata = pd.DataFrame(zbar_2017)
+    saveto = os.path.join(working_directory, "ZbarData.csv")
+    zbardata.to_csv(saveto)
+    
 
     gammadata = pd.DataFrame(gamma_vals)
     saveto = os.path.join(working_directory, "GammaData.csv")
