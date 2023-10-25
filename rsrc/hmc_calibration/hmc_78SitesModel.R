@@ -63,7 +63,7 @@ raster.78Sites <- terra::subset(raster.78Sites, c("amazonBiomeArea_ha_78Sites", 
                                                   "forestArea_2017_ha_78Sites", "agriculturalUseArea_2017_ha_78Sites", "otherArea_2017_ha_78Sites"))
 
 # aggregate from 1000 sites to 43
-raster.78Sites <- terra::aggregate(raster.78Sites, fact = 6, fun = sum, na.rm = T)
+raster.78Sites <- terra::aggregate(raster.78Sites, fact = 4, fun = sum, na.rm = T)
 
 # extract variables as polygons, transform to sf, and project data for faster spatial manipulation
 calibration.78SitesModel <- terra::as.polygons(raster.78Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
@@ -133,7 +133,7 @@ site.gamma2017 <-
 aux.gamma2017 <-
   site.gamma2017 %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(gamma2017_78Sites = mean(co2e_ha_2017, na.rm = T))
+  dplyr::summarise(gamma2017_78Sites = mean(co2e_ha_2017_fitted, na.rm = T))
 
 # add gamma_78Sites to spatial variables
 calibration.78SitesModel <- dplyr::left_join(calibration.78SitesModel, aux.gamma2017)

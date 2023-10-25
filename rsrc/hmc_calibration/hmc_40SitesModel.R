@@ -133,7 +133,7 @@ site.gamma2017 <-
 aux.gamma2017 <-
   site.gamma2017 %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(gamma2017_40Sites = mean(co2e_ha_2017, na.rm = T))
+  dplyr::summarise(gamma2017_40Sites = mean(co2e_ha_2017_fitted, na.rm = T))
 
 # add gamma_40Sites to spatial variables
 calibration.40SitesModel <- dplyr::left_join(calibration.40SitesModel, aux.gamma2017)
