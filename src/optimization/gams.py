@@ -578,10 +578,12 @@ def solve_outer_optimization_problem_gams(
     pa=44.75,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
 ):
-    
+    num_sites=theta_vals.shape[0]
+
     x0_vals=x0_vals*1e9
     
-    working_directory=os.getcwd()+"/gams/78sites/"
+    working_directory = os.getcwd() + f"/gams/{num_sites}sites/"
+
     
     x0data = pd.DataFrame(x0_vals)
     saveto = os.path.join(working_directory, "X0Data.csv")
@@ -599,12 +601,12 @@ def solve_outer_optimization_problem_gams(
 
     ws = GamsWorkspace(
         system_directory=os.path.dirname(os.path.dirname(os.getcwd()))+"/gams/gams45.1_linux_x64_64_sfx",
-        working_directory=os.getcwd()+"/gams/78sites/",
+        working_directory=os.getcwd()+f"/gams/{num_sites}sites/",
     )
 
    
     start_time = time.time()
-    gams_file = "hmc_78sites.gms"
+    gams_file = f"hmc_{num_sites}sites.gms"
     # shutil.copy(gams_file, working_directory)
     t1 = ws.add_job_from_file(
         gams_file
