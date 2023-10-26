@@ -2,13 +2,14 @@ option limrow = 0;
 option limcol = 0;
 option solprint = off;
 
+
 parameter p_e ;
 $gdxIn %myDB%
 $load p_e
 $gdxIn
 
 set T ordered /0*200 /;
-set R ordered /1*1043/;
+set R ordered /1*10/;
 
 scalar scale / 1.0e9 /;
 
@@ -35,7 +36,6 @@ $gdxIn ZbarData.gdx
 $load  zbar
 $gdxIn 
 display zbar;
-
  
 
 parameter gamma(R);
@@ -59,7 +59,6 @@ display theta;
 
 
 parameter delta / 0.02 /;
-
 parameter p_a / 41.945/;
 
 parameter alpha / 0.045007414 /;

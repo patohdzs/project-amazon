@@ -2,6 +2,12 @@ option limrow = 0;
 option limcol = 0;
 option solprint = off;
 
+parameter p_e ;
+$gdxIn %myDB%
+$load p_e
+$gdxIn
+
+
 set T ordered /0*200 /;
 set R ordered /1*40/;
 
@@ -51,7 +57,6 @@ display theta;
 
 
 parameter delta / 0.02 /;
-parameter p_e / 25 /;
 parameter p_a / 41.945/;
 
 parameter alpha / 0.045007414 /;

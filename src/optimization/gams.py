@@ -80,6 +80,9 @@ def solve_outer_optimization_problem_gams(
         working_directory=os.getcwd()+f"/gams/{num_sites}sites/",
     )
 
+    db = ws.add_database(in_model_name="myDB")
+    db.add_parameter("p_e",0).add_record().value=pf
+    print("pf",pf)
    
     start_time = time.time()
     gams_file = f"hmc_{num_sites}sites.gms"
@@ -87,7 +90,7 @@ def solve_outer_optimization_problem_gams(
     t1 = ws.add_job_from_file(
         gams_file
     )
-    t1.run()
+    t1.run(databases=db)
 
 
 
