@@ -33,7 +33,7 @@ args = parser.parse_args()
 # Computing carbon absorbed in start period
 x0_vals = gamma * forestArea_2017_ha
 
-gurobi.solve_outer_optimization_problem(
+gurobi.solve_planner_problem(
     T=args.timehzn,
     theta=theta,
     gamma=gamma,

@@ -1,6 +1,7 @@
 import math
 import time
 
+import numpy as np
 from pyomo.environ import (
     ConcreteModel,
     Constraint,
@@ -14,7 +15,7 @@ from pyomo.environ import (
 from pyomo.opt import SolverFactory
 
 
-def solve_outer_optimization_problem(
+def solve_planner_problem(
     T,
     theta,
     gamma,
@@ -32,14 +33,14 @@ def solve_outer_optimization_problem(
     model = ConcreteModel()
 
     model.T = Set(initialize=list(range(T + 1)), ordered=True)
-    model.R = Set(initialize=list(range(gamma.size)), ordered=True)
+    model.S = Set(initialize=list(range(gamma.size)), ordered=True)
 
     # Parameters
-    model.x0 = Param(model.R, initialize=x0_vals)
-    model.z0 = Param(model.R, initialize=z_2017)
-    model.zbar = Param(model.R, initialize=zbar_2017)
-    model.gamma = Param(model.R, initialize=gamma)
-    model.theta = Param(model.R, initialize=theta)
+    model.x0 = Param(model.S, initialize=x0_vals)
+    model.z0 = Param(model.S, initialize=z_2017)
+    model.zbar = Param(model.S, initialize=zbar_2017)
+    model.gamma = Param(model.S, initialize=gamma)
+    model.theta = Param(model.S, initialize=theta)
     model.delta = Param(initialize=delta)
     model.p_e = Param(initialize=pe)
     model.p_a = Param(initialize=pa)
@@ -50,26 +51,26 @@ def solve_outer_optimization_problem(
 
     # Variables
     model.w = Var(model.T)
-    model.x = Var(model.T, model.R)
-    model.z = Var(model.T, model.R, within=NonNegativeReals)
-    model.u = Var(model.T, model.R, within=NonNegativeReals)
-    model.v = Var(model.T, model.R, within=NonNegativeReals)
+    model.x = Var(model.T, model.S)
+    model.z = Var(model.T, model.S, within=NonNegativeReals)
+    model.u = Var(model.T, model.S, within=NonNegativeReals)
+    model.v = Var(model.T, model.S, within=NonNegativeReals)
 
     # Constraints
-    model.zdot_def = Constraint(model.T, model.R, rule=_zdot_rule)
-    model.xdot_def = Constraint(model.T, model.R, rule=_xdot_rule)
-    model.w_def = Constraint(model.T, rule=_w_rule)
+    model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
+    model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
+    model.w_def = Constraint(model.T, rule=_w_const)
 
     # Define the objective
-    model.obj = Objective(expr=_objective(model), sense=maximize)
+    model.obj = Objective(rule=_planner_obj, sense=maximize)
 
     # Initial and terminal conditions
-    for r in model.R:
-        model.z[:, r].setub(model.zbar[r])
-        model.x[0, r].fix(model.x0[r])
-        model.z[0, r].fix(model.z0[r])
-        model.u[T, r].fix(0)
-        model.v[T, r].fix(0)
+    for s in model.S:
+        model.z[:, s].setub(model.zbar[s])
+        model.x[0, s].fix(model.x0[s])
+        model.z[0, s].fix(model.z0[s])
+        model.u[T, s].fix(0)
+        model.v[T, s].fix(0)
         model.w[T].fix(0)
 
     # Solve the model
@@ -77,20 +78,27 @@ def solve_outer_optimization_problem(
 
     print("Solving the optimization problem...")
     start_time = time.time()
-    solver.solve(model)
+    solver.solve(model, tee=True)
     print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
+    Z = np.array([[model.z[t, r].value for r in model.S] for t in model.T])
+    X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
+    U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
+    V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
+    w = np.array([model.w[t] for t in model.T])
+    return (Z, X, U, V, w)
 
-def _objective(model):
+
+def _planner_obj(model):
     return sum(
         math.exp(-model.delta * t)
         * (
             -model.p_e
             * sum(
-                model.kappa * model.z[t, r] - (model.x[t + 1, r] - model.x[t, r])
-                for r in model.R
+                model.kappa * model.z[t, s] - (model.x[t + 1, s] - model.x[t, s])
+                for s in model.S
             )
-            + model.p_a * sum(model.theta[r] * model.z[t, r] for r in model.R)
+            + model.p_a * sum(model.theta[s] * model.z[t, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         for t in model.T
@@ -98,28 +106,28 @@ def _objective(model):
     )
 
 
-def _zdot_rule(model, t, r):
+def _zdot_const(model, t, s):
     if t < max(model.T):
-        return (model.z[t + 1, r] - model.z[t, r]) / model.dt == (
-            model.u[t, r] - model.v[t, r]
+        return (model.z[t + 1, s] - model.z[t, s]) / model.dt == (
+            model.u[t, s] - model.v[t, s]
         )
     else:
         return Constraint.Skip
 
 
-def _xdot_rule(model, t, r):
+def _xdot_const(model, t, s):
     if t < max(model.T):
-        return (model.x[t + 1, r] - model.x[t, r]) / model.dt == (
-            -model.gamma[r] * model.u[t, r]
-            - model.alpha * model.x[t, r]
-            + model.alpha * model.gamma[r] * (model.zbar[r] - model.z[t, r])
+        return (model.x[t + 1, s] - model.x[t, s]) / model.dt == (
+            -model.gamma[s] * model.u[t, s]
+            - model.alpha * model.x[t, s]
+            + model.alpha * model.gamma[s] * (model.zbar[s] - model.z[t, s])
         )
     else:
         return Constraint.Skip
 
 
-def _w_rule(model, t):
+def _w_const(model, t):
     if t < max(model.T):
-        return model.w[t] == sum(model.u[t, r] + model.v[t, r] for r in model.R)
+        return model.w[t] == sum(model.u[t, s] + model.v[t, s] for s in model.S)
     else:
         return Constraint.Skip
