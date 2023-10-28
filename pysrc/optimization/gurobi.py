@@ -2,6 +2,7 @@ import math
 import time
 
 import numpy as np
+import pyomo.environ as pyo
 from pyomo.environ import (
     ConcreteModel,
     Constraint,
@@ -85,7 +86,7 @@ def solve_planner_problem(
     X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
     U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
-    w = np.array([model.w[t] for t in model.T])
+    w = np.array([model.w[t].value for t in model.T])
     return (Z, X, U, V, w)
 
 
@@ -94,7 +95,7 @@ def _planner_obj(model):
         math.exp(-model.delta * t)
         * (
             -model.p_e
-            * sum(
+            * pyo.quicksum(
                 model.kappa * model.z[t, s] - (model.x[t + 1, s] - model.x[t, s])
                 for s in model.S
             )
@@ -128,6 +129,8 @@ def _xdot_const(model, t, s):
 
 def _w_const(model, t):
     if t < max(model.T):
-        return model.w[t] == sum(model.u[t, s] + model.v[t, s] for s in model.S)
+        return model.w[t] == pyo.quicksum(
+            model.u[t, s] + model.v[t, s] for s in model.S
+        )
     else:
         return Constraint.Skip
