@@ -13,6 +13,7 @@ dependencies = [
     "numpy>=1.25.2",
     "pandas>=2.1.0",
     "geopandas>=0.14.0",
+    "pyomo >= 6.6.2",
     "casadi>=3.6.3",
     "gurobipy>=10.0.3",
     "pystan>=3.7.0",
