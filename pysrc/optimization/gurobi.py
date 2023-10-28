@@ -9,7 +9,7 @@ from pyomo.environ import (
     NonNegativeReals,
     Objective,
     Param,
-    Set,
+    RangeSet,
     Var,
     maximize,
 )
@@ -33,8 +33,9 @@ def solve_planner_problem(
 ):
     model = ConcreteModel()
 
-    model.T = Set(initialize=list(range(T + 1)), ordered=True)
-    model.S = Set(initialize=list(range(gamma.size)), ordered=True)
+    # Indexing sets for time and sites
+    model.T = RangeSet(T + 1)
+    model.S = RangeSet(gamma.size)
 
     # Parameters
     model.x0 = Param(model.S, initialize=x0_vals)
@@ -68,11 +69,11 @@ def solve_planner_problem(
     # Initial and terminal conditions
     for s in model.S:
         model.z[:, s].setub(model.zbar[s])
-        model.x[0, s].fix(model.x0[s])
-        model.z[0, s].fix(model.z0[s])
-        model.u[T, s].fix(0)
-        model.v[T, s].fix(0)
-        model.w[T].fix(0)
+        model.x[min(model.T), s].fix(model.x0[s])
+        model.z[min(model.T), s].fix(model.z0[s])
+        model.u[max(model.T), s].fix(0)
+        model.v[max(model.T), s].fix(0)
+        model.w[max(model.T)].fix(0)
 
     # Solve the model
     solver = SolverFactory("gurobi")
