@@ -53,23 +53,28 @@ def solve_outer_optimization_problem_gams(
 
     
     x0data = pd.DataFrame(x0_vals)
+    x0data.index = x0data.index + 1
     saveto = os.path.join(working_directory, "X0Data.csv")
     x0data.to_csv(saveto)
     
     z0data = pd.DataFrame(site_z_vals)
+    z0data.index = z0data.index + 1
     saveto = os.path.join(working_directory, "Z0Data.csv")
     z0data.to_csv(saveto)
     
     zbardata = pd.DataFrame(zbar_2017)
+    zbardata.index = zbardata.index + 1
     saveto = os.path.join(working_directory, "ZbarData.csv")
     zbardata.to_csv(saveto)
     
 
     gammadata = pd.DataFrame(gamma_vals)
+    gammadata.index = gammadata.index + 1
     saveto = os.path.join(working_directory, "GammaData.csv")
     gammadata.to_csv(saveto)
 
     thetadata = pd.DataFrame(theta_vals)
+    thetadata.index = thetadata.index + 1
     saveto = os.path.join(working_directory, "ThetaData.csv")
     thetadata.to_csv(saveto)
 
