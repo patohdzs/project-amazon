@@ -9,7 +9,7 @@ from pyomo.environ import (
     NonNegativeReals,
     Objective,
     Param,
-    RangeSet,
+    Set,
     Var,
     maximize,
 )
@@ -34,8 +34,8 @@ def solve_planner_problem(
     model = ConcreteModel()
 
     # Indexing sets for time and sites
-    model.T = RangeSet(T + 1)
-    model.S = RangeSet(gamma.size)
+    model.T = Set(initialize=list(range(T + 1)), ordered=True)
+    model.S = Set(initialize=list(range(gamma.size)), ordered=True)
 
     # Parameters
     model.x0 = Param(model.S, initialize=x0_vals)
