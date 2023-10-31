@@ -19,7 +19,7 @@ def sample(
     pf,
     pa,
     weight,
-    site_num,
+    num_sites,
     T,
     N=200,
     delta_t=0.02,
@@ -57,9 +57,7 @@ def sample(
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(site_num)
-
-    num_sites = gamma_vals.size
+    ) = load_site_data(num_sites)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
