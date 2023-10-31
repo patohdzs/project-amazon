@@ -8,6 +8,7 @@ import seaborn as sns
 
 from pysrc import plots
 from pysrc.sampling import baseline
+from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import (
     logs_dir_path,
     output_dir_path,
@@ -41,6 +42,20 @@ with open(output_dir / "results.pcl", "rb") as f:
     # Load the data from the file
     results = pickle.load(f)
 
+# Load site data
+(
+    zbar_2017,
+    gamma,
+    z_2017,
+    forestArea_2017_ha,
+    theta,
+    site_theta_2017_df,
+    site_gamma_2017_df,
+    municipal_theta_df,
+    municipal_gamma_df,
+) = load_site_data(args.sitenum)
+
+
 # Load coef baseline samples
 fit = baseline.sample(model_name=args.model, num_samples=10000, num_sites=args.sitenum)
 base_samples = np.concatenate(
@@ -72,6 +87,15 @@ plots.traceplot_sampling_time(results, plots_dir)
 plots.traceplot_params_pct_error(results, plots_dir)
 plots.traceplot_gammas(results, plots_dir)
 plots.traceplot_thetas(results, plots_dir)
+
+# Plot agg %change in z
+plots.agg_Z_trajectory(
+    z_2017=z_2017,
+    zbar_2017=zbar_2017,
+    results=results,
+    num_sites=args.sitenum,
+    plots_dir=plots_dir,
+)
 
 # Plot Z (for each site)
 plots.Z_trajectory(results, plots_dir)
