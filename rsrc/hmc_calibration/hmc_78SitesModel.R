@@ -47,7 +47,7 @@ load(here::here("data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"))
 
 # INITIAL CONDITIONS Z -------------------------------------------------------------------------------------------------------------------------------
 
-# AGGREGATE FROM 1000 SITES TO 43 SITES
+# AGGREGATE FROM 1000 SITES TO 100 SITES
 # transform shares to areas
 raster.78Sites$amazonBiomeArea_ha_78Sites <- raster.78Sites$share_amazonBiome*raster.78Sites$pixelArea_ha
 raster.78Sites$forestArea_1995_ha_78Sites <- raster.78Sites$share_forest_1995*raster.78Sites$pixelArea_ha
@@ -56,13 +56,18 @@ raster.78Sites$otherArea_1995_ha_78Sites <- raster.78Sites$share_other_1995*rast
 raster.78Sites$forestArea_2017_ha_78Sites <- raster.78Sites$share_forest_2017*raster.78Sites$pixelArea_ha
 raster.78Sites$agriculturalUseArea_2017_ha_78Sites <- raster.78Sites$share_agriculturalUse_2017*raster.78Sites$pixelArea_ha
 raster.78Sites$otherArea_2017_ha_78Sites <- raster.78Sites$share_other_2017*raster.78Sites$pixelArea_ha
+raster.78Sites$forestArea_2008_ha_78Sites <- raster.78Sites$share_forest_2008*raster.78Sites$pixelArea_ha
+raster.78Sites$agriculturalUseArea_2008_ha_78Sites <- raster.78Sites$share_agriculturalUse_2008*raster.78Sites$pixelArea_ha
+raster.78Sites$otherArea_2008_ha_78Sites <- raster.78Sites$share_other_2008*raster.78Sites$pixelArea_ha
 
 # select area variables
-raster.78Sites <- terra::subset(raster.78Sites, c("amazonBiomeArea_ha_78Sites", "pixelArea_ha",
-                                                  "forestArea_1995_ha_78Sites", "agriculturalUseArea_1995_ha_78Sites", "otherArea_1995_ha_78Sites",
-                                                  "forestArea_2017_ha_78Sites", "agriculturalUseArea_2017_ha_78Sites", "otherArea_2017_ha_78Sites"))
-
-# aggregate from 1000 sites to 43
+# select area variables
+raster.78Sites <- terra::subset(raster.78Sites,
+                                c("amazonBiomeArea_ha_78Sites", "pixelArea_ha",
+                                  "forestArea_1995_ha_78Sites", "agriculturalUseArea_1995_ha_78Sites", "otherArea_1995_ha_78Sites",
+                                  "forestArea_2017_ha_78Sites", "agriculturalUseArea_2017_ha_78Sites", "otherArea_2017_ha_78Sites",
+                                  "forestArea_2008_ha_78Sites", "agriculturalUseArea_2008_ha_78Sites", "otherArea_2008_ha_78Sites"))
+# aggregate from 1000 sites to 100
 raster.78Sites <- terra::aggregate(raster.78Sites, fact = 4, fun = sum, na.rm = T)
 
 # extract variables as polygons, transform to sf, and project data for faster spatial manipulation
@@ -72,22 +77,23 @@ calibration.78SitesModel <- terra::as.polygons(raster.78Sites, dissolve = F) %>%
 calibration.78SitesModel <-
   calibration.78SitesModel %>%
   dplyr::mutate(zbar_1995_78Sites = agriculturalUseArea_1995_ha_78Sites + forestArea_1995_ha_78Sites,
-                zbar_2017_78Sites = agriculturalUseArea_2017_ha_78Sites + forestArea_2017_ha_78Sites) %>%
-  dplyr::select(amazonBiomeArea_ha_78Sites, siteArea_ha_78Sites = pixelArea_ha,
-                forestArea_1995_ha_78Sites,
+                zbar_2017_78Sites = agriculturalUseArea_2017_ha_78Sites + forestArea_2017_ha_78Sites,
+                zbar_2008_78Sites = agriculturalUseArea_2008_ha_78Sites + forestArea_2008_ha_78Sites) %>%
+  dplyr::select(siteArea_ha_78Sites = pixelArea_ha, amazonBiomeArea_ha_78Sites,
+                forestArea_1995_ha_78Sites, otherArea_1995_ha_78Sites,
                 z_1995_78Sites = agriculturalUseArea_1995_ha_78Sites, zbar_1995_78Sites,
-                forestArea_2017_ha_78Sites,
-                z_2017_78Sites = agriculturalUseArea_2017_ha_78Sites, zbar_2017_78Sites)
+                forestArea_2017_ha_78Sites, otherArea_2017_ha_78Sites,
+                z_2017_78Sites = agriculturalUseArea_2017_ha_78Sites, zbar_2017_78Sites,
+                forestArea_2008_ha_78Sites, otherArea_2008_ha_78Sites,
+                z_2008_78Sites = agriculturalUseArea_2008_ha_78Sites, zbar_2008_78Sites)
 
-
-# remove sites with less than 2% of its are intersecting with the amazon biome
+# remove sites with less than 1% of its are intersecting with the amazon biome
 calibration.78SitesModel <-
   calibration.78SitesModel %>%
   dplyr::filter(amazonBiomeArea_ha_78Sites/siteArea_ha_78Sites >= 0.03)
 
 # add id variable
 calibration.78SitesModel$id <- 1:nrow(calibration.78SitesModel)
-
 
 
 
@@ -235,7 +241,10 @@ calibration.78SitesModel <-
 # x_2017_78Sites estimated as in the old way of global model, just considering the stock of carbon stored in forest areas assuming that all forests are primary
 calibration.78SitesModel <-
   calibration.78SitesModel %>%
-  dplyr::mutate(x_2017_78Sites = gamma_78Sites*(zbar_2017_78Sites-z_2017_78Sites))
+  dplyr::mutate(x_2017_78Sites = gamma_78Sites*(zbar_2017_78Sites-z_2017_78Sites),
+                x_1995_78Sites = gamma_78Sites*(zbar_1995_78Sites-z_1995_78Sites),
+                x_2008_78Sites = gamma_78Sites*(zbar_2008_78Sites-z_2008_78Sites))
+
 
 
 
