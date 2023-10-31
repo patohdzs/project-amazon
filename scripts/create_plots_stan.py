@@ -42,8 +42,10 @@ with open(output_dir / "results.pcl", "rb") as f:
     results = pickle.load(f)
 
 # Load coef baseline samples
-fit = baseline.sample(model_name=args.model, num_samples=1000, num_sites=args.sitenum)
-base_samples = np.concatenate((fit["theta"].T, fit["gamma"].T), axis=1)
+fit = baseline.sample(model_name=args.model, num_samples=10000, num_sites=args.sitenum)
+base_samples = np.concatenate(
+    (fit.stan_variable("theta"), fit.stan_variable("gamma")), axis=1
+)
 
 try:
     adj_samples = results["final_sample"]
