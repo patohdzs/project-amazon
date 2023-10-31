@@ -9,7 +9,7 @@ from pyomo.environ import (
     NonNegativeReals,
     Objective,
     Param,
-    Set,
+    RangeSet,
     Var,
     maximize,
 )
@@ -34,15 +34,15 @@ def solve_planner_problem(
     model = ConcreteModel()
 
     # Indexing sets for time and sites
-    model.T = Set(initialize=list(range(T + 1)), ordered=True)
-    model.S = Set(initialize=list(range(gamma.size)), ordered=True)
+    model.T = RangeSet(T + 1)
+    model.S = RangeSet(gamma.size)
 
     # Parameters
-    model.x0 = Param(model.S, initialize=x0_vals)
-    model.z0 = Param(model.S, initialize=z_2017)
-    model.zbar = Param(model.S, initialize=zbar_2017)
-    model.gamma = Param(model.S, initialize=gamma)
-    model.theta = Param(model.S, initialize=theta)
+    model.x0 = Param(model.S, initialize=_np_to_dict(x0_vals))
+    model.z0 = Param(model.S, initialize=_np_to_dict(z_2017))
+    model.zbar = Param(model.S, initialize=_np_to_dict(zbar_2017))
+    model.gamma = Param(model.S, initialize=_np_to_dict(gamma))
+    model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
     model.p_e = Param(initialize=pe)
     model.p_a = Param(initialize=pa)
@@ -135,3 +135,7 @@ def _w_const(model, t):
         )
     else:
         return Constraint.Skip
+
+
+def _np_to_dict(x):
+    return dict(enumerate(x.flatten(), 1))
