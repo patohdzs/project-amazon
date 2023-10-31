@@ -93,16 +93,18 @@ def solve_planner_problem(
 
 def _planner_obj(model):
     return sum(
-        math.exp(-model.delta * t)
+        math.exp(-model.delta * (t * model.dt - model.dt))
         * (
             -model.p_e
             * pyo.quicksum(
-                model.kappa * model.z[t, s] - (model.x[t + 1, s] - model.x[t, s])
+                model.kappa * model.z[t, s]
+                - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
             + model.p_a * sum(model.theta[s] * model.z[t, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
+        * model.dt
         for t in model.T
         if t < max(model.T)
     )
