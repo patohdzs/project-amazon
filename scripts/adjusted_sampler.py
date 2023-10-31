@@ -33,7 +33,9 @@ stan_results = adjusted.sample(
     num_sites=args.sitenum,
     T=args.timehzn,
     max_iter=20,
-    sample_size=1000,
     final_sample_size=5_000,
-    num_chains=4,
+    iter_sampling=1000,
+    iter_warmup=500,
+    show_progress=True,
+    seed=1,
 )

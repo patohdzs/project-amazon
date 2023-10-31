@@ -30,10 +30,8 @@ def sample(
     # Sampling params
     max_iter=20000,
     tol=0.001,
-    sample_size=1000,
     final_sample_size=5_000,
-    num_chains=8,
-    num_warmup=500,
+    **stan_kwargs,
 ):
     # Create the output directory
     if not os.path.isdir(output_dir):
@@ -113,7 +111,6 @@ def sample(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
         output_dir=output_dir,
@@ -201,12 +198,7 @@ def sample(
         sampling_time = time.time()
         fit = stan_model.sample(
             data=model_data,
-            chains=num_chains,
-            parallel_chains=num_chains,
-            iter_sampling=sample_size,
-            iter_warmup=num_warmup,
-            show_progress=True,
-            seed=1,
+            **stan_kwargs,
         )
         sampling_time = time.time() - sampling_time
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
@@ -298,7 +290,9 @@ def sample(
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     fit = stan_model.sample(
-        data=model_data, chains=num_chains, iter_sampling=final_sample_size
+        data=model_data,
+        iter_sampling=final_sample_size,
+        **stan_kwargs,
     )
 
     # Extract samples
