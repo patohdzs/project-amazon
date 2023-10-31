@@ -61,9 +61,6 @@ def sample(
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
 
-    # Retrieve z data for selected site(s)
-    site_z_vals = z_2017
-
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
     coe_ensembles = {}
@@ -71,8 +68,7 @@ def sample(
     # Track error over iterations
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
-    percentage_error_tracker = []
-    log_diff_error_tracker = []
+    pct_error_tracker = []
     sol_val_X_tracker = []
     sol_val_Ua_tracker = []
     sol_val_Up_tracker = []
@@ -153,7 +149,7 @@ def sample(
             gamma_vals=gamma_vals,
             x0_vals=x0_vals,
             zbar_2017=zbar_2017,
-            site_z_vals=site_z_vals,
+            site_z_vals=z_2017,
             alpha=alpha,
             kappa=kappa,
             pf=pf,
@@ -249,7 +245,7 @@ def sample(
         )
 
         abs_error_tracker.append(abs_error)
-        percentage_error_tracker.append(percentage_error)
+        pct_error_tracker.append(percentage_error)
 
         print(
             f"""
@@ -269,8 +265,7 @@ def sample(
             {
                 "cntr": cntr,
                 "abs_error_tracker": np.asarray(abs_error_tracker),
-                "percentage_error_tracker": np.asarray(percentage_error_tracker),
-                "log_diff_error_tracker": np.asarray(log_diff_error_tracker),
+                "pct_error_tracker": np.asarray(pct_error_tracker),
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
                 "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
