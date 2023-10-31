@@ -1,5 +1,5 @@
 import numpy as np
-import stan
+from cmdstanpy import CmdStanModel
 
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..services.data_service import load_site_data
@@ -21,8 +21,8 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     ) = load_site_data(num_sites)
 
     # Read model code
-    with open(stan_model_path(model_name) / "baseline.stan") as f:
-        model_code = f.read()
+    stan_file = stan_model_path(model_name) / "baseline.stan"
+    stan_model = CmdStanModel(stan_file=stan_file, force_compile=True)
 
     # Get regression data
     _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
@@ -46,11 +46,12 @@ def sample(model_name: str, num_samples: int, num_sites: int):
         **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )
 
-    # Compiling model
-    sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
-
     # Sampling
-    fit = sampler.fixed_param(num_samples=num_samples)
+    fit = stan_model.sample(
+        data=model_data,
+        iter_sampling=num_samples,
+        fixed_param=True,
+    )
     return fit
 
 

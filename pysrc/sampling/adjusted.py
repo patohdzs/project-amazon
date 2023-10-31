@@ -3,7 +3,7 @@ import pickle
 import time
 
 import numpy as np
-import stan
+from cmdstanpy import CmdStanModel
 
 from ..optimization.casadi import solve_outer_optimization_problem
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
@@ -40,8 +40,11 @@ def sample(
         os.makedirs(output_dir)
 
     # Read model code
-    with open(stan_model_path(model_name) / "adjusted.stan") as f:
-        model_code = f.read()
+    stan_model = CmdStanModel(
+        stan_file=stan_model_path(model_name) / "adjusted.stan",
+        cpp_options={"STAN_THREADS": "true"},
+        force_compile=True,
+    )
 
     # Load sites' data
     (
@@ -86,6 +89,7 @@ def sample(
     sol_val_Um_tracker = []
     sol_val_Z_tracker = []
     sampling_time_tracker = []
+    fit_tracker = []
 
     # Create dynamics matrices
     arr = np.cumsum(
@@ -207,24 +211,30 @@ def sample(
             **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
 
-        # Compiling model
-        sampler = stan.build(program_code=model_code, data=model_data, random_seed=1)
-        print("Model compiled!\n")
-
         # Sampling from adjusted distribution
         sampling_time = time.time()
-        fit = sampler.sample(
-            num_chains=num_chains, num_samples=sample_size, num_warmup=num_warmup
+        fit = stan_model.sample(
+            data=model_data,
+            chains=num_chains,
+            parallel_chains=num_chains,
+            iter_sampling=sample_size,
+            iter_warmup=num_warmup,
+            show_progress=True,
+            seed=1,
         )
         sampling_time = time.time() - sampling_time
-        sampling_time_tracker.append(sampling_time)
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
+        print(fit.diagnose())
+
+        # Update fit and sampling time trackers
+        fit_tracker.append(fit.summary())
+        sampling_time_tracker.append(sampling_time)
 
         # Extract samples
-        theta_adj_samples = fit["theta"].T
-        gamma_adj_samples = fit["gamma"].T
-        theta_coe_adj_samples = fit["beta_theta"].T
-        gamma_coe_adj_samples = fit["beta_gamma"].T
+        theta_adj_samples = fit.stan_variable("theta")
+        gamma_adj_samples = fit.stan_variable("gamma")
+        theta_coe_adj_samples = fit.stan_variable("beta_theta")
+        gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
 
         uncertainty_adj_samples = np.concatenate(
             (theta_adj_samples, gamma_adj_samples), axis=1
@@ -296,17 +306,20 @@ def sample(
         )
 
         # Save results (overwrite existing file)
-        saveto = os.path.join(output_dir, "results.pcl")
+        saveto = output_dir / "results.pcl"
         pickle.dump(results, open(saveto, "wb"))
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
-    fit = sampler.sample(num_chains=num_chains, num_samples=final_sample_size)
+    fit = stan_model.sample(
+        data=model_data, chains=num_chains, iter_sampling=final_sample_size
+    )
 
-    theta_adj_samples = fit["theta"].T
-    gamma_adj_samples = fit["gamma"].T
-    theta_coe_adj_samples = fit["beta_theta"].T
-    gamma_coe_adj_samples = fit["beta_gamma"].T
+    # Extract samples
+    theta_adj_samples = fit.stan_variable("theta")
+    gamma_adj_samples = fit.stan_variable("gamma")
+    theta_coe_adj_samples = fit.stan_variable("beta_theta")
+    gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
 
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
@@ -317,7 +330,7 @@ def sample(
     results.update({"final_sample_coe": final_samples_coe})
 
     # Save results (overwrite existing file)
-    saveto = os.path.join(output_dir, "results.pcl")
+    saveto = output_dir / "results.pcl"
     pickle.dump(results, open(saveto, "wb"))
     print(f"Results saved to {saveto}")
 
