@@ -89,6 +89,7 @@ def sample(
     sol_val_Um_tracker = []
     sol_val_Z_tracker = []
     sampling_time_tracker = []
+    fit_tracker = []
 
     # Create dynamics matrices
     arr = np.cumsum(
@@ -222,8 +223,12 @@ def sample(
             seed=1,
         )
         sampling_time = time.time() - sampling_time
-        sampling_time_tracker.append(sampling_time)
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
+        print(fit.diagnose())
+
+        # Update fit and sampling time trackers
+        fit_tracker.append(fit.summary())
+        sampling_time_tracker.append(sampling_time)
 
         # Extract samples
         theta_adj_samples = fit.stan_variable("theta")
