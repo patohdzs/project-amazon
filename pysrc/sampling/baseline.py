@@ -24,24 +24,12 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     stan_file = stan_model_path(model_name) / "baseline.stan"
     stan_model = CmdStanModel(stan_file=stan_file, force_compile=True)
 
-    # Get regression data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
-        num_sites, site_theta_df
-    )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
-
     # Pack into model data
     model_data = dict(
         S=num_sites,
-        K_theta=K_theta,
-        K_gamma=K_gamma,
-        N_theta=N_theta,
-        N_gamma=N_gamma,
-        X_theta=X_theta,
-        X_gamma=X_gamma,
-        G_theta=G_theta,
-        G_gamma=G_gamma,
         pa_2017=44.9736197781184,
+        **theta_adj_reg_data(num_sites, site_theta_df),
+        **gamma_adj_reg_data(num_sites, site_gamma_df),
         **baseline_hyperparams(municipal_theta_df, "theta"),
         **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )

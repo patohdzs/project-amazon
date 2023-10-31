@@ -61,12 +61,6 @@ def sample(
 
     num_sites = gamma_vals.size
 
-    # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
-        num_sites, site_theta_df
-    )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
-
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -197,16 +191,10 @@ def sample(
             xi=xi,
             kappa=kappa,
             pa=pa,
-            pf=pf,
-            K_theta=K_theta,
-            K_gamma=K_gamma,
-            N_theta=N_theta,
-            N_gamma=N_gamma,
-            X_theta=X_theta,
-            G_theta=G_theta,
-            X_gamma=X_gamma,
-            G_gamma=G_gamma,
             pa_2017=pa_2017,
+            pf=pf,
+            **theta_adj_reg_data(num_sites, site_theta_df),
+            **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
             **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
