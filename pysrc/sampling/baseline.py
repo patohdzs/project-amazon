@@ -49,7 +49,7 @@ def baseline_hyperparams(municipal_df, var):
 
     if var == "theta":
         # Get theta regression data
-        y, X, W = theta_baseline_reg_data(municipal_df)
+        y, X, W = _theta_muni_reg_data(municipal_df)
 
         # Applying WLS weights
         y = W @ y
@@ -57,7 +57,7 @@ def baseline_hyperparams(municipal_df, var):
 
     elif var == "gamma":
         # Get gamma regression data
-        y, X = gamma_baseline_reg_data(municipal_df)
+        y, X = _gamma_muni_reg_data(municipal_df)
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
@@ -73,7 +73,7 @@ def baseline_hyperparams(municipal_df, var):
     }
 
 
-def theta_baseline_reg_data(municipal_theta_df):
+def _theta_muni_reg_data(municipal_theta_df):
     # Get outcome
     y = municipal_theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
 
@@ -86,7 +86,7 @@ def theta_baseline_reg_data(municipal_theta_df):
     return y, X, W
 
 
-def gamma_baseline_reg_data(municipal_gamma_df):
+def _gamma_muni_reg_data(municipal_gamma_df):
     # Get outcome
     y = municipal_gamma_df["log_co2e_ha_2017"].to_numpy()
 
