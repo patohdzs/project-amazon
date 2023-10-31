@@ -4,13 +4,13 @@
 # LEAD: JULIANO ASSUNÇÃO, LARS PETER HANSEN, TODD MUNSON, JOSÉ A. SCHEINKMAN
 #
 # > THIS SCRIPT
-# AIM: PARAMETERS CALIBRATION (40 SITES MODEL)
+# AIM: PARAMETERS CALIBRATION (1043 SITES MODEL)
 # AUTHOR: JOÃO PEDRO VIEIRA
 #
 # > NOTES
 # 1: -
 
-
+conflicts_prefer(dplyr::filter)
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ source("rsrc/setup.R")
 
 
 # START TIMER
-tictoc::tic(msg = "calibration_40SitesModel.R script", log = T)
+tictoc::tic(msg = "calibration_1043SitesModel.R script", log = T)
 
 
 # TERRA OPTIONS (specify temporary file location)
@@ -28,14 +28,15 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 
 
 
+conflicts_prefer(dplyr::select)
 
 
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster.40Sites <- terra::rast(list.files(here::here("data/calibration/1055SitesModel/aux_tifs"),
-                                          pattern = "raster_",
-                                          full.names = T))
+raster.variables <- terra::rast(list.files(here::here("data/calibration/1043SitesModel/aux_tifs"),
+                                           pattern = "raster_",
+                                           full.names = T))
 
 
 # MUNI LEVEL SPATIAL SAMPLE
@@ -44,130 +45,100 @@ load(here::here("data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"))
 
 
 
+
 # INITIAL CONDITIONS Z -------------------------------------------------------------------------------------------------------------------------------
 
-# AGGREGATE FROM 1000 SITES TO 100 SITES
-# transform shares to areas
-raster.40Sites$amazonBiomeArea_ha_40Sites <- raster.40Sites$share_amazonBiome*raster.40Sites$pixelArea_ha
-raster.40Sites$forestArea_1995_ha_40Sites <- raster.40Sites$share_forest_1995*raster.40Sites$pixelArea_ha
-raster.40Sites$agriculturalUseArea_1995_ha_40Sites <- raster.40Sites$share_agriculturalUse_1995*raster.40Sites$pixelArea_ha
-raster.40Sites$otherArea_1995_ha_40Sites <- raster.40Sites$share_other_1995*raster.40Sites$pixelArea_ha
-raster.40Sites$forestArea_2017_ha_40Sites <- raster.40Sites$share_forest_2017*raster.40Sites$pixelArea_ha
-raster.40Sites$agriculturalUseArea_2017_ha_40Sites <- raster.40Sites$share_agriculturalUse_2017*raster.40Sites$pixelArea_ha
-raster.40Sites$otherArea_2017_ha_40Sites <- raster.40Sites$share_other_2017*raster.40Sites$pixelArea_ha
-raster.40Sites$forestArea_2008_ha_40Sites <- raster.40Sites$share_forest_2008*raster.40Sites$pixelArea_ha
-raster.40Sites$agriculturalUseArea_2008_ha_40Sites <- raster.40Sites$share_agriculturalUse_2008*raster.40Sites$pixelArea_ha
-raster.40Sites$otherArea_2008_ha_40Sites <- raster.40Sites$share_other_2008*raster.40Sites$pixelArea_ha
-
-# select area variables
-# select area variables
-raster.40Sites <- terra::subset(raster.40Sites,
-                                c("amazonBiomeArea_ha_40Sites", "pixelArea_ha",
-                                  "forestArea_1995_ha_40Sites", "agriculturalUseArea_1995_ha_40Sites", "otherArea_1995_ha_40Sites",
-                                  "forestArea_2017_ha_40Sites", "agriculturalUseArea_2017_ha_40Sites", "otherArea_2017_ha_40Sites",
-                                  "forestArea_2008_ha_40Sites", "agriculturalUseArea_2008_ha_40Sites", "otherArea_2008_ha_40Sites"))
-# aggregate from 1000 sites to 100
-raster.40Sites <- terra::aggregate(raster.40Sites, fact = 6, fun = sum, na.rm = T)
-
+# MAPBIOMAS VARIABLES + AMAZON BIOME + PIXEL AREA (Z_1043Sites CONSTRUCTION)
 # extract variables as polygons, transform to sf, and project data for faster spatial manipulation
-calibration.40SitesModel <- terra::as.polygons(raster.40Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
+calibration.1043SitesModel <- terra::as.polygons(raster.variables, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
 
-# transform share aggregate in area (ha)
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(zbar_1995_40Sites = agriculturalUseArea_1995_ha_40Sites + forestArea_1995_ha_40Sites,
-                zbar_2017_40Sites = agriculturalUseArea_2017_ha_40Sites + forestArea_2017_ha_40Sites,
-                zbar_2008_40Sites = agriculturalUseArea_2008_ha_40Sites + forestArea_2008_ha_40Sites) %>%
-  dplyr::select(siteArea_ha_40Sites = pixelArea_ha, amazonBiomeArea_ha_40Sites,
-                forestArea_1995_ha_40Sites, otherArea_1995_ha_40Sites,
-                z_1995_40Sites = agriculturalUseArea_1995_ha_40Sites, zbar_1995_40Sites,
-                forestArea_2017_ha_40Sites, otherArea_2017_ha_40Sites,
-                z_2017_40Sites = agriculturalUseArea_2017_ha_40Sites, zbar_2017_40Sites,
-                forestArea_2008_ha_40Sites, otherArea_2008_ha_40Sites,
-                z_2008_40Sites = agriculturalUseArea_2008_ha_40Sites, zbar_2008_40Sites)
 
 # remove sites with less than 1% of its are intersecting with the amazon biome
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::filter(amazonBiomeArea_ha_40Sites/siteArea_ha_40Sites >= 0.03)
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::filter(share_amazonBiome >= 0.03)
 
 # add id variable
-calibration.40SitesModel$id <- 1:nrow(calibration.40SitesModel)
+calibration.1043SitesModel$id <- 1:nrow(calibration.1043SitesModel)
+
+# transform share variables in area (ha)
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(amazonBiomeArea_ha_1043Sites = share_amazonBiome*pixelArea_ha,
+                forestArea_2017_ha_1043Sites = share_forest_2017*pixelArea_ha,
+                z_2017_1043Sites = share_agriculturalUse_2017*pixelArea_ha,
+                otherArea_2017_ha_1043Sites = share_other_2017*pixelArea_ha,
+                zbar_2017_1043Sites = forestArea_2017_ha_1043Sites + z_2017_1043Sites,
+                forestArea_1995_ha_1043Sites = share_forest_1995*pixelArea_ha,
+                z_1995_1043Sites = share_agriculturalUse_1995*pixelArea_ha,
+                otherArea_1995_ha_1043Sites = share_other_1995*pixelArea_ha,
+                zbar_1995_1043Sites = forestArea_1995_ha_1043Sites + z_1995_1043Sites,
+                forestArea_2008_ha_1043Sites = share_forest_2008*pixelArea_ha,
+                z_2008_1043Sites = share_agriculturalUse_2008*pixelArea_ha,
+                otherArea_2008_ha_1043Sites = share_other_2008*pixelArea_ha,
+                zbar_2008_1043Sites = forestArea_2008_ha_1043Sites + z_2008_1043Sites) %>%
+  dplyr::select(id, siteArea_ha_1043Sites = pixelArea_ha, amazonBiomeArea_ha_1043Sites,
+                forestArea_2017_ha_1043Sites, otherArea_2017_ha_1043Sites, z_2017_1043Sites, zbar_2017_1043Sites,
+                forestArea_1995_ha_1043Sites, otherArea_1995_ha_1043Sites, z_1995_1043Sites, zbar_1995_1043Sites,
+                forestArea_2008_ha_1043Sites, otherArea_2008_ha_1043Sites, z_2008_1043Sites, zbar_2008_1043Sites)
 
 
 
 # PARAMETER GAMMA ------------------------------------------------------------------------------------------------------------------------------------
 
 
-# DATA INPUT
-# load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
-
-muniTheta.prepData<-muniTheta.prepData %>%
-  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
-
-
-
-
 # DATA INPUT (2017)
 # load pixel sample with biomass data
-# Load pixelBiomass2017_prepData.Rdata
+load(here::here("data/calibration/prepData/pixelBiomass2017_prepData.Rdata"))
 
-
-
-
-reg.gamma.2017 <-
-  muniTheta.prepData  %>%
-  lm(formula = log(co2e_ha_2017)  ~ log(historical_precip) + log(historical_temp) +log(lat)+log(lon), na.action = na.exclude)
-
-summary(reg.gamma.2017)
-
-
-muniTheta.prepData  <-   muniTheta.prepData %>%
-  dplyr::mutate(co2e_ha_2017_fitted = exp(predict(reg.gamma.2017, .)))
-
-
+# select minicells of primary forest with co2 information and transform to spatial points
+pixelBiomass2017.prepData <-
+  pixelBiomass2017.prepData %>%
+  sf::st_transform(sf::st_crs(calibration.1043SitesModel)) %>%
+  dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12)) %>%
+  dplyr::filter(co2e_ha_2017 > 0, !is.na(co2e_ha_2017))
 
 # match minicells with sites
 site.gamma2017 <-
-  sf::st_join(calibration.40SitesModel %>% dplyr::select(id),
-              muniTheta.prepData %>% dplyr::select(muni_code, co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon)) %>%
+  sf::st_join(calibration.1043SitesModel %>% dplyr::select(id),
+              pixelBiomass2017.prepData %>% dplyr::select(co2e_ha_2017)) %>%
   sf::st_drop_geometry()
 
 # calculate average carbon density on primary forest areas by site
 aux.gamma2017 <-
   site.gamma2017 %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(gamma2017_40Sites = mean(co2e_ha_2017_fitted, na.rm = T))
+  dplyr::summarise(gamma2017_1043Sites = mean(co2e_ha_2017, na.rm = T))
 
-# add gamma_40Sites to spatial variables
-calibration.40SitesModel <- dplyr::left_join(calibration.40SitesModel, aux.gamma2017)
+# add gamma_1043Sites to spatial variables
+calibration.1043SitesModel <- dplyr::left_join(calibration.1043SitesModel, aux.gamma2017)
 
 
 # clean environment
-rm(aux.gamma2017)
+rm(pixelBiomass2017.prepData, aux.gamma2017)
+
+
+
 
 
 # identify adjacent neighbors
-aux.neighbors <- sf::st_is_within_distance(calibration.40SitesModel, calibration.40SitesModel, dist = 100, remove_self = TRUE)
+aux.neighbors <- sf::st_is_within_distance(calibration.1043SitesModel, calibration.1043SitesModel, dist = 100, remove_self = TRUE)
 
 # impute values for missing gammas based on the average of adjacent neighbors
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(gamma2017_40Sites = dplyr::if_else(is.na(gamma2017_40Sites),
-                                                   apply(aux.neighbors, 1, function(i){mean(.$gamma2017_40Sites[i], na.rm = TRUE)}),
-                                                   gamma2017_40Sites))
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(gamma2017_1043Sites = dplyr::if_else(is.na(gamma2017_1043Sites),
+                                                     apply(aux.neighbors, 1, function(i){mean(.$gamma2017_1043Sites[i], na.rm = TRUE)}),
+                                                     gamma2017_1043Sites))
 
 
 # set baseline gamma and gammaSD as the data from 2017 and calculate alternative  gamma gammaSD based on the mean and sd of gamma2010,gamma2017, and gamma2018
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
   dplyr::group_by(id) %>%
-  dplyr::mutate(gamma_40Sites = rowMeans(across(c("gamma2017_40Sites")))) %>%
-  #gammaSD_10Sites = apply(across(c("gamma2010_10Sites", "gamma2017_10Sites", "gamma2018_10Sites")), 1, sd)) %>%
+  dplyr::mutate(gamma_1043Sites = rowMeans(across(c("gamma2017_1043Sites")))) %>%
+                #gammaSD_1043Sites = apply(across(c("gamma2010_1043Sites", "gamma2017_1043Sites", "gamma2018_1043Sites")), 1, sd)) %>%
   dplyr::ungroup()
-
-
 
 
 
@@ -175,9 +146,9 @@ calibration.40SitesModel <-
 # PARAMETER ALPHA ------------------------------------------------------------------------------------------------------------------------------------
 
 # estimate of alpha same as in the global model
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(alpha_40Sites = 1 - (1-0.99)^(1/100))
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(alpha_1043Sites = 1 - (1-0.99)^(1/100))
 
 
 
@@ -200,9 +171,9 @@ avg.netEmissionFactor <-
 
 
 # estimate of kappa same as in the global model
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(kappa_40Sites = avg.netEmissionFactor)
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(kappa_1043Sites = avg.netEmissionFactor)
 
 # clean environment
 rm(avg.netEmissionFactor)
@@ -226,10 +197,10 @@ zeta <- aux.transitionCost/aux.transitionArea
 zeta_alt <- 483/aux.transitionArea # Alternative value based on a quote from (https://www.otempo.com.br/brasil/investigacoes-revelam-quadrilhas-e-ganho-milionario-por-tras-do-desmate-1.2229571)
 
 # estimate of zeta same as in the global model
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(zeta_40Sites = zeta,
-                zeta_alt_40Sites = zeta_alt)
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(zeta_1043Sites = zeta,
+                zeta_alt_1043Sites = zeta_alt)
 
 
 
@@ -237,12 +208,12 @@ calibration.40SitesModel <-
 
 # INITIAL CONDITIONS X -------------------------------------------------------------------------------------------------------------------------------
 
-# x_2017_40Sites estimated as in the old way of global model, just considering the stock of carbon stored in forest areas assuming that all forests are primary
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(x_2017_40Sites = gamma_40Sites*(zbar_2017_40Sites-z_2017_40Sites),
-                x_1995_40Sites = gamma_40Sites*(zbar_1995_40Sites-z_1995_40Sites),
-                x_2008_40Sites = gamma_40Sites*(zbar_2008_40Sites-z_2008_40Sites))
+# x_2017_1043Sites estimated as in the old way of global model, just considering the stock of carbon stored in forest areas assuming that all forests are primary
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(x_2017_1043Sites = gamma_1043Sites*(zbar_2017_1043Sites-z_2017_1043Sites),
+                x_1995_1043Sites = gamma_1043Sites*(zbar_1995_1043Sites-z_1995_1043Sites),
+                x_2008_1043Sites = gamma_1043Sites*(zbar_2008_1043Sites-z_2008_1043Sites))
 
 
 
@@ -358,7 +329,7 @@ muniTheta.prepData <-
 rm(reg.cattleValueperHa.2017, aux.min.positive.cattleSlaughter.value.ha.fitted.2017)
 
 # match munis with sites
-site.theta.2017 <- sf::st_intersection(calibration.40SitesModel %>% dplyr::select(id),
+site.theta.2017 <- sf::st_intersection(calibration.1043SitesModel %>% dplyr::select(id),
                                        muniTheta.prepData       %>% dplyr::select(muni_code, muni_area, cattleSlaughter_valuePerHa_fitted_2017,
                                                                                   pasture_area_2017, d_theta_winsorized_2017,zbar_2017_muni))
 
@@ -380,26 +351,28 @@ aux.theta.2017 <-
   site.theta.2017 %>%
   dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(theta2017_40Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = zbar_2017_muni, na.rm = T),
+  dplyr::summarise(theta2017_1043Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = zbar_2017_muni, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),
                    d_theta_winsorized_2017 = min(d_theta_winsorized_2017, na.rm = T))
 
 # add cattleSlaughter_valuePerHa_fitted and pastureArea_value to spatial variables
-calibration.40SitesModel <- dplyr::left_join(calibration.40SitesModel, aux.theta.2017)
+calibration.1043SitesModel <- dplyr::left_join(calibration.1043SitesModel, aux.theta.2017)
 
 # clean environment
 rm(aux.theta.2017)
 
+calibration.1043SitesModel<-
+  calibration.1043SitesModel %>%
+  dplyr::filter(!is.na(theta2017_1043Sites))
 
 
 
 # calculate average and SD theta using the values of 2006 and 2017
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
   dplyr::group_by(id) %>%
-  dplyr::mutate(theta_40Sites = rowMeans(across(starts_with("theta20")), na.rm = T)) %>%
+  dplyr::mutate(theta_1043Sites = rowMeans(across(starts_with("theta20")), na.rm = T)) %>%
   dplyr::ungroup()
-
 
 
 
@@ -451,9 +424,9 @@ matrixTransition.2prices <- markovchain::markovchainFit(seriesPriceCattle.prepDa
 
 
 # STORE PARAMETER VALUES
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::mutate(p_2017_40Sites = max(seriesPriceCattle.prepData$price_high))
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(p_2017_1043Sites = max(seriesPriceCattle.prepData$price_high))
 
 
 
@@ -462,32 +435,34 @@ calibration.40SitesModel <-
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # ORDER VARIABLES
-calibration.40SitesModel <-
-  calibration.40SitesModel %>%
-  dplyr::select(id, z_2017_40Sites, zbar_2017_40Sites, x_2017_40Sites, gamma_40Sites, theta_40Sites,
-                d_theta_winsorized_2017,pasture_area_2017, ends_with("_40Sites"))
-
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::select(id, z_2017_1043Sites, zbar_2017_1043Sites, x_2017_1043Sites, gamma_1043Sites, theta_1043Sites,
+                d_theta_winsorized_2017, pasture_area_2017, ends_with("_1043Sites"))
 
 
 # POST-TREATMENT OVERVIEW
-# summary(calibration.40SitesModel)
-# View(calibration.40SitesModel)
+# summary(calibration.1043SitesModel)
+# View(calibration.1043SitesModel)
 
 
-
+calibration.1043SitesModel <-
+  calibration.1043SitesModel %>%
+  dplyr::mutate(id=1:nrow(calibration.1043SitesModel))
+                
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(calibration.40SitesModel,
-     file = here::here("data/hmc",
-                       "hmc_40SitesModel.Rdata"))
+save(calibration.1043SitesModel,
+     file = here::here("data/calibration/1043SitesModel",
+                       "calibration_1043SitesModel.Rdata"))
 
 # remove spatial feature
-calibration.40SitesModel <- calibration.40SitesModel %>% sf::st_drop_geometry()
+calibration.1043SitesModel <- calibration.1043SitesModel %>% sf::st_drop_geometry()
 
-readr::write_csv(calibration.40SitesModel,
-                 file = here::here("data/hmc", "hmc_40SitesModel.csv"))
+readr::write_csv(calibration.1043SitesModel,
+                 file = here::here("data/calibration/1043SitesModel", "calibration_1043SitesModel.csv"))
 
 
 # CLEAN TEMP DIR
@@ -498,6 +473,15 @@ gc()
 
 # END TIMER
 tictoc::toc(log = T)
+
+
+
+
+# export time to csv table
+ExportTimeProcessing("code/calibration")
+
+
+
 
 
 

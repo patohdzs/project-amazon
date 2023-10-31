@@ -5,6 +5,12 @@
 # Data
 data/
 
+# Stan executables
+adjusted
+baseline
+*.hpp
+*.o
+
 # Results
 output/
 plot/
