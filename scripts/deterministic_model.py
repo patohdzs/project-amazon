@@ -37,7 +37,7 @@ gurobi.solve_planner_problem(
     T=args.timehzn,
     theta=theta,
     gamma=gamma,
-    x0_vals=x0_vals,
-    zbar_2017=zbar_2017,
-    z_2017=z_2017,
+    x0=x0_vals,
+    zbar=zbar_2017,
+    z0=z_2017,
 )

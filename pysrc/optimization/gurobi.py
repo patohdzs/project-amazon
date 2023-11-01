@@ -20,16 +20,16 @@ def solve_planner_problem(
     T,
     theta,
     gamma,
-    x0_vals,
-    zbar_2017,
-    z_2017,
+    x0,
+    z0,
+    zbar,
+    dt=1,
     pe=20.76,
     pa=44.75,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,
-    dt=1,
 ):
     model = ConcreteModel()
 
@@ -38,14 +38,14 @@ def solve_planner_problem(
     model.S = RangeSet(gamma.size)
 
     # Parameters
-    model.x0 = Param(model.S, initialize=_np_to_dict(x0_vals))
-    model.z0 = Param(model.S, initialize=_np_to_dict(z_2017))
-    model.zbar = Param(model.S, initialize=_np_to_dict(zbar_2017))
+    model.x0 = Param(model.S, initialize=_np_to_dict(x0))
+    model.z0 = Param(model.S, initialize=_np_to_dict(z0))
+    model.zbar = Param(model.S, initialize=_np_to_dict(zbar))
     model.gamma = Param(model.S, initialize=_np_to_dict(gamma))
     model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
-    model.p_e = Param(initialize=pe)
-    model.p_a = Param(initialize=pa)
+    model.pe = Param(initialize=pe)
+    model.pa = Param(initialize=pa)
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
     model.zeta = Param(initialize=zeta)
@@ -95,13 +95,13 @@ def _planner_obj(model):
     return sum(
         math.exp(-model.delta * (t * model.dt - model.dt))
         * (
-            -model.p_e
+            -model.pe
             * pyo.quicksum(
                 model.kappa * model.z[t, s]
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.p_a * sum(model.theta[s] * model.z[t, s] for s in model.S)
+            + model.pa * sum(model.theta[s] * model.z[t, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt
