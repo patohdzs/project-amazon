@@ -37,8 +37,8 @@ def sample(
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    # Read model code
-    stan_model = CmdStanModel(
+    # Instantiate stan sampler
+    sampler = CmdStanModel(
         stan_file=stan_model_path(model_name) / "adjusted.stan",
         cpp_options={"STAN_THREADS": "true"},
         force_compile=True,
@@ -192,7 +192,7 @@ def sample(
 
         # Sampling from adjusted distribution
         sampling_time = time.time()
-        fit = stan_model.sample(
+        fit = sampler.sample(
             data=model_data,
             **stan_kwargs,
         )
@@ -284,7 +284,7 @@ def sample(
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
-    fit = stan_model.sample(
+    fit = sampler.sample(
         data=model_data,
         iter_sampling=final_sample_size,
         **stan_kwargs,
