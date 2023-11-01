@@ -24,24 +24,12 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     stan_file = stan_model_path(model_name) / "baseline.stan"
     stan_model = CmdStanModel(stan_file=stan_file, force_compile=True)
 
-    # Get regression data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
-        num_sites, site_theta_df
-    )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
-
     # Pack into model data
     model_data = dict(
         S=num_sites,
-        K_theta=K_theta,
-        K_gamma=K_gamma,
-        N_theta=N_theta,
-        N_gamma=N_gamma,
-        X_theta=X_theta,
-        X_gamma=X_gamma,
-        G_theta=G_theta,
-        G_gamma=G_gamma,
         pa_2017=44.9736197781184,
+        **theta_adj_reg_data(num_sites, site_theta_df),
+        **gamma_adj_reg_data(num_sites, site_gamma_df),
         **baseline_hyperparams(municipal_theta_df, "theta"),
         **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )
@@ -61,7 +49,7 @@ def baseline_hyperparams(municipal_df, var):
 
     if var == "theta":
         # Get theta regression data
-        y, X, W = theta_baseline_reg_data(municipal_df)
+        y, X, W = _theta_muni_reg_data(municipal_df)
 
         # Applying WLS weights
         y = W @ y
@@ -69,7 +57,7 @@ def baseline_hyperparams(municipal_df, var):
 
     elif var == "gamma":
         # Get gamma regression data
-        y, X = gamma_baseline_reg_data(municipal_df)
+        y, X = _gamma_muni_reg_data(municipal_df)
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
@@ -85,7 +73,7 @@ def baseline_hyperparams(municipal_df, var):
     }
 
 
-def theta_baseline_reg_data(municipal_theta_df):
+def _theta_muni_reg_data(municipal_theta_df):
     # Get outcome
     y = municipal_theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
 
@@ -98,7 +86,7 @@ def theta_baseline_reg_data(municipal_theta_df):
     return y, X, W
 
 
-def gamma_baseline_reg_data(municipal_gamma_df):
+def _gamma_muni_reg_data(municipal_gamma_df):
     # Get outcome
     y = municipal_gamma_df["log_co2e_ha_2017"].to_numpy()
 

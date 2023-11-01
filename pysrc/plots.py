@@ -34,7 +34,7 @@ def traceplot_pct_error(results: dict, plots_dir: Path) -> None:
     # Make plot fig and axis
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 
-    plt.plot(results["percentage_error_tracker"], label=r"Proportional Error")
+    plt.plot(results["pct_error_tracker"], label=r"Proportional Error")
     plt.xlabel("Iteration")
     plt.ylabel(r"Proportional Error")
     plt.title(r"Trace Plot of Proportional Error")
