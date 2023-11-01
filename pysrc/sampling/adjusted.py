@@ -5,7 +5,7 @@ import time
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from ..optimization.casadi import solve_outer_optimization_problem
+from ..optimization import gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -141,20 +141,13 @@ def sample(
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = solve_outer_optimization_problem(
-            N=N,
-            dt=dt,
-            ds_vect=ds_vect,
-            theta_vals=theta_vals,
-            gamma_vals=gamma_vals,
-            x0_vals=x0_vals,
-            zbar_2017=zbar_2017,
-            site_z_vals=z_2017,
-            alpha=alpha,
-            kappa=kappa,
-            pf=pf,
-            pa=pa,
-            zeta=zeta,
+        ) = gurobi.solve_planner_problem(
+            T=T,
+            theta=theta_vals,
+            gamma=gamma_vals,
+            x0=x0_vals,
+            z0=z_2017,
+            zbar=zbar_2017,
         )
 
         # Update trackers
@@ -284,9 +277,9 @@ def sample(
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
+    stan_kwargs["iter_sampling"] = final_sample_size
     fit = sampler.sample(
         data=model_data,
-        iter_sampling=final_sample_size,
         **stan_kwargs,
     )
 

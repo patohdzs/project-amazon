@@ -88,7 +88,16 @@ def solve_planner_problem(
     U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
     w = np.array([model.w[t].value for t in model.T])
-    return (Z, X, U, V, w)
+
+    X_agg = X.sum(axis=1)
+    X_agg = X_agg.reshape(X_agg.size, 1)
+
+    sol_val_Ua = (w[:-1] ** 2).T.flatten()
+    sol_val_X = np.concatenate((Z.T, X_agg.T, np.ones((1, Z.T.shape[1]))))
+    sol_val_Up = U[:-1, :].T
+    sol_val_Um = V[:-1, :].T
+    sol_val_Z = sol_val_Up - sol_val_Um
+    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
 
 
 def _planner_obj(model):
