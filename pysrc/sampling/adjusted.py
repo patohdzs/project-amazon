@@ -19,7 +19,7 @@ def sample(
     pf,
     pa,
     weight,
-    site_num,
+    num_sites,
     T,
     N=200,
     delta_t=0.02,
@@ -30,10 +30,8 @@ def sample(
     # Sampling params
     max_iter=20000,
     tol=0.001,
-    sample_size=1000,
     final_sample_size=5_000,
-    num_chains=8,
-    num_warmup=500,
+    **stan_kwargs,
 ):
     # Create the output directory
     if not os.path.isdir(output_dir):
@@ -57,22 +55,11 @@ def sample(
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(site_num)
-
-    num_sites = gamma_vals.size
-
-    # Retrieving Stan data
-    _, X_theta, N_theta, K_theta, G_theta, _ = theta_adj_reg_data(
-        num_sites, site_theta_df
-    )
-    _, X_gamma, N_gamma, K_gamma, G_gamma = gamma_adj_reg_data(num_sites, site_gamma_df)
+    ) = load_site_data(num_sites)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
-
-    # Retrieve z data for selected site(s)
-    site_z_vals = z_2017
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
@@ -81,8 +68,7 @@ def sample(
     # Track error over iterations
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
-    percentage_error_tracker = []
-    log_diff_error_tracker = []
+    pct_error_tracker = []
     sol_val_X_tracker = []
     sol_val_Ua_tracker = []
     sol_val_Up_tracker = []
@@ -121,7 +107,6 @@ def sample(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        sample_size=sample_size,
         final_sample_size=final_sample_size,
         weight=weight,
         output_dir=output_dir,
@@ -164,7 +149,7 @@ def sample(
             gamma_vals=gamma_vals,
             x0_vals=x0_vals,
             zbar_2017=zbar_2017,
-            site_z_vals=site_z_vals,
+            site_z_vals=z_2017,
             alpha=alpha,
             kappa=kappa,
             pf=pf,
@@ -197,16 +182,10 @@ def sample(
             xi=xi,
             kappa=kappa,
             pa=pa,
-            pf=pf,
-            K_theta=K_theta,
-            K_gamma=K_gamma,
-            N_theta=N_theta,
-            N_gamma=N_gamma,
-            X_theta=X_theta,
-            G_theta=G_theta,
-            X_gamma=X_gamma,
-            G_gamma=G_gamma,
             pa_2017=pa_2017,
+            pf=pf,
+            **theta_adj_reg_data(num_sites, site_theta_df),
+            **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
             **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
@@ -215,12 +194,7 @@ def sample(
         sampling_time = time.time()
         fit = stan_model.sample(
             data=model_data,
-            chains=num_chains,
-            parallel_chains=num_chains,
-            iter_sampling=sample_size,
-            iter_warmup=num_warmup,
-            show_progress=True,
-            seed=1,
+            **stan_kwargs,
         )
         sampling_time = time.time() - sampling_time
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
@@ -271,7 +245,7 @@ def sample(
         )
 
         abs_error_tracker.append(abs_error)
-        percentage_error_tracker.append(percentage_error)
+        pct_error_tracker.append(percentage_error)
 
         print(
             f"""
@@ -291,8 +265,7 @@ def sample(
             {
                 "cntr": cntr,
                 "abs_error_tracker": np.asarray(abs_error_tracker),
-                "percentage_error_tracker": np.asarray(percentage_error_tracker),
-                "log_diff_error_tracker": np.asarray(log_diff_error_tracker),
+                "pct_error_tracker": np.asarray(pct_error_tracker),
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
                 "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
@@ -312,7 +285,9 @@ def sample(
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     fit = stan_model.sample(
-        data=model_data, chains=num_chains, iter_sampling=final_sample_size
+        data=model_data,
+        iter_sampling=final_sample_size,
+        **stan_kwargs,
     )
 
     # Extract samples
