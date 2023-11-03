@@ -128,17 +128,30 @@ muniTheta.prepData  <-   muniTheta.prepData %>%
 
 
 
-# match minicells with sites
+# match minicells with Sites
 site.gamma2017 <-
-  sf::st_join(calibration.40SitesModel %>% dplyr::select(id),
-              muniTheta.prepData %>% dplyr::select(muni_code, co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon)) %>%
+  sf::st_intersection(calibration.40SitesModel %>% dplyr::select(id),
+              muniTheta.prepData %>% dplyr::select(muni_code, muni_area, co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon)) 
+# sf::st_drop_geometry()
+
+site.gamma2017$muni_site_area <-
+  sf::st_area(site.gamma2017) %>%
+  units::set_units(ha) %>%
+  unclass()
+
+# drop spatial feature
+site.gamma2017 <-
+  site.gamma2017 %>%
   sf::st_drop_geometry()
 
 # calculate average carbon density on primary forest areas by site
 aux.gamma2017 <-
   site.gamma2017 %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(gamma2017_40Sites = mean(co2e_ha_2017_fitted, na.rm = T))
+  dplyr::summarise(gamma2017_40Sites = weighted.mean(co2e_ha_2017_fitted, w=muni_site_area, na.rm = T))
+
+
+
 
 # add gamma_40Sites to spatial variables
 calibration.40SitesModel <- dplyr::left_join(calibration.40SitesModel, aux.gamma2017)
@@ -380,7 +393,7 @@ aux.theta.2017 <-
   site.theta.2017 %>%
   dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(theta2017_40Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = zbar_2017_muni, na.rm = T),
+  dplyr::summarise(theta2017_40Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = muni_site_area, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),
                    d_theta_winsorized_2017 = min(d_theta_winsorized_2017, na.rm = T))
 

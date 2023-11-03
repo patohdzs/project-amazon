@@ -23,7 +23,7 @@ distance_data <-
 
 # Drop outliers and separate geometry from df
 muni_theta_prep_data <-
-  as.data.frame(muniTheta.prepData)[-c(142, 106, 112),]
+  as.data.frame(muniTheta.prepData)[-c(142, 106, 112), ]
 
 geo <- st_geometry(muniTheta.prepData)[-c(142, 106, 112)]
 
@@ -78,6 +78,27 @@ df <- muni_theta_prep_data %>%
 
 # Write output
 st_write(df,
-         "data/hmc/data_theta.geojson",
+         "data/hmc/muni_data_theta.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE)
+
+
+for (n in list(10, 24, 40, 78)) {
+  id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
+
+  site_theta2017 <- df %>%
+    st_intersection(id_df)
+
+  site_theta2017$muni_site_area <-
+    st_area(site_theta2017) %>%
+    units::set_units(ha) %>%
+    unclass()
+
+  st_write(
+    site_theta2017,
+    sprintf("data/hmc/site_%d_data_theta.geojson", n),
+    driver = "GeoJSON",
+    delete_dsn = TRUE
+  )
+
+}

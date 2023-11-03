@@ -29,6 +29,27 @@ df <- muniTheta.prepData %>%
          log_co2e_ha_2017)
 
 st_write(df,
-         "data/hmc/data_gamma.geojson",
+         "data/hmc/muni_data_gamma.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE)
+
+
+for (n in list(10, 24, 40, 78)) {
+  id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
+
+  site_gamma2017 <- df %>%
+    st_intersection(id_df)
+
+  site_gamma2017$muni_site_area <-
+    st_area(site_gamma2017) %>%
+    units::set_units(ha) %>%
+    unclass()
+
+  st_write(
+    site_gamma2017,
+    sprintf("data/hmc/site_%d_data_gamma.geojson", n),
+    driver = "GeoJSON",
+    delete_dsn = TRUE
+  )
+
+}

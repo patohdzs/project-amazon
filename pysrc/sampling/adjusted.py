@@ -284,9 +284,9 @@ def sample(
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
+    stan_kwargs["iter_sampling"] = final_sample_size
     fit = stan_model.sample(
         data=model_data,
-        iter_sampling=final_sample_size,
         **stan_kwargs,
     )
 

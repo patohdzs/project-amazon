@@ -22,7 +22,7 @@ def sample(model_name: str, num_samples: int, num_sites: int):
 
     # Read model code
     stan_file = stan_model_path(model_name) / "baseline.stan"
-    stan_model = CmdStanModel(stan_file=stan_file, force_compile=True)
+    sampler = CmdStanModel(stan_file=stan_file, force_compile=True)
 
     # Pack into model data
     model_data = dict(
@@ -35,7 +35,7 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     )
 
     # Sampling
-    fit = stan_model.sample(
+    fit = sampler.sample(
         data=model_data,
         iter_sampling=num_samples,
         fixed_param=True,
