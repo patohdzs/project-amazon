@@ -22,8 +22,8 @@ def sample(
     num_sites,
     T,
     N=200,
-    delta_t=0.02,
     alpha=0.045007414,
+    delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
@@ -91,7 +91,7 @@ def sample(
     dt = T / N
 
     # Other placeholders!
-    ds_vect = np.exp(-delta_t * np.arange(N + 1) * dt)
+    ds_vect = np.exp(-delta * np.arange(N + 1) * dt)
     ds_vect = np.reshape(ds_vect, (ds_vect.size, 1))
 
     # Results dictionary
@@ -100,7 +100,7 @@ def sample(
         tol=tol,
         T=T,
         N=N,
-        delta_t=delta_t,
+        delta_t=delta,
         alpha=alpha,
         kappa=kappa,
         pf=pf,
@@ -148,6 +148,13 @@ def sample(
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
+            dt=dt,
+            pe=pf,
+            pa=pa,
+            alpha=alpha,
+            delta=delta,
+            kappa=kappa,
+            zeta=zeta,
         )
 
         # Update trackers
