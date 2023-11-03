@@ -6,7 +6,7 @@ def theta_adj_reg_data(num_sites, theta_df):
     theta_df = theta_df[theta_df["zbar_2017_muni"].notna()]
 
     # Get design matrix and its dimensions
-    X = theta_df.iloc[:, 1:9].to_numpy()
+    X = theta_df.iloc[:, :8].to_numpy()
     N, K = X.shape
 
     # Get weighted grouped average matrix
@@ -26,7 +26,7 @@ def theta_adj_reg_data(num_sites, theta_df):
 
 def gamma_adj_reg_data(num_sites, gamma_df):
     # Get design matrix and its dimensions
-    X = gamma_df.iloc[:, 1:6].to_numpy()
+    X = gamma_df.iloc[:, :5].to_numpy()
     N, K = X.shape
 
     # Get grouped average matrix

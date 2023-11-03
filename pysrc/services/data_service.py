@@ -28,19 +28,23 @@ def load_site_data(
     z_2017 /= norm_fac
     forestArea_2017_ha /= norm_fac
 
-    # Read municipal geojson files
-    municipal_theta_df = gpd.read_file(data_folder / "data_theta.geojson")
-    municipal_gamma_df = gpd.read_file(data_folder / "data_gamma.geojson")
-    id_data = gpd.read_file(data_folder / f"id_{num_sites}.geojson")
+    # Read municipal level data
+    municipal_theta_df = gpd.read_file(data_folder / "muni_data_theta.geojson")
+    municipal_gamma_df = gpd.read_file(data_folder / "muni_data_gamma.geojson")
 
-    # Transform into site level data
-    site_theta_2017 = gpd.overlay(id_data, municipal_theta_df, how="intersection")
+    # Read site level data
+    site_theta_2017 = gpd.read_file(
+        data_folder / f"site_{num_sites}_data_theta.geojson"
+    )
+    site_gamma_2017 = gpd.read_file(
+        data_folder / f"site_{num_sites}_data_gamma.geojson"
+    )
+
+    # Remove geometries
     site_theta_2017_df = site_theta_2017.iloc[:, :-1]
-
-    site_gamma_2017 = gpd.overlay(id_data, municipal_gamma_df, how="intersection")
     site_gamma_2017_df = site_gamma_2017.iloc[:, :-1]
 
-    print(f"Data successfully loaded from '{file_path}'")
+    print(f"Data successfully loaded from {data_folder}")
     return (
         zbar_2017,
         gamma,
