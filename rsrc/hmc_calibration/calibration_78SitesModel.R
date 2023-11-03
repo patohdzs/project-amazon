@@ -63,7 +63,7 @@ raster.78Sites <- terra::subset(raster.78Sites, c("amazonBiomeArea_ha_78Sites", 
                                                   "forestArea_2017_ha_78Sites", "agriculturalUseArea_2017_ha_78Sites", "otherArea_2017_ha_78Sites"))
 
 # aggregate from 1000 sites to 43
-raster.78Sites <- terra::aggregate(raster.78Sites, fact = 6, fun = sum, na.rm = T)
+raster.78Sites <- terra::aggregate(raster.78Sites, fact = 4, fun = sum, na.rm = T)
 
 # extract variables as polygons, transform to sf, and project data for faster spatial manipulation
 calibration.78SitesModel <- terra::as.polygons(raster.78Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
@@ -360,7 +360,7 @@ aux.theta.2017 <-
   site.theta.2017 %>%
   dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
-  dplyr::summarise(theta2017_78Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = zbar_2017_muni, na.rm = T),
+  dplyr::summarise(theta2017_78Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = muni_site_area, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),
                    d_theta_winsorized_2017 = min(d_theta_winsorized_2017, na.rm = T))
 
