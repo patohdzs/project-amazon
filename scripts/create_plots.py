@@ -22,11 +22,11 @@ sns.set(font_scale=1.2)
 parser = argparse.ArgumentParser(description="parameter settings")
 
 parser.add_argument("--model", type=str, default="full_model_v3")
-parser.add_argument("--xi", type=float, default=1.0)
-parser.add_argument("--pf", type=float, default=25)
-parser.add_argument("--pa", type=float, default=44.75)
+parser.add_argument("--xi", type=float, default=2.0)
+parser.add_argument("--pf", type=float, default=7.02)
+parser.add_argument("--pa", type=float, default=42.03)
 parser.add_argument("--weight", type=float, default=0.25)
-parser.add_argument("--sitenum", type=int, default=10)
+parser.add_argument("--sitenum", type=int, default=78)
 parser.add_argument("--timehzn", type=int, default=200)
 
 # Parse arguments
