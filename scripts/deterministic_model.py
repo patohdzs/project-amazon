@@ -33,11 +33,19 @@ args = parser.parse_args()
 # Computing carbon absorbed in start period
 x0_vals = gamma * forestArea_2017_ha
 
-gurobi.solve_planner_problem(
+(
+    sol_val_X,
+    sol_val_Up,
+    sol_val_Um,
+    sol_val_Z,
+    sol_val_Ua,
+) = gurobi.solve_planner_problem(
     T=args.timehzn,
     theta=theta,
     gamma=gamma,
     x0=x0_vals,
     zbar=zbar_2017,
     z0=z_2017,
+    pe=args.pf,
+    pa=args.pa,
 )
