@@ -188,7 +188,7 @@ def solve_with_casadi(
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = solve_outer_optimization_problem(
+        ) = solve_planner_problem(
             N=N,
             dt=dt,
             ds_vect=ds_vect,
@@ -376,7 +376,7 @@ def solve_with_casadi(
     return results
 
 
-def solve_outer_optimization_problem(
+def solve_planner_problem(
     N,
     dt,
     ds_vect,
