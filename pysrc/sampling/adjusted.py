@@ -274,6 +274,7 @@ def sample(
                 "sol_val_Up_tracker": sol_val_Up_tracker,
                 "sol_val_Um_tracker": sol_val_Um_tracker,
                 "sol_val_Z_tracker": sol_val_Z_tracker,
+                "fit_tracker": fit_tracker,
                 "coe_ensembles": coe_ensembles,
             }
         )
