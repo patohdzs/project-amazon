@@ -51,10 +51,6 @@ def baseline_hyperparams(municipal_df, var):
         # Get theta regression data
         y, X, W = _theta_muni_reg_data(municipal_df)
 
-        # Applying WLS weights
-        y = W @ y
-        X = W @ X
-
     elif var == "gamma":
         # Get gamma regression data
         y, X = _gamma_muni_reg_data(municipal_df)
