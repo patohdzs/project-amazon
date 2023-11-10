@@ -34,6 +34,6 @@ generated quantities {
                                                 sigma_sq_gamma * inv_Q_gamma);
 
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
+  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta + sigma_sq_theta/2)) / pa_2017;
+  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma + sigma_sq_gamma/2);
 }

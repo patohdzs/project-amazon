@@ -1,5 +1,5 @@
 functions {
-  real log_density_function(vector gamma, vector theta, int T, int S,
+  real log_value(vector gamma, vector theta, int T, int S,
                             real alpha, matrix sol_val_X, vector sol_val_Ua,
                             matrix sol_val_Up, vector zbar_2017,
                             vector forestArea_2017_ha, vector alpha_p_Adym,
@@ -93,8 +93,8 @@ parameters {
 }
 transformed parameters {
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
+  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta + sigma_sq_theta/2)) / pa_2017;
+  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma + sigma_sq_gamma/2);
 }
 model {
   // Hierarchical priors
@@ -105,7 +105,7 @@ model {
   beta_gamma ~ multi_normal(m_gamma, sigma_sq_gamma * inv_Q_gamma);
 
   // Value function
-  target += log_density_function(gamma, theta, T, S, alpha, sol_val_X,
+  target += log_value(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
                                  forestArea_2017_ha, alpha_p_Adym, Bdym,
                                  ds_vect, zeta, xi, kappa, pa, pf);
