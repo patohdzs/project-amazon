@@ -5,7 +5,7 @@ import time
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from ..optimization.casadi import solve_outer_optimization_problem
+from ..optimization import gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -22,8 +22,8 @@ def sample(
     num_sites,
     T,
     N=200,
-    delta_t=0.02,
     alpha=0.045007414,
+    delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
@@ -37,8 +37,8 @@ def sample(
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    # Read model code
-    stan_model = CmdStanModel(
+    # Instantiate stan sampler
+    sampler = CmdStanModel(
         stan_file=stan_model_path(model_name) / "adjusted.stan",
         cpp_options={"STAN_THREADS": "true"},
         force_compile=True,
@@ -91,7 +91,7 @@ def sample(
     dt = T / N
 
     # Other placeholders!
-    ds_vect = np.exp(-delta_t * np.arange(N + 1) * dt)
+    ds_vect = np.exp(-delta * np.arange(N + 1) * dt)
     ds_vect = np.reshape(ds_vect, (ds_vect.size, 1))
 
     # Results dictionary
@@ -100,7 +100,7 @@ def sample(
         tol=tol,
         T=T,
         N=N,
-        delta_t=delta_t,
+        delta_t=delta,
         alpha=alpha,
         kappa=kappa,
         pf=pf,
@@ -141,19 +141,19 @@ def sample(
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = solve_outer_optimization_problem(
-            N=N,
+        ) = gurobi.solve_planner_problem(
+            T=T,
+            theta=theta_vals,
+            gamma=gamma_vals,
+            x0=x0_vals,
+            z0=z_2017,
+            zbar=zbar_2017,
             dt=dt,
-            ds_vect=ds_vect,
-            theta_vals=theta_vals,
-            gamma_vals=gamma_vals,
-            x0_vals=x0_vals,
-            zbar_2017=zbar_2017,
-            site_z_vals=z_2017,
-            alpha=alpha,
-            kappa=kappa,
-            pf=pf,
+            pe=pf,
             pa=pa,
+            alpha=alpha,
+            delta=delta,
+            kappa=kappa,
             zeta=zeta,
         )
 
@@ -192,7 +192,7 @@ def sample(
 
         # Sampling from adjusted distribution
         sampling_time = time.time()
-        fit = stan_model.sample(
+        fit = sampler.sample(
             data=model_data,
             **stan_kwargs,
         )
@@ -285,7 +285,7 @@ def sample(
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     stan_kwargs["iter_sampling"] = final_sample_size
-    fit = stan_model.sample(
+    fit = sampler.sample(
         data=model_data,
         **stan_kwargs,
     )
