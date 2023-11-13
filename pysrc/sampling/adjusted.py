@@ -6,6 +6,7 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..optimization import gurobi
+from ..optimization import gams
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -141,7 +142,7 @@ def sample(
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = gurobi.solve_planner_problem(
+        ) = gams.solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,

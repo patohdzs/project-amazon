@@ -5,7 +5,7 @@ from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_di
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
-
+parser.add_argument("--action_name", type=str, default="test")
 parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--xi", type=float, default=2.0)
 parser.add_argument("--pf", type=float, default=6.5)
