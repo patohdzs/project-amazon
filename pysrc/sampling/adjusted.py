@@ -210,28 +210,25 @@ def sample(
         theta_coe_adj_samples = fit.stan_variable("beta_theta")
         gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
 
-        uncertainty_adj_samples = np.concatenate(
-            (theta_adj_samples, gamma_adj_samples), axis=1
-        )
+        adj_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
 
-        uncertainty_coe_adj_samples = np.concatenate(
+        adj_coe_samples = np.concatenate(
             (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
         )
 
         # Update ensemble/tracker
-        collected_ensembles.update({cntr: uncertainty_adj_samples.copy()})
-        coe_ensembles.update({cntr: uncertainty_coe_adj_samples.copy()})
+        collected_ensembles.update({cntr: adj_samples.copy()})
+        coe_ensembles.update({cntr: adj_coe_samples.copy()})
 
         print(f"Parameters from last iteration: {uncertain_vals_old}\n")
         print(
             f"""Parameters from current iteration:
-            {np.mean(uncertainty_adj_samples, axis=0)}\n"""
+            {np.mean(adj_samples, axis=0)}\n"""
         )
 
         # Compute exponentially-smoothened new params
         uncertain_vals = (
-            weight * np.mean(uncertainty_adj_samples, axis=0)
-            + (1 - weight) * uncertain_vals_old
+            weight * np.mean(adj_samples, axis=0) + (1 - weight) * uncertain_vals_old
         )
 
         uncertain_vals_tracker.append(uncertain_vals.copy())
