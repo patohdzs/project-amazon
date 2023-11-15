@@ -163,8 +163,8 @@ ggplot2::ggsave(filename = here::here("results/calibration/1043SitesModel/map_x2
 
 # gamma_1043Sites
 # Define breaks and labels
-breaks <- c(212, 380, 425, 530, 730, 1090)
-labels <- c("212-380", "380-425", "425-530", "530-730", "730-1090")
+breaks <- c(200, 380, 425, 530, 730, 1100)
+labels <- c("200-380", "380-425", "425-530", "530-730", "730-1100")
 
 # Modify your plotting code
 ggplot2::ggplot(data = calibration.1043SitesModel) +
