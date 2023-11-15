@@ -10,7 +10,7 @@
 # > NOTES
 # 1: -
 
-
+conflicts_prefer(dplyr::filter)
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ calibration.78SitesModel$id <- 1:nrow(calibration.78SitesModel)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
+load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
 
 muniTheta.prepData<-muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
@@ -269,7 +269,7 @@ distance_data <-
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData.Rdata")
+load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
 
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
