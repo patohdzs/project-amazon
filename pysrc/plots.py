@@ -154,7 +154,7 @@ def agg_Z_trajectory(
     z_2017, zbar_2017, results: dict, num_sites: int, plots_dir: Path
 ) -> None:
     # Get delta_z
-    delta_z = results["sol_val_Z_tracker"][-1][:, :50]
+    delta_z = results["sol_val_Z_tracker"][-1][:, :200]
 
     # Sum zdot and add it to the z_2017
     z_2017 = z_2017.reshape(num_sites, 1)
@@ -162,7 +162,7 @@ def agg_Z_trajectory(
     cum_delta_z = np.cumsum(delta_z, axis=1) + z_2017
 
     # Load deterministic z solved
-    z_det = results["sol_val_Z_tracker"][0][:, :50]
+    z_det = results["sol_val_Z_tracker"][0][:, :200]
     cumulative_det_z = np.cumsum(z_det, axis=1) + z_2017
 
     # Add t=0 for hmc solution
@@ -171,16 +171,16 @@ def agg_Z_trajectory(
 
     pct_delta_z = np.sum(cum_delta_z, axis=0) / (np.sum(zbar_2017)) * 100
     pct_z_det = np.sum(cumulative_det_z, axis=0) / (np.sum(zbar_2017)) * 100
-    time = np.arange(1, 51)
+    time = np.arange(1, 201)
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 
-    plt.plot(time, pct_z_det[:50], label="deterministic")
-    plt.plot(time, pct_delta_z[:50], label=r"adjusted")
+    plt.plot(time, pct_z_det[:200], label="deterministic")
+    plt.plot(time, pct_delta_z[:200], label=r"adjusted")
 
     plt.xlabel("Time period")
     plt.ylabel("Z(%)")
-    plt.title("Aggregate percentage Z over 50 years")
+    plt.title("Aggregate percentage Z over 200 years")
 
     # Display the legend
     plt.legend()

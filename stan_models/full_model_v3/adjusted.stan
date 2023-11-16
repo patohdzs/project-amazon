@@ -43,34 +43,45 @@ functions {
 
     return log_density_val;
   }
+  real planner_obj(int T, int S, vector theta,
+                    matrix z, matrix x, vector w, real delta,
+                    real dt, real pe, real pa,
+                    real kappa, real zeta, real xi) {
+    real result = 0;
+
+    for (t in 1 : T) {
+      if (t < T) {
+        real exp_term = exp(-delta * (t * dt - dt));
+        real pe_term = -pe * sum(kappa * z[t, :] - (x[t + 1, :] - x[t, :]) / dt);
+        real pa_term = pa * sum(theta .* z[t, :]');
+        real zeta_term = -zeta / 2 * w[t]^2;
+
+        result += exp_term * (pe_term + pa_term + zeta_term) * dt;
+      }
+    }
+
+    return (-1.0 / xi) * result;
+  }
 }
 data {
-  int<lower=0> T; // Time horizon
-  int<lower=0> S; // Number of sites
-  real<lower=0> alpha; // Mean reversion coefficient
-  matrix[S + 2, T + 1] sol_val_X; // Sate trajectories
-  vector[T] sol_val_Ua; // Squared total control adjustments; dimensions T x 1
-  matrix[S, T] sol_val_Up; // U control
-  vector[S] zbar_2017; // z_bar in 2017
-  vector[S] forestArea_2017_ha; // forrest area in 2017
-  vector[T] alpha_p_Adym;
-  matrix[T, T] Bdym;
-  vector[T + 1] ds_vect; // Time discounting vector
-  real zeta; // Penalty on adjustment costs
-  real xi; // Penalty on prior-posterior KL div
-  real kappa; // Effect of cattle farming on emissions
-  real<lower=0> pa; // Price of cattle output
-  real<lower=0> pf; // Price of carbon emission transfers
+  int<lower=0> T;
+  int<lower=0> S;
+  matrix[T + 1, S] z;
+  matrix[T + 1, S] x;
+  vector[T + 1] w;
+  real delta;
+  real<lower=0> dt;
+  real<lower=0> pe;
+  real<lower=0> pa;
+  real kappa;
+  real zeta;
+  real xi;
 
   int<lower=0> N_theta;
-  int<lower=0> N_gamma;
   int<lower=0> K_theta; // Number of coefficients on theta
-  int<lower=0> K_gamma; // Number of coefficients on gamma
 
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
-  matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
-  matrix[S, N_gamma] G_gamma; // Groups for gamma
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
@@ -78,43 +89,28 @@ data {
   vector[K_theta] m_theta;
   real<lower=0> a_theta;
   real<lower=0> b_theta;
-
-  cov_matrix[K_gamma] inv_Q_gamma;
-  vector[K_gamma] m_gamma;
-  real<lower=0> a_gamma;
-  real<lower=0> b_gamma;
 }
 transformed data {
   matrix[K_theta, K_theta] L_theta = cholesky_decompose(inv_Q_theta);
-  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(inv_Q_gamma);
 }
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta
   vector[K_theta] alpha_theta;
-
-  real<lower=0> sigma_sq_gamma; // Variance of log_gamma
-  vector[K_gamma] alpha_gamma;
 }
 transformed parameters {
   // Coefs
   vector[K_theta] beta_theta = m_theta + sqrt(sigma_sq_theta) * L_theta * alpha_theta;
-  vector[K_gamma] beta_gamma = m_gamma + sqrt(sigma_sq_gamma) * L_gamma * alpha_gamma;
 
   // Grouped average
   vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta + sigma_sq_theta/2)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma + sigma_sq_gamma/2);
 }
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
 
   alpha_theta ~ std_normal();
-  alpha_gamma ~ std_normal();
 
   // Value function
-  target += log_value(gamma, theta, T, S, alpha, sol_val_X,
-                                 sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forestArea_2017_ha, alpha_p_Adym, Bdym,
-                                 ds_vect, zeta, xi, kappa, pa, pf);
+  target += planner_obj(T, S, theta, z, x, w, delta,
+                        dt, pe, pa, kappa, zeta, xi);
 }

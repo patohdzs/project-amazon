@@ -92,12 +92,12 @@ def solve_planner_problem(
     X_agg = X.sum(axis=1)
     X_agg = X_agg.reshape(X_agg.size, 1)
 
-    sol_val_Ua = (w[:-1] ** 2).T.flatten()
-    sol_val_X = np.concatenate((Z.T, X_agg.T, np.ones((1, Z.T.shape[1]))))
+    (w[:-1] ** 2).T.flatten()
+    np.concatenate((Z.T, X_agg.T, np.ones((1, Z.T.shape[1]))))
     sol_val_Up = U[:-1, :].T
     sol_val_Um = V[:-1, :].T
-    sol_val_Z = sol_val_Up - sol_val_Um
-    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
+    sol_val_Up - sol_val_Um
+    return (Z, X, U, V, w)
 
 
 def _planner_obj(model):

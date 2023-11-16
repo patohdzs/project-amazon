@@ -6,7 +6,7 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..optimization import gurobi
-from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
+from ..sampling import theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
 from ..services.file_service import stan_model_path
@@ -58,8 +58,8 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Save starting params
-    uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
-    uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
+    uncertain_vals = theta_vals.copy()
+    uncertain_vals_old = theta_vals.copy()
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
@@ -85,7 +85,7 @@ def sample(
     Bdym = (1 - alpha) ** (arr - 1)
     Bdym[Bdym > 1] = 0.0
     Adym = np.arange(1, T + 1)
-    alpha_p_Adym = np.power(1 - alpha, Adym)
+    np.power(1 - alpha, Adym)
 
     # Time step
     dt = T / N
@@ -126,7 +126,6 @@ def sample(
 
         # Unpacking uncertain values
         theta_vals = uncertain_vals[:num_sites].copy()
-        gamma_vals = uncertain_vals[num_sites:].copy()
 
         print(f"Theta: {theta_vals}\n")
         print(f"Gamma: {gamma_vals}\n")
@@ -135,13 +134,7 @@ def sample(
         x0_vals = gamma_vals * forestArea_2017_ha
 
         # Solve outer optimization problem
-        (
-            sol_val_X,
-            sol_val_Up,
-            sol_val_Um,
-            sol_val_Z,
-            sol_val_Ua,
-        ) = gurobi.solve_planner_problem(
+        (Z, X, U, V, w) = gurobi.solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,
@@ -158,36 +151,30 @@ def sample(
         )
 
         # Update trackers
-        sol_val_X_tracker.append(sol_val_X)
-        sol_val_Ua_tracker.append(sol_val_Ua)
-        sol_val_Up_tracker.append(sol_val_Up)
-        sol_val_Um_tracker.append(sol_val_Um)
-        sol_val_Z_tracker.append(sol_val_Z)
+        sol_val_X_tracker.append(X)
+        sol_val_Ua_tracker.append(w)
+        sol_val_Up_tracker.append(U)
+        sol_val_Um_tracker.append(V)
+        sol_val_Z_tracker.append(Z)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
         model_data = dict(
             T=T,
             S=num_sites,
-            alpha=alpha,
-            sol_val_X=sol_val_X,
-            sol_val_Ua=sol_val_Ua,
-            sol_val_Up=sol_val_Up,
-            zbar_2017=zbar_2017,
-            forestArea_2017_ha=forestArea_2017_ha,
-            alpha_p_Adym=alpha_p_Adym,
-            Bdym=Bdym,
-            ds_vect=ds_vect.flatten(),
+            x=X,
+            z=Z,
+            w=w,
+            dt=dt,
+            pe=pf,
+            pa=pa,
+            delta=delta,
+            kappa=kappa,
             zeta=zeta,
             xi=xi,
-            kappa=kappa,
-            pa=pa,
             pa_2017=pa_2017,
-            pf=pf,
             **theta_adj_reg_data(num_sites, site_theta_df),
-            **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
-            **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
 
         # Sampling from adjusted distribution
@@ -205,16 +192,8 @@ def sample(
         sampling_time_tracker.append(sampling_time)
 
         # Extract samples
-        theta_adj_samples = fit.stan_variable("theta")
-        gamma_adj_samples = fit.stan_variable("gamma")
-        theta_coe_adj_samples = fit.stan_variable("beta_theta")
-        gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
-
-        adj_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
-
-        adj_coe_samples = np.concatenate(
-            (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
-        )
+        adj_samples = fit.stan_variable("theta")
+        adj_coe_samples = fit.stan_variable("beta_theta")
 
         # Update ensemble/tracker
         collected_ensembles.update({cntr: adj_samples.copy()})
@@ -289,15 +268,8 @@ def sample(
     )
 
     # Extract samples
-    theta_adj_samples = fit.stan_variable("theta")
-    gamma_adj_samples = fit.stan_variable("gamma")
-    theta_coe_adj_samples = fit.stan_variable("beta_theta")
-    gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
-
-    final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
-    final_samples_coe = np.concatenate(
-        (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
-    )
+    final_samples = fit.stan_variable("theta")
+    final_samples_coe = fit.stan_variable("beta_theta")
 
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
