@@ -6,7 +6,7 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..optimization import gurobi
-from ..sampling import theta_adj_reg_data
+from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
 from ..services.file_service import stan_model_path
@@ -58,8 +58,8 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Save starting params
-    uncertain_vals = theta_vals.copy()
-    uncertain_vals_old = theta_vals.copy()
+    uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
+    uncertain_vals_old = uncertain_vals.copy()
 
     # Collected Ensembles over all iterations; dictionary indexed by iteration number
     collected_ensembles = {}
@@ -162,19 +162,25 @@ def sample(
         model_data = dict(
             T=T,
             S=num_sites,
-            x=X,
             z=Z,
+            u=U,
+            v=V,
             w=w,
+            forest_area_2017=forestArea_2017_ha,
+            z_bar=zbar_2017,
             dt=dt,
             pe=pf,
             pa=pa,
+            alpha=alpha,
             delta=delta,
             kappa=kappa,
             zeta=zeta,
             xi=xi,
             pa_2017=pa_2017,
             **theta_adj_reg_data(num_sites, site_theta_df),
+            **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
+            **baseline_hyperparams(municipal_gamma_df, "gamma"),
         )
 
         # Sampling from adjusted distribution
@@ -187,13 +193,17 @@ def sample(
         print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
         print(fit.diagnose())
 
-        # Update fit and sampling time trackers
-        fit_tracker.append(fit.summary())
-        sampling_time_tracker.append(sampling_time)
-
         # Extract samples
-        adj_samples = fit.stan_variable("theta")
-        adj_coe_samples = fit.stan_variable("beta_theta")
+        theta_adj_samples = fit.stan_variable("theta")
+        gamma_adj_samples = fit.stan_variable("gamma")
+        theta_coe_adj_samples = fit.stan_variable("beta_theta")
+        gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+
+        adj_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
+
+        adj_coe_samples = np.concatenate(
+            (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
+        )
 
         # Update ensemble/tracker
         collected_ensembles.update({cntr: adj_samples.copy()})
@@ -268,8 +278,12 @@ def sample(
     )
 
     # Extract samples
-    final_samples = fit.stan_variable("theta")
-    final_samples_coe = fit.stan_variable("beta_theta")
+    final_samples = np.concatenate(
+        (fit.stan_variable("theta"), fit.stan_variable("gamma")), axis=1
+    )
+    final_samples_coe = np.concatenate(
+        (fit.stan_variable("beta_theta"), fit.stan_variable("beta_gamma")), axis=1
+    )
 
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
