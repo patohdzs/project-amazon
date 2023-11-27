@@ -293,7 +293,7 @@ muniTheta.prepData_filtered <- muniTheta.prepData %>%
 reg.cattleValueperHa.2017 <-
   muniTheta.prepData_filtered  %>%
   lm(formula = log(cattleSlaughter_valuePerHa_2017) ~  historical_precip+ historical_temp + I(historical_temp^2)
-     + lat+I(lat^2)+distance+cattleSlaughter_farmGatePrice_2017, na.action = na.exclude, weights = pasture_area_2017)
+     + lat+I(lat^2)+distance+log(cattleSlaughter_farmGatePrice_2017), na.action = na.exclude, weights = pasture_area_2017)
 
 # regression results
 summary(reg.cattleValueperHa.2017)
