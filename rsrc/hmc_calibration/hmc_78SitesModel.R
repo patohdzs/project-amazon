@@ -13,6 +13,7 @@
 conflicts_prefer(dplyr::filter)
 
 
+
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
@@ -116,12 +117,12 @@ muniTheta.prepData<-muniTheta.prepData %>%
 
 
 
-
 reg.gamma.2017 <-
   muniTheta.prepData  %>%
   lm(formula = log(co2e_ha_2017)  ~ log(historical_precip) + log(historical_temp) +log(lat)+log(lon), na.action = na.exclude)
 
 summary(reg.gamma.2017)
+
 
 
 muniTheta.prepData  <-   muniTheta.prepData %>%
@@ -340,14 +341,15 @@ muniTheta.prepData_filtered <- muniTheta.prepData %>%
 
 # cattle value per ha
 
-
 reg.cattleValueperHa.2017 <-
   muniTheta.prepData_filtered  %>%
   lm(formula = log(cattleSlaughter_valuePerHa_2017) ~  historical_precip+ historical_temp + I(historical_temp^2)
-     + lat+I(lat^2)+distance+cattleSlaughter_farmGatePrice_2017, na.action = na.exclude, weights = pasture_area_2017)
+     + lat+I(lat^2)+distance+log(cattleSlaughter_farmGatePrice_2017), na.action = na.exclude, weights = pasture_area_2017)
 
 # regression results
 summary(reg.cattleValueperHa.2017)
+
+
 
 # extract fitted values
 muniTheta.prepData <-

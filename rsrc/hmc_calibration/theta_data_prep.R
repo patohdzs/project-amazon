@@ -48,6 +48,7 @@ df <- muni_theta_prep_data %>%
     historical_temp_sq = historical_temp ^ 2,
     lat_sq = lat ^ 2,
     log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017),
+    log_cattle_price=log(cattle_price_2017),
     weights = pasture_area_2017
   ) %>%
   mutate(across(
@@ -57,7 +58,7 @@ df <- muni_theta_prep_data %>%
       historical_temp_sq,
       lat,
       lat_sq,
-      cattle_price_2017,
+      log_cattle_price,
       distance
     ),
     scale
@@ -69,7 +70,7 @@ df <- muni_theta_prep_data %>%
     historical_temp_sq,
     lat,
     lat_sq,
-    cattle_price_2017,
+    log_cattle_price,
     distance,
     zbar_2017_muni,
     log_cattleSlaughter_valuePerHa_2017,
