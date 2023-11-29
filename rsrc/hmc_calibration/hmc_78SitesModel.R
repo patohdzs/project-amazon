@@ -10,6 +10,7 @@
 # > NOTES
 # 1: -
 
+conflicts_prefer(dplyr::filter)
 
 
 
@@ -102,7 +103,7 @@ calibration.78SitesModel$id <- 1:nrow(calibration.78SitesModel)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
+load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
 
 muniTheta.prepData<-muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
@@ -116,12 +117,12 @@ muniTheta.prepData<-muniTheta.prepData %>%
 
 
 
-
 reg.gamma.2017 <-
   muniTheta.prepData  %>%
   lm(formula = log(co2e_ha_2017)  ~ log(historical_precip) + log(historical_temp) +log(lat)+log(lon), na.action = na.exclude)
 
 summary(reg.gamma.2017)
+
 
 
 muniTheta.prepData  <-   muniTheta.prepData %>%
@@ -269,7 +270,7 @@ distance_data <-
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData.Rdata")
+load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
 
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
@@ -340,14 +341,15 @@ muniTheta.prepData_filtered <- muniTheta.prepData %>%
 
 # cattle value per ha
 
-
 reg.cattleValueperHa.2017 <-
   muniTheta.prepData_filtered  %>%
   lm(formula = log(cattleSlaughter_valuePerHa_2017) ~  historical_precip+ historical_temp + I(historical_temp^2)
-     + lat+I(lat^2)+distance+cattleSlaughter_farmGatePrice_2017, na.action = na.exclude, weights = pasture_area_2017)
+     + lat+I(lat^2)+distance+log(cattleSlaughter_farmGatePrice_2017), na.action = na.exclude, weights = pasture_area_2017)
 
 # regression results
 summary(reg.cattleValueperHa.2017)
+
+
 
 # extract fitted values
 muniTheta.prepData <-
