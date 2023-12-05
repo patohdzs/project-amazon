@@ -84,22 +84,14 @@ data {
   real<lower=0> a_gamma;
   real<lower=0> b_gamma;
 }
-transformed data {
-  matrix[K_theta, K_theta] L_theta = cholesky_decompose(inv_Q_theta);
-  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(inv_Q_gamma);
-}
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta
-  vector[K_theta] alpha_theta;
+  vector[K_theta] beta_theta; // Coefficients on theta
 
   real<lower=0> sigma_sq_gamma; // Variance of log_gamma
-  vector[K_gamma] alpha_gamma;
+  vector[K_gamma] beta_gamma; // Coefficients on gamma
 }
 transformed parameters {
-  // Coefs
-  vector[K_theta] beta_theta = m_theta + sqrt(sigma_sq_theta) * L_theta * alpha_theta;
-  vector[K_gamma] beta_gamma = m_gamma + sqrt(sigma_sq_gamma) * L_gamma * alpha_gamma;
-
   // Grouped average
   vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
   vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
@@ -107,10 +99,11 @@ transformed parameters {
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
+  beta_theta ~ multi_normal(m_theta, sigma_sq_theta * inv_Q_theta);
 
-  alpha_theta ~ std_normal();
-  alpha_gamma ~ std_normal();
+  sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
+  beta_gamma ~ multi_normal(m_gamma, sigma_sq_gamma * inv_Q_gamma);
+
   // Value function
   target += log_value(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
