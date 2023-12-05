@@ -47,7 +47,7 @@ with open(output_dir / "results.pcl", "rb") as f:
     zbar_2017,
     gamma,
     z_2017,
-    forestArea_2017_ha,
+    forest_area_2017,
     theta,
     site_theta_2017_df,
     site_gamma_2017_df,

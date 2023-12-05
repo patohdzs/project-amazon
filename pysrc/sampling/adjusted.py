@@ -49,7 +49,7 @@ def sample(
         zbar_2017,
         gamma_vals,
         z_2017,
-        forestArea_2017_ha,
+        forest_area_2017,
         theta_vals,
         site_theta_df,
         site_gamma_df,
@@ -132,7 +132,7 @@ def sample(
         print(f"Gamma: {gamma_vals}\n")
 
         # Computing carbon absorbed in start period
-        x0_vals = gamma_vals * forestArea_2017_ha
+        x0_vals = gamma_vals * forest_area_2017
 
         # Solve outer optimization problem
         (
@@ -174,7 +174,7 @@ def sample(
             sol_val_Ua=sol_val_Ua,
             sol_val_Up=sol_val_Up,
             zbar_2017=zbar_2017,
-            forestArea_2017_ha=forestArea_2017_ha,
+            forest_area_2017=forest_area_2017,
             alpha_p_Adym=alpha_p_Adym,
             Bdym=Bdym,
             ds_vect=ds_vect.flatten(),

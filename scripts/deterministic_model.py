@@ -22,7 +22,7 @@ args = parser.parse_args()
     zbar_2017,
     gamma,
     z_2017,
-    forestArea_2017_ha,
+    forest_area_2017,
     theta,
     _,
     _,
@@ -31,7 +31,7 @@ args = parser.parse_args()
 ) = load_site_data(args.sitenum)
 
 # Computing carbon absorbed in start period
-x0_vals = gamma * forestArea_2017_ha
+x0_vals = gamma * forest_area_2017
 
 (
     sol_val_X,

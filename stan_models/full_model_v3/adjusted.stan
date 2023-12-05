@@ -2,11 +2,11 @@ functions {
   real log_value(vector gamma, vector theta, int T, int S,
                             real alpha, matrix sol_val_X, vector sol_val_Ua,
                             matrix sol_val_Up, vector zbar_2017,
-                            vector forestArea_2017_ha, vector alpha_p_Adym,
+                            vector forest_area_2017, vector alpha_p_Adym,
                             matrix Bdym, vector ds_vect, real zeta, real xi,
                             real kappa, real pa, real pf) {
     // Carbon captured at time zero
-    real x0 = (gamma' * forestArea_2017_ha);
+    real x0 = (gamma' * forest_area_2017);
 
     // Aggregate carbon captured
     vector[T] X_zero = x0 * rep_vector(1.0, T);
@@ -52,7 +52,7 @@ data {
   vector[T] sol_val_Ua; // Squared total control adjustments; dimensions T x 1
   matrix[S, T] sol_val_Up; // U control
   vector[S] zbar_2017; // z_bar in 2017
-  vector[S] forestArea_2017_ha; // forrest area in 2017
+  vector[S] forest_area_2017; // forrest area in 2017
   vector[T] alpha_p_Adym;
   matrix[T, T] Bdym;
   vector[T + 1] ds_vect; // Time discounting vector
@@ -114,6 +114,6 @@ model {
   // Value function
   target += log_value(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forestArea_2017_ha, alpha_p_Adym, Bdym,
+                                 forest_area_2017, alpha_p_Adym, Bdym,
                                  ds_vect, zeta, xi, kappa, pa, pf);
 }
