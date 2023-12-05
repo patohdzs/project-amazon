@@ -7,7 +7,7 @@ from pysrc.services.file_service import plots_dir_path
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="beta_model")
+parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--sitenum", type=int, default=10)
 
 # Parse arguments
