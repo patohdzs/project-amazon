@@ -21,12 +21,12 @@ def load_site_data(
     zbar_2017 = df[f"zbar_2017_{num_sites}Sites"].to_numpy()
     theta = df[f"theta_{num_sites}Sites"].to_numpy()
     gamma = df[f"gamma_{num_sites}Sites"].to_numpy()
-    forestArea_2017_ha = df[f"forestArea_2017_ha_{num_sites}Sites"].to_numpy()
+    forest_area_2017 = df[f"forestArea_2017_ha_{num_sites}Sites"].to_numpy()
 
     # Normalize Z data
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
-    forestArea_2017_ha /= norm_fac
+    forest_area_2017 /= norm_fac
 
     # Read municipal level data
     municipal_theta_df = gpd.read_file(data_folder / "muni_data_theta.geojson")
@@ -49,7 +49,7 @@ def load_site_data(
         zbar_2017,
         gamma,
         z_2017,
-        forestArea_2017_ha,
+        forest_area_2017,
         theta,
         site_theta_2017_df,
         site_gamma_2017_df,

@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description="parameter settings")
 
 parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--xi", type=float, default=2.0)
-parser.add_argument("--pf", type=float, default=6.5)
+parser.add_argument("--pf", type=float, default=21.5)
 parser.add_argument("--pa", type=float, default=42.03)
 parser.add_argument("--weight", type=float, default=0.25)
 parser.add_argument("--sitenum", type=int, default=78)
@@ -47,7 +47,7 @@ with open(output_dir / "results.pcl", "rb") as f:
     zbar_2017,
     gamma,
     z_2017,
-    forestArea_2017_ha,
+    forest_area_2017,
     theta,
     site_theta_2017_df,
     site_gamma_2017_df,
