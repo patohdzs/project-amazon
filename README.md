@@ -34,12 +34,17 @@
 python -m venv venv
 source venv/bin/activate
 ```
-2. Install dependencies
+2. Install python dependencies
 ```
 python -m pip install -e '.[all]'
 ```
 
-3. Install pre-commit hooks (required for contributors)
+3. Install Stan
+```
+install_cmdstan --overwrite
+```
+
+4. Install pre-commit hooks (required for contributors)
 ```
 pre-commit install
 ```
