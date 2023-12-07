@@ -6,6 +6,7 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..optimization import gurobi
+from ..optimization import gams
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -21,6 +22,7 @@ def sample(
     weight,
     num_sites,
     T,
+    opt_method="gurobi",
     N=200,
     alpha=0.045007414,
     delta=0.02,
@@ -31,7 +33,7 @@ def sample(
     max_iter=20000,
     tol=0.001,
     final_sample_size=5_000,
-    **stan_kwargs,
+    **stan_kwargs
 ):
     # Create the output directory
     if not os.path.isdir(output_dir):
@@ -134,28 +136,59 @@ def sample(
         # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forest_area_2017
 
-        # Solve outer optimization problem
-        (
-            sol_val_X,
-            sol_val_Up,
-            sol_val_Um,
-            sol_val_Z,
-            sol_val_Ua,
-        ) = gurobi.solve_planner_problem(
-            T=T,
-            theta=theta_vals,
-            gamma=gamma_vals,
-            x0=x0_vals,
-            z0=z_2017,
-            zbar=zbar_2017,
-            dt=dt,
-            pe=pf,
-            pa=pa,
-            alpha=alpha,
-            delta=delta,
-            kappa=kappa,
-            zeta=zeta,
-        )
+        if opt_method == "gurobi":
+
+            # Solve outer optimization problem
+            (
+                sol_val_X,
+                sol_val_Up,
+                sol_val_Um,
+                sol_val_Z,
+                sol_val_Ua,
+            ) = gurobi.solve_planner_problem(
+                T=T,
+                theta=theta_vals,
+                gamma=gamma_vals,
+                x0=x0_vals,
+                z0=z_2017,
+                zbar=zbar_2017,
+                dt=dt,
+                pe=pf,
+                pa=pa,
+                alpha=alpha,
+                delta=delta,
+                kappa=kappa,
+                zeta=zeta,
+            )
+            print("gurobi")
+            
+        elif opt_method == "gams":
+
+            (
+                sol_val_X,
+                sol_val_Up,
+                sol_val_Um,
+                sol_val_Z,
+                sol_val_Ua,
+            ) = gams.solve_planner_problem(
+                T=T,
+                theta=theta_vals,
+                gamma=gamma_vals,
+                x0=x0_vals,
+                z0=z_2017,
+                zbar=zbar_2017,
+                dt=dt,
+                pe=pf,
+                pa=pa,
+                alpha=alpha,
+                delta=delta,
+                kappa=kappa,
+                zeta=zeta,
+            )
+            print("gams")
+            
+        else:
+            print("Optimization method error")
 
         # Update trackers
         sol_val_X_tracker.append(sol_val_X)
