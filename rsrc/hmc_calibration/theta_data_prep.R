@@ -45,10 +45,10 @@ muni_theta_prep_data <- muni_theta_prep_data %>%
 df <- muni_theta_prep_data %>%
   mutate(
     X1 = 1,
-    historical_temp_sq = historical_temp ^ 2,
-    lat_sq = lat ^ 2,
+    historical_temp_sq = historical_temp^2,
+    lat_sq = lat^2,
     log_cattleSlaughter_valuePerHa_2017 = log(cattleSlaughter_valuePerHa_2017),
-    log_cattle_price=log(cattle_price_2017),
+    log_cattle_price = log(cattle_price_2017),
     weights = pasture_area_2017
   ) %>%
   mutate(across(
@@ -79,9 +79,10 @@ df <- muni_theta_prep_data %>%
 
 # Write output
 st_write(df,
-         "data/hmc/muni_data_theta.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE)
+  "data/hmc/muni_data_theta.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
 
 
 for (n in list(10, 24, 40, 78)) {
@@ -101,5 +102,4 @@ for (n in list(10, 24, 40, 78)) {
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
-
 }

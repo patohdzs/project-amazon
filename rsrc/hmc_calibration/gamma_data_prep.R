@@ -21,17 +21,20 @@ df <- muniTheta.prepData %>%
     log_lat = scale(log_lat),
     log_lon = scale(log_lon)
   ) %>%
-  select(X1,
-         log_historical_precip,
-         log_historical_temp,
-         log_lat,
-         log_lon,
-         log_co2e_ha_2017)
+  select(
+    X1,
+    log_historical_precip,
+    log_historical_temp,
+    log_lat,
+    log_lon,
+    log_co2e_ha_2017
+  )
 
 st_write(df,
-         "data/hmc/muni_data_gamma.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE)
+  "data/hmc/muni_data_gamma.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
 
 
 for (n in list(10, 24, 40, 78)) {
@@ -51,5 +54,4 @@ for (n in list(10, 24, 40, 78)) {
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
-
 }
