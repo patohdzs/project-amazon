@@ -57,6 +57,13 @@ def sample(
         municipal_gamma_df,
     ) = load_site_data(num_sites)
 
+    theta_vals /= 4
+    gamma_vals /= 4
+    alpha /= 4
+    delta /= 4
+    kappa /= 4
+    zeta *= 4
+
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()

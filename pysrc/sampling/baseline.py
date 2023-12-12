@@ -57,6 +57,7 @@ def baseline_hyperparams(municipal_df, var):
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
+    y *= 0.25
     inv_Q = np.linalg.inv(X.T @ X)
     m = inv_Q @ X.T @ y
     a = (X.shape[0]) / 2
