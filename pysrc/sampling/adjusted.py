@@ -75,23 +75,6 @@ def sample(
     sampling_time_tracker = []
     fit_tracker = []
 
-    # Create dynamics matrices
-    arr = np.cumsum(
-        np.triu(np.ones((T, T))),
-        axis=1,
-    ).T
-    Bdym = (1 - alpha) ** (arr - 1)
-    Bdym[Bdym > 1] = 0.0
-    Adym = np.arange(1, T + 1)
-    alpha_p_Adym = np.power(1 - alpha, Adym)
-
-    # Time step
-    dt = T / N
-
-    # Other placeholders!
-    ds_vect = np.exp(-delta * np.arange(N + 1) * dt)
-    ds_vect = np.reshape(ds_vect, (ds_vect.size, 1))
-
     # Results dictionary
     results = dict(
         num_sites=num_sites,
@@ -149,7 +132,7 @@ def sample(
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
-            dt=dt,
+            dt=T / N,
             pe=pf,
             pa=pa,
             alpha=alpha,
@@ -169,9 +152,6 @@ def sample(
             alpha=alpha,
             zbar_2017=zbar_2017,
             forest_area_2017=forest_area_2017,
-            alpha_p_Adym=alpha_p_Adym,
-            Bdym=Bdym,
-            ds_vect=ds_vect.flatten(),
             zeta=zeta,
             xi=xi,
             kappa=kappa,
@@ -179,6 +159,7 @@ def sample(
             pa_2017=pa_2017,
             pf=pf,
             **solution,
+            **_dynamics_matrices(T, T / N, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
@@ -301,3 +282,20 @@ def sample(
     print(f"Results saved to {saveto}")
 
     return results
+
+
+def _dynamics_matrices(T, dt, alpha, delta):
+    # Create dynamics matrices
+    arr = np.cumsum(
+        np.triu(np.ones((T, T))),
+        axis=1,
+    ).T
+    Bdym = (1 - alpha) ** (arr - 1)
+    Bdym[Bdym > 1] = 0.0
+    Adym = np.arange(1, T + 1)
+    alpha_p_Adym = np.power(1 - alpha, Adym)
+
+    # Other placeholders!
+    ds_vect = np.exp(-delta * np.arange(T + 1) * dt)
+    ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
+    return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}
