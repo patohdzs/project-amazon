@@ -71,11 +71,7 @@ def sample(
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
     pct_error_tracker = []
-    sol_val_X_tracker = []
-    sol_val_Ua_tracker = []
-    sol_val_Up_tracker = []
-    sol_val_Um_tracker = []
-    sol_val_Z_tracker = []
+    solution_tracker = []
     sampling_time_tracker = []
     fit_tracker = []
 
@@ -146,13 +142,7 @@ def sample(
         else:
             raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
 
-        (
-            sol_val_X,
-            sol_val_Up,
-            sol_val_Um,
-            sol_val_Z,
-            sol_val_Ua,
-        ) = solve_planner_problem(
+        solution = solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,
@@ -169,11 +159,7 @@ def sample(
         )
 
         # Update trackers
-        sol_val_X_tracker.append(sol_val_X)
-        sol_val_Ua_tracker.append(sol_val_Ua)
-        sol_val_Up_tracker.append(sol_val_Up)
-        sol_val_Um_tracker.append(sol_val_Um)
-        sol_val_Z_tracker.append(sol_val_Z)
+        solution_tracker.append(solution)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
@@ -181,9 +167,6 @@ def sample(
             T=T,
             S=num_sites,
             alpha=alpha,
-            sol_val_X=sol_val_X,
-            sol_val_Ua=sol_val_Ua,
-            sol_val_Up=sol_val_Up,
             zbar_2017=zbar_2017,
             forest_area_2017=forest_area_2017,
             alpha_p_Adym=alpha_p_Adym,
@@ -195,6 +178,7 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pf,
+            **solution,
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
@@ -280,11 +264,7 @@ def sample(
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
                 "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
-                "sol_val_X_tracker": sol_val_X_tracker,
-                "sol_val_Ua_tracker": sol_val_Ua_tracker,
-                "sol_val_Up_tracker": sol_val_Up_tracker,
-                "sol_val_Um_tracker": sol_val_Um_tracker,
-                "sol_val_Z_tracker": sol_val_Z_tracker,
+                "solution_tracker": solution_tracker,
                 "coe_ensembles": coe_ensembles,
             }
         )
