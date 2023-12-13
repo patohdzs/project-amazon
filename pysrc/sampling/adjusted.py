@@ -1,5 +1,3 @@
-import os
-import pickle
 import time
 
 import numpy as np
@@ -14,7 +12,6 @@ from ..services.file_service import stan_model_path
 
 def sample(
     model_name,
-    output_dir,
     xi,
     pf,
     pa,
@@ -35,10 +32,6 @@ def sample(
     final_sample_size=5_000,
     **stan_kwargs,
 ):
-    # Create the output directory
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-
     # Instantiate stan sampler
     sampler = CmdStanModel(
         stan_file=stan_model_path(model_name) / "adjusted.stan",
@@ -90,7 +83,6 @@ def sample(
         zeta=zeta,
         final_sample_size=final_sample_size,
         weight=weight,
-        output_dir=output_dir,
     )
 
     # Initialize error & iteration counter
@@ -250,10 +242,6 @@ def sample(
             }
         )
 
-        # Save results (overwrite existing file)
-        saveto = output_dir / "results.pcl"
-        pickle.dump(results, open(saveto, "wb"))
-
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
     stan_kwargs["iter_sampling"] = final_sample_size
@@ -275,11 +263,6 @@ def sample(
 
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
-
-    # Save results (overwrite existing file)
-    saveto = output_dir / "results.pcl"
-    pickle.dump(results, open(saveto, "wb"))
-    print(f"Results saved to {saveto}")
 
     return results
 

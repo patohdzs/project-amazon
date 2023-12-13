@@ -1,4 +1,5 @@
 import argparse
+import pickle
 
 from pysrc.sampling import adjusted
 from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_dir_path
@@ -24,9 +25,8 @@ plots_dir = plots_dir_path(**vars(args))
 logs_dir = logs_dir_path(**vars(args))
 
 # Sample from adjusted distribution
-stan_results = adjusted.sample(
+results = adjusted.sample(
     model_name=args.model,
-    output_dir=output_dir,
     xi=args.xi,
     pf=args.pf,
     pa=args.pa,
@@ -41,3 +41,9 @@ stan_results = adjusted.sample(
     show_progress=True,
     seed=1,
 )
+
+# Save results
+outfile_path = output_dir / "results.pcl"
+with open(outfile_path, "wb") as outfile:
+    pickle.dump(results, outfile)
+    print(f"Results saved to {outfile_path}")
