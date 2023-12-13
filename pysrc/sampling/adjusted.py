@@ -18,7 +18,7 @@ def sample(
     weight,
     num_sites,
     T,
-    N=200,
+    dt=1,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
@@ -73,7 +73,7 @@ def sample(
         num_sites=num_sites,
         tol=tol,
         T=T,
-        N=N,
+        dt=dt,
         delta_t=delta,
         alpha=alpha,
         kappa=kappa,
@@ -87,11 +87,11 @@ def sample(
 
     # Initialize error & iteration counter
     abs_error = np.infty
-    percentage_error = np.infty
+    pct_error = np.infty
     cntr = 0
 
     # Loop until convergence
-    while cntr < max_iter and percentage_error > tol:
+    while cntr < max_iter and pct_error > tol:
         print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
 
         # Flatten uncertain values
@@ -124,7 +124,7 @@ def sample(
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
-            dt=T / N,
+            dt=dt,
             pe=pf,
             pa=pa,
             alpha=alpha,
@@ -151,7 +151,7 @@ def sample(
             pa_2017=pa_2017,
             pf=pf,
             **solution,
-            **_dynamics_matrices(T, T / N, alpha, delta),
+            **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
@@ -208,17 +208,17 @@ def sample(
         # Evaluate error for convergence check
         # The percentage difference are changed to absolute difference
         abs_error = np.max(np.abs(uncertain_vals_old - uncertain_vals))
-        percentage_error = np.max(
+        pct_error = np.max(
             np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
         )
 
         abs_error_tracker.append(abs_error)
-        pct_error_tracker.append(percentage_error)
+        pct_error_tracker.append(pct_error)
 
         print(
             f"""
             Iteration [{cntr+1:4d}]: Absolute Error = {abs_error},
-            Percentage Error = {percentage_error}
+            Percentage Error = {pct_error}
             """
         )
 
