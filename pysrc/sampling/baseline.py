@@ -51,13 +51,15 @@ def baseline_hyperparams(municipal_df, var):
         # Get theta regression data
         y, X, W = _theta_muni_reg_data(municipal_df)
 
+        # Quarterly adj.
+        y -= np.log(4)
+
     elif var == "gamma":
         # Get gamma regression data
         y, X = _gamma_muni_reg_data(municipal_df)
     else:
         raise ValueError("Argument `var` should be one of `theta`, `gamma`")
 
-    y -= np.log(4)
     inv_Q = np.linalg.inv(X.T @ X)
     m = inv_Q @ X.T @ y
     a = (X.shape[0]) / 2

@@ -57,8 +57,8 @@ def sample(
         municipal_gamma_df,
     ) = load_site_data(num_sites)
 
+    # Quarterly adjustment
     theta_vals /= 4
-    gamma_vals /= 4
     alpha /= 4
     delta /= 4
     kappa /= 4
