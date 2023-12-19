@@ -22,7 +22,7 @@ conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::summarize)
 
 # START TIMER
-tictoc::tic(msg = "calibration_24SitesModel.R script", log = T)
+tictoc::tic(msg = "calibration_24SitesModel.R script", log = TRUE)
 
 
 # TERRA OPTIONS (specify temporary file location)
@@ -34,11 +34,11 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 
 # DATA INPUT
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster.24Sites <-
+raster_24_sites <-
   terra::rast(list.files(
     here::here("data/calibration/1055SitesModel/aux_tifs"),
     pattern = "raster_",
-    full.names = T
+    full.names = TRUE
   ))
 
 
@@ -53,25 +53,25 @@ load(here::here(
 # INITIAL CONDITIONS Z
 # AGGREGATE FROM 1000 SITES TO 43 SITES
 # transform shares to areas
-raster.24Sites$amazonBiomeArea_ha_24Sites <-
-  raster.24Sites$share_amazonBiome * raster.24Sites$pixelArea_ha
-raster.24Sites$forestArea_1995_ha_24Sites <-
-  raster.24Sites$share_forest_1995 * raster.24Sites$pixelArea_ha
-raster.24Sites$agriculturalUseArea_1995_ha_24Sites <-
-  raster.24Sites$share_agriculturalUse_1995 * raster.24Sites$pixelArea_ha
-raster.24Sites$otherArea_1995_ha_24Sites <-
-  raster.24Sites$share_other_1995 * raster.24Sites$pixelArea_ha
-raster.24Sites$forestArea_2017_ha_24Sites <-
-  raster.24Sites$share_forest_2017 * raster.24Sites$pixelArea_ha
-raster.24Sites$agriculturalUseArea_2017_ha_24Sites <-
-  raster.24Sites$share_agriculturalUse_2017 * raster.24Sites$pixelArea_ha
-raster.24Sites$otherArea_2017_ha_24Sites <-
-  raster.24Sites$share_other_2017 * raster.24Sites$pixelArea_ha
+raster_24_sites$amazonBiomeArea_ha_24Sites <-
+  raster_24_sites$share_amazonBiome * raster_24_sites$pixelArea_ha
+raster_24_sites$forestArea_1995_ha_24Sites <-
+  raster_24_sites$share_forest_1995 * raster_24_sites$pixelArea_ha
+raster_24_sites$agriculturalUseArea_1995_ha_24Sites <-
+  raster_24_sites$share_agriculturalUse_1995 * raster_24_sites$pixelArea_ha
+raster_24_sites$otherArea_1995_ha_24Sites <-
+  raster_24_sites$share_other_1995 * raster_24_sites$pixelArea_ha
+raster_24_sites$forestArea_2017_ha_24Sites <-
+  raster_24_sites$share_forest_2017 * raster_24_sites$pixelArea_ha
+raster_24_sites$agriculturalUseArea_2017_ha_24Sites <-
+  raster_24_sites$share_agriculturalUse_2017 * raster_24_sites$pixelArea_ha
+raster_24_sites$otherArea_2017_ha_24Sites <-
+  raster_24_sites$share_other_2017 * raster_24_sites$pixelArea_ha
 
 # select area variables
-raster.24Sites <-
+raster_24_sites <-
   terra::subset(
-    raster.24Sites,
+    raster_24_sites,
     c(
       "amazonBiomeArea_ha_24Sites",
       "pixelArea_ha",
@@ -85,30 +85,36 @@ raster.24Sites <-
   )
 
 # aggregate from 1000 sites to 24
-raster.24Sites <-
-  terra::aggregate(raster.24Sites,
-                   fact = 8,
-                   fun = sum,
-                   na.rm = T)
+raster_24_sites <-
+  terra::aggregate(raster_24_sites,
+    fact = 8,
+    fun = sum,
+    na.rm = TRUE
+  )
 
 
 
-# extract variables as polygons, transform to sf, and project data for faster spatial manipulation
-calibration.24SitesModel <-
-  terra::as.polygons(raster.24Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
+# extract variables as polygons, transform to sf,
+# and project data for faster spatial manipulation
+calibration_24_sites_model <-
+  terra::as.polygons(raster_24_sites, dissolve = FALSE) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(5880)
 
 
 
 
 # add id variable
-calibration.24SitesModel$id <- 1:nrow(calibration.24SitesModel)
+calibration_24_sites_model$id <- 1:nrow(calibration_24_sites_model)
 
 # transform share variables in area (ha)
-calibration.24SitesModel <-
-  calibration.24SitesModel %>%
+calibration_24_sites_model <-
+  calibration_24_sites_model %>%
   dplyr::mutate(
-    zbar_1995_24Sites = agriculturalUseArea_1995_ha_24Sites + forestArea_1995_ha_24Sites,
-    zbar_2017_24Sites = agriculturalUseArea_2017_ha_24Sites + forestArea_2017_ha_24Sites
+    zbar_1995_24Sites = agriculturalUseArea_1995_ha_24Sites +
+      forestArea_1995_ha_24Sites,
+    zbar_2017_24Sites = agriculturalUseArea_2017_ha_24Sites +
+      forestArea_2017_ha_24Sites
   ) %>%
   dplyr::select(
     amazonBiomeArea_ha_24Sites,
@@ -123,17 +129,18 @@ calibration.24SitesModel <-
 
 
 # remove sites with less than 2% of its are intersecting with the amazon biome
-calibration.24SitesModel <-
-  calibration.24SitesModel %>%
+calibration_24_sites_model <-
+  calibration_24_sites_model %>%
   dplyr::filter(amazonBiomeArea_ha_24Sites / siteArea_ha_24Sites >= 0.03)
 
 # add id variable
-calibration.24SitesModel$id <- 1:nrow(calibration.24SitesModel)
+calibration_24_sites_model$id <- 1:nrow(calibration_24_sites_model)
 
-id <- calibration.24SitesModel %>%
+id <- calibration_24_sites_model %>%
   select(id)
 
 st_write(id,
-         "data/hmc/id_24.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE)
+  "data/hmc/id_24.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
