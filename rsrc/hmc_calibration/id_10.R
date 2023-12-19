@@ -24,18 +24,18 @@ conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::summarize)
 
 # START TIMER
-tictoc::tic(msg = "calibration_10SitesModel.R script", log = T)
+tictoc::tic(msg = "calibration_10SitesModel.R script", log = TRUE)
 
 # TERRA OPTIONS (specify temporary file location)
 terra::terraOptions(tempdir = here::here("data", "_temp"))
 
 # DATA INPUT
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster.10Sites <-
+raster_10_sites <-
   terra::rast(list.files(
     paste(getwd(), "data/calibration/1055SitesModel/aux_tifs", sep = "/"),
     pattern = "raster_",
-    full.names = T
+    full.names = TRUE
   ))
 
 
@@ -47,39 +47,39 @@ load(here::here(
 # INITIAL CONDITIONS Z
 # AGGREGATE FROM 1000 Sites TO 10 Sites
 # transform shares to areas
-raster.10Sites$amazonBiomeArea_ha_10Sites <-
-  raster.10Sites$share_amazonBiome * raster.10Sites$pixelArea_ha
+raster_10_sites$amazonBiomeArea_ha_10Sites <-
+  raster_10_sites$share_amazonBiome * raster_10_sites$pixelArea_ha
 
-raster.10Sites$forestArea_1995_ha_10Sites <-
-  raster.10Sites$share_forest_1995 * raster.10Sites$pixelArea_ha
+raster_10_sites$forestArea_1995_ha_10Sites <-
+  raster_10_sites$share_forest_1995 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$agriculturalUseArea_1995_ha_10Sites <-
-  raster.10Sites$share_agriculturalUse_1995 * raster.10Sites$pixelArea_ha
+raster_10_sites$agriculturalUseArea_1995_ha_10Sites <-
+  raster_10_sites$share_agriculturalUse_1995 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$otherArea_1995_ha_10Sites <-
-  raster.10Sites$share_other_1995 * raster.10Sites$pixelArea_ha
+raster_10_sites$otherArea_1995_ha_10Sites <-
+  raster_10_sites$share_other_1995 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$forestArea_2017_ha_10Sites <-
-  raster.10Sites$share_forest_2017 * raster.10Sites$pixelArea_ha
+raster_10_sites$forestArea_2017_ha_10Sites <-
+  raster_10_sites$share_forest_2017 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$agriculturalUseArea_2017_ha_10Sites <-
-  raster.10Sites$share_agriculturalUse_2017 * raster.10Sites$pixelArea_ha
+raster_10_sites$agriculturalUseArea_2017_ha_10Sites <-
+  raster_10_sites$share_agriculturalUse_2017 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$otherArea_2017_ha_10Sites <-
-  raster.10Sites$share_other_2017 * raster.10Sites$pixelArea_ha
+raster_10_sites$otherArea_2017_ha_10Sites <-
+  raster_10_sites$share_other_2017 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$forestArea_2008_ha_10Sites <-
-  raster.10Sites$share_forest_2008 * raster.10Sites$pixelArea_ha
+raster_10_sites$forestArea_2008_ha_10Sites <-
+  raster_10_sites$share_forest_2008 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$agriculturalUseArea_2008_ha_10Sites <-
-  raster.10Sites$share_agriculturalUse_2008 * raster.10Sites$pixelArea_ha
+raster_10_sites$agriculturalUseArea_2008_ha_10Sites <-
+  raster_10_sites$share_agriculturalUse_2008 * raster_10_sites$pixelArea_ha
 
-raster.10Sites$otherArea_2008_ha_10Sites <-
-  raster.10Sites$share_other_2008 * raster.10Sites$pixelArea_ha
+raster_10_sites$otherArea_2008_ha_10Sites <-
+  raster_10_sites$share_other_2008 * raster_10_sites$pixelArea_ha
 
 # select area variables
-raster.10Sites <- terra::subset(
-  raster.10Sites,
+raster_10_sites <- terra::subset(
+  raster_10_sites,
   c(
     "amazonBiomeArea_ha_10Sites",
     "pixelArea_ha",
@@ -96,31 +96,38 @@ raster.10Sites <- terra::subset(
 )
 
 # aggregate from 1000 Sites to 10
-raster.10Sites <-
-  terra::aggregate(raster.10Sites,
-                   fact = 14,
-                   fun = sum,
-                   na.rm = T)
+raster_10_sites <-
+  terra::aggregate(raster_10_sites,
+    fact = 14,
+    fun = sum,
+    na.rm = TRUE
+  )
 
 
 # MAPBIOMAS VARIABLES + AMAZON BIOME + PIXEL AREA (Z_10Sites CONSTRUCTION)
-# extract variables as polygons, transform to sf, and project data for faster spatial manipulation
-calibration.10SitesModel <-
-  terra::as.polygons(raster.10Sites, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
+# extract variables as polygons, transform to sf,
+# and project data for faster spatial manipulation
+calibration_10_sites_model <-
+  terra::as.polygons(raster_10_sites, dissolve = FALSE) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(5880)
 
 
 
 
 # add id variable
-calibration.10SitesModel$id <- 1:nrow(calibration.10SitesModel)
+calibration_10_sites_model$id <- 1:nrow(calibration_10_sites_model)
 
 # transform share variables in area (ha)
-calibration.10SitesModel <-
-  calibration.10SitesModel %>%
+calibration_10_sites_model <-
+  calibration_10_sites_model %>%
   dplyr::mutate(
-    zbar_1995_10Sites = agriculturalUseArea_1995_ha_10Sites + forestArea_1995_ha_10Sites,
-    zbar_2017_10Sites = agriculturalUseArea_2017_ha_10Sites + forestArea_2017_ha_10Sites,
-    zbar_2008_10Sites = agriculturalUseArea_2008_ha_10Sites + forestArea_2008_ha_10Sites
+    zbar_1995_10Sites = agriculturalUseArea_1995_ha_10Sites +
+      forestArea_1995_ha_10Sites,
+    zbar_2017_10Sites = agriculturalUseArea_2017_ha_10Sites +
+      forestArea_2017_ha_10Sites,
+    zbar_2008_10Sites = agriculturalUseArea_2008_ha_10Sites +
+      forestArea_2008_ha_10Sites
   ) %>%
   dplyr::select(
     amazonBiomeArea_ha_10Sites,
@@ -136,19 +143,20 @@ calibration.10SitesModel <-
     zbar_2008_10Sites
   )
 
-calibration.10SitesModel <-
-  calibration.10SitesModel %>%
+calibration_10_sites_model <-
+  calibration_10_sites_model %>%
   dplyr::filter(amazonBiomeArea_ha_10Sites / siteArea_ha_10Sites >= 0.03)
 
 # add id variable
-calibration.10SitesModel$id <- 1:nrow(calibration.10SitesModel)
+calibration_10_sites_model$id <- 1:nrow(calibration_10_sites_model)
 
 
 
-id <- calibration.10SitesModel %>%
+id <- calibration_10_sites_model %>%
   select(id)
 
 st_write(id,
-         "data/hmc/id_10.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE)
+  "data/hmc/id_10.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
