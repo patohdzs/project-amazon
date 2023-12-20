@@ -9,8 +9,8 @@ load("data/calibration/prepData/muniTheta_prepData.Rdata")
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 
-# load predicted values
-predicted_values <-
+# load farm gate price data
+fgp_data <-
   read_excel("data/calibration/farm_gate_price.xlsx")
 
 # load distance data
@@ -30,7 +30,7 @@ geo <- st_geometry(muniTheta.prepData)[-c(142, 106, 112)]
 # Merge with distance data and farm price data
 muni_theta_prep_data <- muni_theta_prep_data %>%
   left_join(distance_data, by = "muni_code") %>%
-  left_join(predicted_values, by = "muni_code") %>%
+  left_join(fgp_data, by = "muni_code") %>%
   st_sf(geometry = geo) %>%
   mutate(
     cattle_price_2017 = ifelse(
@@ -77,25 +77,28 @@ df <- muni_theta_prep_data %>%
     weights
   )
 
-# Write output
+# Output municipality-level regression data
 st_write(df,
   "data/hmc/muni_data_theta.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
 
-
+# Output site-level regression data
 for (n in list(10, 24, 40, 78)) {
   id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
 
+  # Project data to site level
   site_theta2017 <- df %>%
     st_intersection(id_df)
 
+  # Set area units to hectares
   site_theta2017$muni_site_area <-
     st_area(site_theta2017) %>%
     units::set_units(ha) %>%
     unclass()
 
+  # Write to file
   st_write(
     site_theta2017,
     sprintf("data/hmc/site_%d_data_theta.geojson", n),
