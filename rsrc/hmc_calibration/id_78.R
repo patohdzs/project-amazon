@@ -23,7 +23,7 @@ conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::summarize)
 
 # START TIMER
-tictoc::tic(msg = "calibration_78SitesModel.R script", log = T)
+tictoc::tic(msg = "calibration_78SitesModel.R script", log = TRUE)
 
 
 # TERRA OPTIONS (specify temporary file location)
@@ -35,7 +35,7 @@ raster_78_sites <-
   terra::rast(list.files(
     here::here("data/calibration/1055SitesModel/aux_tifs"),
     pattern = "raster_",
-    full.names = T
+    full.names = TRUE
   ))
 
 # MUNI LEVEL SPATIAL SAMPLE
@@ -82,14 +82,15 @@ raster_78_sites <-
   terra::aggregate(raster_78_sites,
     fact = 4,
     fun = sum,
-    na.rm = T
+    na.rm = TRUE
   )
 
 
 
-# extract variables as polygons, transform to sf, and project data for faster spatial manipulation
+# extract variables as polygons, transform to sf,
+# and project data for faster spatial manipulation
 calibration_78_sites_model <-
-  terra::as.polygons(raster_78_sites, dissolve = F) %>%
+  terra::as.polygons(raster_78_sites, dissolve = FALSE) %>%
   sf::st_as_sf() %>%
   sf::st_transform(5880)
 
@@ -97,7 +98,7 @@ calibration_78_sites_model <-
 
 
 # add id variable
-calibration_78_sites_model$id <- 1:nrow(calibration_78_sites_model)
+calibration_78_sites_model$id <- seq_len(nrow(calibration_78_sites_model))
 
 # transform share variables in area (ha)
 calibration_78_sites_model <-
@@ -126,7 +127,7 @@ calibration_78_sites_model <-
   dplyr::filter(amazonBiomeArea_ha_78Sites / siteArea_ha_78Sites >= 0.03)
 
 # add id variable
-calibration_78_sites_model$id <- 1:nrow(calibration_78_sites_model)
+calibration_78_sites_model$id <- seq_len(nrow(calibration_78_sites_model))
 
 
 

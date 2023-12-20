@@ -105,7 +105,7 @@ calibration_24_sites_model <-
 
 
 # add id variable
-calibration_24_sites_model$id <- 1:nrow(calibration_24_sites_model)
+calibration_24_sites_model$id <- seq_len(nrow(calibration_24_sites_model))
 
 # transform share variables in area (ha)
 calibration_24_sites_model <-
@@ -134,7 +134,7 @@ calibration_24_sites_model <-
   dplyr::filter(amazonBiomeArea_ha_24Sites / siteArea_ha_24Sites >= 0.03)
 
 # add id variable
-calibration_24_sites_model$id <- 1:nrow(calibration_24_sites_model)
+calibration_24_sites_model$id <- seq_len(nrow(calibration_24_sites_model))
 
 id <- calibration_24_sites_model %>%
   select(id)
