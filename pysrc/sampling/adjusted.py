@@ -5,7 +5,7 @@ import time
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from ..optimization import gurobi
+from ..optimization import gams, gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -27,6 +27,8 @@ def sample(
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
+    # Optimizer
+    optimizer="gurobi",
     # Sampling params
     max_iter=20000,
     tol=0.001,
@@ -134,14 +136,23 @@ def sample(
         # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forest_area_2017
 
-        # Solve outer optimization problem
+        # Choose optimizer
+        if optimizer == "gurobi":
+            solve_planner_problem = gurobi.solve_planner_problem
+
+        elif optimizer == "gams":
+            solve_planner_problem = gams.solve_planner_problem
+
+        else:
+            raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
+
         (
             sol_val_X,
             sol_val_Up,
             sol_val_Um,
             sol_val_Z,
             sol_val_Ua,
-        ) = gurobi.solve_planner_problem(
+        ) = solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,

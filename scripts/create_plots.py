@@ -22,6 +22,7 @@ sns.set(font_scale=1.2)
 parser = argparse.ArgumentParser(description="parameter settings")
 
 parser.add_argument("--model", type=str, default="sigma_correction_model")
+parser.add_argument("--opt", type=str, default="gurobi")
 parser.add_argument("--xi", type=float, default=2.0)
 parser.add_argument("--pf", type=float, default=21.5)
 parser.add_argument("--pa", type=float, default=42.03)

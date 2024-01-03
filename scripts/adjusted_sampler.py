@@ -7,6 +7,7 @@ from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_di
 parser = argparse.ArgumentParser(description="parameter settings")
 
 parser.add_argument("--model", type=str, default="sigma_correction_model")
+parser.add_argument("--opt", type=str, default="gurobi")
 parser.add_argument("--xi", type=float, default=2.0)
 parser.add_argument("--pf", type=float, default=21.5)
 parser.add_argument("--pa", type=float, default=42.03)
@@ -32,7 +33,8 @@ stan_results = adjusted.sample(
     weight=args.weight,
     num_sites=args.sitenum,
     T=args.timehzn,
-    max_iter=20,
+    optimizer=args.opt,
+    max_iter=100,
     final_sample_size=5_000,
     iter_sampling=1000,
     iter_warmup=500,
