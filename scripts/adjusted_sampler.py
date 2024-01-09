@@ -40,4 +40,5 @@ stan_results = adjusted.sample(
     iter_warmup=500,
     show_progress=True,
     seed=1,
+    inits=0.2,
 )

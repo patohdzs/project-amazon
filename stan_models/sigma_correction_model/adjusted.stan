@@ -101,8 +101,8 @@ transformed parameters {
   vector[K_gamma] beta_gamma = m_gamma + sqrt(sigma_sq_gamma) * L_gamma * alpha_gamma;
 
   // Preds
-  vector<lower=0>[N_theta] eta_theta = exp(X_theta * beta_theta - (sigma_sq_theta / 2));
-  vector<lower=0>[N_gamma] eta_gamma = exp(X_gamma * beta_gamma - (sigma_sq_gamma / 2));
+  vector<lower=0>[N_theta] eta_theta = exp(X_theta * beta_theta + (sigma_sq_theta / 2));
+  vector<lower=0>[N_gamma] eta_gamma = exp(X_gamma * beta_gamma + (sigma_sq_gamma / 2));
 
   // Grouped average
   vector<lower=0>[S] theta = (G_theta * eta_theta) / pa_2017;
