@@ -16,6 +16,7 @@ data {
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
+  vector[N_theta] w_theta;
   cov_matrix[K_theta] inv_Q_theta;
   vector[K_theta] m_theta;
   real<lower=0> a_theta;

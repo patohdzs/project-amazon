@@ -51,6 +51,10 @@ def baseline_hyperparams(municipal_df, var):
         # Get theta regression data
         y, X, W = _theta_muni_reg_data(municipal_df)
 
+        # Applying WLS weights
+        y = W @ y
+        X = W @ X
+
     elif var == "gamma":
         # Get gamma regression data
         y, X = _gamma_muni_reg_data(municipal_df)
@@ -75,6 +79,7 @@ def _theta_muni_reg_data(municipal_theta_df):
 
     # Get weights matrix
     W = np.diag(np.sqrt(municipal_theta_df["weights"]))
+    W = W * W.shape[0] / W.trace()
 
     # Get regression design matrix and its dimensions
     X = municipal_theta_df.iloc[:, :8].to_numpy()
