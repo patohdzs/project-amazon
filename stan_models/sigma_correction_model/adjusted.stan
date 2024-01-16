@@ -69,7 +69,6 @@ data {
 
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
-  vector[N_theta] w_theta;
 
   matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
   matrix[S, N_gamma] G_gamma; // Groups for gamma

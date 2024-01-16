@@ -14,16 +14,11 @@ def theta_adj_reg_data(num_sites, theta_df):
     # Multiply by area overalp weights
     G = theta_df["muni_site_area"].to_numpy() * G
     G = G / G.sum(axis=1, keepdims=True)
-
-    # Get inv vector of weights
-    w = 1 / theta_df["weights"]
-
     return {
         "X_theta": X,
         "N_theta": N,
         "K_theta": K,
         "G_theta": G,
-        "w_theta": w,
     }
 
 
