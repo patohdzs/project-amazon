@@ -5,6 +5,8 @@ import time
 import numpy as np
 from cmdstanpy import CmdStanModel
 
+from pysrc.sampling import baseline
+
 from ..optimization import gams, gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
@@ -58,6 +60,13 @@ def sample(
         municipal_theta_df,
         municipal_gamma_df,
     ) = load_site_data(num_sites)
+
+    # Set initial theta & gamma using baseline mean
+    fit = baseline.sample(
+        model_name=model_name, num_samples=final_sample_size, num_sites=num_sites
+    )
+    theta_vals = fit.stan_variable("theta").mean(axis=0)
+    gamma_vals = fit.stan_variable("gamma").mean(axis=0)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -286,6 +295,7 @@ def sample(
                 "sol_val_Um_tracker": sol_val_Um_tracker,
                 "sol_val_Z_tracker": sol_val_Z_tracker,
                 "coe_ensembles": coe_ensembles,
+                "fit_tracker": fit_tracker,
             }
         )
 
