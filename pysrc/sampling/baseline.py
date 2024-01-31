@@ -73,23 +73,26 @@ def baseline_hyperparams(municipal_df, var):
     }
 
 
-def _theta_muni_reg_data(municipal_theta_df):
+def _theta_muni_reg_data(df):
     # Get outcome
-    y = municipal_theta_df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+    y = df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
 
-    # Get weights matrix
-    W = np.diag(np.sqrt(municipal_theta_df["weights"]))
+    # Normalize weights
+    w = df["weights"] / df["weights"].sum()
+
+    # # Get weights pre-multiplication matrix
+    W = np.diag(np.sqrt(w))
 
     # Get regression design matrix and its dimensions
-    X = municipal_theta_df.iloc[:, :8].to_numpy()
+    X = df.iloc[:, :8].to_numpy()
 
     return y, X, W
 
 
-def _gamma_muni_reg_data(municipal_gamma_df):
+def _gamma_muni_reg_data(df):
     # Get outcome
-    y = municipal_gamma_df["log_co2e_ha_2017"].to_numpy()
+    y = df["log_co2e_ha_2017"].to_numpy()
 
     # Get regression design matrix and its dimensions
-    X = municipal_gamma_df.iloc[:, :5].to_numpy()
+    X = df.iloc[:, :5].to_numpy()
     return y, X
