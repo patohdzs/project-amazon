@@ -15,10 +15,11 @@ from ..services.file_service import stan_model_path
 def sample(
     model_name,
     xi,
-    pf,
+    pe,
     pa,
     weight,
     num_sites,
+    # Model parameters
     T,
     dt=1,
     alpha=0.045007414,
@@ -44,10 +45,10 @@ def sample(
     # Load sites' data
     (
         zbar_2017,
-        gamma_vals,
+        _,
         z_2017,
         forest_area_2017,
-        theta_vals,
+        _,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
@@ -86,7 +87,7 @@ def sample(
         delta_t=delta,
         alpha=alpha,
         kappa=kappa,
-        pf=pf,
+        pf=pe,
         pa=pa,
         xi=xi,
         zeta=zeta,
@@ -126,7 +127,7 @@ def sample(
         else:
             raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
 
-        solution = solve_planner_problem(
+        trajectories = solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,
@@ -134,7 +135,7 @@ def sample(
             z0=z_2017,
             zbar=zbar_2017,
             dt=dt,
-            pe=pf,
+            pe=pe,
             pa=pa,
             alpha=alpha,
             delta=delta,
@@ -143,7 +144,7 @@ def sample(
         )
 
         # Update trackers
-        solution_tracker.append(solution)
+        solution_tracker.append(trajectories)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
@@ -158,8 +159,8 @@ def sample(
             kappa=kappa,
             pa=pa,
             pa_2017=pa_2017,
-            pf=pf,
-            **solution,
+            pf=pe,
+            **trajectories,
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
