@@ -106,11 +106,11 @@ def _planner_obj(model):
         * (
             -model.pe
             * pyo.quicksum(
-                model.kappa * model.z[t, s]
+                model.kappa * model.z[t + 1, s]
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa * sum(model.theta[s] * model.z[t, s] for s in model.S)
+            + model.pa * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt
