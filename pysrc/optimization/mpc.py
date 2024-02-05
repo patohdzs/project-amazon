@@ -1,5 +1,6 @@
 import math
 import time
+from itertools import product
 
 import numpy as np
 import pyomo.environ as pyo
@@ -25,9 +26,11 @@ def solve_planner_problem(
     x0,
     z0,
     zbar,
+    pa_history,
+    M,
+    tau,
     dt=1,
     pe=20.76,
-    pa=44.75,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
@@ -38,6 +41,7 @@ def solve_planner_problem(
     # Indexing sets for time and sites
     model.T = RangeSet(T + 1)
     model.S = RangeSet(gamma.size)
+    model.P = RangeSet(tau**2)
 
     # Parameters
     model.x0 = Param(model.S, initialize=np_to_dict(x0))
@@ -47,11 +51,17 @@ def solve_planner_problem(
     model.theta = Param(model.S, initialize=np_to_dict(theta))
     model.delta = Param(initialize=delta)
     model.pe = Param(initialize=pe)
-    model.pa = Param(initialize=pa)
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
     model.zeta = Param(initialize=zeta)
     model.dt = Param(initialize=dt)
+
+    # Cattle price parameters
+    pa_paths = price_paths(T, tau, True)
+
+    model.pa_history = Param(model.T, initialize=pa_history)
+    model.pa_paths = Param(model.P, model.T, initialize=pa_paths)
+    model.pa_path_probs = Param(model.P)
 
     # Variables
     model.w = Var(model.T)
@@ -148,3 +158,37 @@ def _w_const(model, t):
         )
     else:
         return Constraint.Skip
+
+
+def price_paths(T, tau, start_high):
+    """
+    Get matrix of all possible price paths
+    """
+    # Compute initial state
+    p0 = np.ones(2**tau, np.int8) if start_high else np.zeros(2**tau, np.int8)
+
+    # Get stochastic and deterministic horizon paths
+    rand_hzn = np.array(list(product([0, 1], repeat=tau)))
+    det_hzn = np.tile(rand_hzn[:, -1][:, np.newaxis], T - tau)
+
+    # Merge into full price path
+    price_paths = np.column_stack((p0, rand_hzn, det_hzn))
+    return price_paths
+
+
+def price_path_probs(M, paths):
+    """
+    Compute likelihood of a price path realization
+    """
+    return [_price_path_prob(M, path) for path in paths]
+
+
+def _price_path_prob(M, price_path):
+    prob = 1.0
+
+    for i in range(len(price_path) - 1):
+        current_state = price_path[i]
+        next_state = price_path[i + 1]
+        prob *= M[current_state, next_state]
+
+    return prob
