@@ -21,10 +21,10 @@ functions {
     X_dym[1] = x0;
     X_dym[2 : (T + 1)] = alpha_p_Adym .* X_zero + Bdym * omega';
 
-    matrix[S, T + 1] z_shifted_X;
+    matrix[S, T ] z_shifted_X;
     vector[S] scl = pa * theta - pf * kappa;
-    for (j in 1 : (T + 1)) {
-      z_shifted_X[ : , j] = sol_val_X[1 : S, j] .* scl;
+    for (j in 1 : (T )) {
+      z_shifted_X[ : , j] = sol_val_X[1 : S, j+1] .* scl;
     }
 
     // Adjustment costs
@@ -35,7 +35,7 @@ functions {
                   * pf;
 
     // Value of cattle output minus cost of emissions
-    real term_3 = sum(ds_vect .* (rep_row_vector(1.0, S) * z_shifted_X)');
+    real term_3 = sum(ds_vect[1 : T] .* (rep_row_vector(1.0, S) * z_shifted_X)');
 
     // Overall objective value
     real obj_val = term_1 + term_2 + term_3;
