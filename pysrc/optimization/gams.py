@@ -111,4 +111,10 @@ def solve_planner_problem(
     print("sol.value(Up)", sol_val_Up, "\n")
     print("sol.value(Um)", sol_val_Um, "\n")
 
-    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
+    return {
+        "sol_val_X": sol_val_X,
+        "sol_val_Up": sol_val_Up,
+        "sol_val_Um": sol_val_Um,
+        "sol_val_Z": sol_val_Z,
+        "sol_val_Ua": sol_val_Ua,
+    }

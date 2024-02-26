@@ -97,7 +97,13 @@ def solve_planner_problem(
     sol_val_Up = U[:-1, :].T
     sol_val_Um = V[:-1, :].T
     sol_val_Z = sol_val_Up - sol_val_Um
-    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
+    return {
+        "sol_val_X": sol_val_X,
+        "sol_val_Up": sol_val_Up,
+        "sol_val_Um": sol_val_Um,
+        "sol_val_Z": sol_val_Z,
+        "sol_val_Ua": sol_val_Ua,
+    }
 
 
 def _planner_obj(model):
