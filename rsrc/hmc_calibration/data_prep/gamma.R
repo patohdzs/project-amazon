@@ -21,35 +21,44 @@ df <- muniTheta.prepData %>%
     log_lat = scale(log_lat),
     log_lon = scale(log_lon)
   ) %>%
-  select(X1,
-         log_historical_precip,
-         log_historical_temp,
-         log_lat,
-         log_lon,
-         log_co2e_ha_2017)
+  select(
+    X1,
+    log_historical_precip,
+    log_historical_temp,
+    log_lat,
+    log_lon,
+    log_co2e_ha_2017
+  )
 
+
+# Output municipality-level regression data
 st_write(df,
-         "data/hmc/muni_data_gamma.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE)
+  "data/hmc/muni_data_gamma.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
 
 
+# Output site-level regression data
 for (n in list(10, 24, 40, 78)) {
+  # Get site boundaries
   id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
 
+  # Project data to site level
   site_gamma2017 <- df %>%
     st_intersection(id_df)
 
+  # Set area units to hectares
   site_gamma2017$muni_site_area <-
     st_area(site_gamma2017) %>%
     units::set_units(ha) %>%
     unclass()
 
+  # Write to file
   st_write(
     site_gamma2017,
     sprintf("data/hmc/site_%d_data_gamma.geojson", n),
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
-
 }
