@@ -40,7 +40,7 @@ st_write(df,
 
 
 # Output site-level regression data
-for (n in list(10, 24, 40, 78)) {
+for (n in list(10, 24, 40, 78,1043)) {
   # Get site boundaries
   id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
 
