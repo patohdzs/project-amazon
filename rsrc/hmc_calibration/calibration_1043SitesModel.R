@@ -10,7 +10,7 @@
 # > NOTES
 # 1: -
 
-conflicts_prefer(dplyr::filter)
+
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -27,8 +27,6 @@ tictoc::tic(msg = "calibration_1043SitesModel.R script", log = T)
 terra::terraOptions(tempdir = here::here("data", "_temp"))
 
 
-
-conflicts_prefer(dplyr::select)
 
 
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
@@ -51,6 +49,7 @@ load(here::here("data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"))
 # MAPBIOMAS VARIABLES + AMAZON BIOME + PIXEL AREA (Z_1043Sites CONSTRUCTION)
 # extract variables as polygons, transform to sf, and project data for faster spatial manipulation
 calibration.1043SitesModel <- terra::as.polygons(raster.variables, dissolve = F) %>% sf::st_as_sf() %>% sf::st_transform(5880)
+
 
 
 # remove sites with less than 1% of its are intersecting with the amazon biome
