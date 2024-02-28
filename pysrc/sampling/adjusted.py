@@ -2,6 +2,14 @@ import time
 
 import numpy as np
 from cmdstanpy import CmdStanModel
+import jax.numpy as jnp
+from jax import jit
+import jax
+from jax.scipy.linalg import cholesky
+import numpyro
+import numpyro.distributions as dist
+from numpyro.infer import MCMC, NUTS
+from functools import partial
 
 from pysrc.sampling import baseline
 
@@ -10,6 +18,85 @@ from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
 from ..services.file_service import stan_model_path
+
+@partial(jax.jit, static_argnums=(2,3))
+def log_value_jax(gamma, theta, T, S, alpha, sol_val_X, sol_val_Ua, sol_val_Up, zbar_2017, forest_area_2017, alpha_p_Adym, Bdym, ds_vect, zeta, xi, kappa, pa, pf):
+    # Carbon captured at time zero
+    x0 = jnp.dot(gamma, forest_area_2017)
+
+    # Aggregate carbon captured
+    X_zero = x0 * jnp.ones(T)
+
+    # Initialize shifted_X with zeros and then fill
+    shifted_X = jnp.zeros((S, T))
+    for j in range(T):  # Adjusted for zero-based indexing
+        shifted_X = shifted_X.at[:, j].set(zbar_2017 - sol_val_X[:S, j])
+
+    omega = jnp.dot(gamma, (alpha * shifted_X) - sol_val_Up)
+
+    # Initialize X_dym and fill
+    X_dym = jnp.zeros(T + 1)
+    X_dym = X_dym.at[0].set(x0)
+    X_dym = X_dym.at[1:].set(alpha_p_Adym * X_zero + jnp.dot(Bdym, omega.T))
+
+    # Initialize z_shifted_X with zeros and then fill
+    z_shifted_X = jnp.zeros((S, T))
+    scl = pa * theta - pf * kappa
+    for j in range(T):  # Adjusted for zero-based indexing
+        z_shifted_X = z_shifted_X.at[:, j].set(sol_val_X[:S, j] * scl)  # Adjusted for sol_val_X indexing
+
+    # Adjustment costs
+    term_1 = -jnp.sum(ds_vect[:T] * sol_val_Ua) * zeta / 2.0
+
+    # Value of emissions absorbed
+    term_2 = jnp.sum(ds_vect[:T] * (X_dym[1:] - X_dym[:-1])) * pf
+
+    # Value of cattle output minus cost of emissions
+    term_3 = jnp.sum(ds_vect[:T] * jnp.sum(z_shifted_X, axis=0))
+
+    # Overall objective value
+    obj_val = term_1 + term_2 + term_3
+    log_density_val = -1.0 / xi * obj_val
+
+    return log_density_val
+
+
+def numpyro_model(T, S, alpha, sol_val_X, sol_val_Ua, sol_val_Up,sol_val_Um,sol_val_Z, zbar_2017, forest_area_2017, 
+                  alpha_p_Adym, Bdym, ds_vect, zeta, xi, kappa, pa, pf, N_theta, N_gamma, 
+                  K_theta, K_gamma, X_theta, G_theta, X_gamma, G_gamma, pa_2017, 
+                  inv_Q_theta, m_theta, a_theta, b_theta, inv_Q_gamma, m_gamma, a_gamma, b_gamma):
+    # Transformed data
+    L_theta = cholesky(inv_Q_theta)
+    L_gamma = cholesky(inv_Q_gamma)
+
+    # Parameters
+    sigma_sq_theta = numpyro.sample('sigma_sq_theta', dist.InverseGamma(a_theta, b_theta))
+    alpha_theta = numpyro.sample('alpha_theta', dist.Normal(0, 1).expand([K_theta]))
+    
+    sigma_sq_gamma = numpyro.sample('sigma_sq_gamma', dist.InverseGamma(a_gamma, b_gamma))
+    alpha_gamma = numpyro.sample('alpha_gamma', dist.Normal(0, 1).expand([K_gamma]))
+    
+    # Transformed parameters
+    beta_theta = m_theta + jnp.sqrt(sigma_sq_theta) * jnp.dot(L_theta, alpha_theta)
+    beta_gamma = m_gamma + jnp.sqrt(sigma_sq_gamma) * jnp.dot(L_gamma, alpha_gamma)
+    beta_theta= numpyro.deterministic("beta_theta", beta_theta)
+    beta_gamma= numpyro.deterministic("beta_gamma", beta_gamma)
+    
+    theta = jnp.exp(jnp.dot(X_theta, beta_theta)) / pa_2017
+    gamma = jnp.exp(jnp.dot(X_gamma, beta_gamma))
+
+    # Ensure non-negativity
+    theta = numpyro.deterministic('theta', jnp.maximum(0, jnp.dot(G_theta, theta)))
+    gamma = numpyro.deterministic('gamma', jnp.maximum(0, jnp.dot(G_gamma, gamma)))
+
+    # Value function (log-probability contribution)
+    log_val = log_value_jax(gamma, theta, T, S, alpha, sol_val_X, sol_val_Ua, sol_val_Up, 
+                            zbar_2017, forest_area_2017, alpha_p_Adym, Bdym, ds_vect, 
+                            zeta, xi, kappa, pa, pf)
+    numpyro.factor('log_value', log_val)
+
+
+
 
 
 def sample(
@@ -148,46 +235,102 @@ def sample(
 
         # HMC sampling
         print("Starting HMC sampling...\n")
-        model_data = dict(
-            T=T,
-            S=num_sites,
-            alpha=alpha,
-            zbar_2017=zbar_2017,
-            forest_area_2017=forest_area_2017,
-            zeta=zeta,
-            xi=xi,
-            kappa=kappa,
-            pa=pa,
-            pa_2017=pa_2017,
-            pf=pe,
-            **trajectories,
-            **_dynamics_matrices(T, dt, alpha, delta),
-            **theta_adj_reg_data(num_sites, site_theta_df),
-            **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **baseline_hyperparams(municipal_theta_df, "theta"),
-            **baseline_hyperparams(municipal_gamma_df, "gamma"),
-        )
+        
+        
+        
+        
+        nuts_kernel = NUTS(numpyro_model)
+        print("test2")
+# Setup the MCMC run
+        mcmc = MCMC(nuts_kernel, num_warmup=500, num_samples=4000)
+        print("test3")
+        # Run the MCMC
+        mcmc.run(jax.random.PRNGKey(0),
+                T=T, S=num_sites, 
+                alpha=alpha, 
+                zbar_2017=zbar_2017, 
+                forest_area_2017=forest_area_2017, 
+                zeta=zeta, 
+                xi=xi, 
+                kappa=kappa, 
+                pa=pa, 
+                pa_2017=pa_2017,
+                pf=pe, 
+                **trajectories,
+                **_dynamics_matrices(T, dt, alpha, delta),
+                **theta_adj_reg_data(num_sites, site_theta_df),
+                **gamma_adj_reg_data(num_sites, site_gamma_df),
+                **baseline_hyperparams(municipal_theta_df, "theta"),
+                **baseline_hyperparams(municipal_gamma_df, "gamma"),
+            )
 
-        # Sampling from adjusted distribution
-        sampling_time = time.time()
-        fit = sampler.sample(
-            data=model_data,
-            **stan_kwargs,
-        )
-        sampling_time = time.time() - sampling_time
-        print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
-        print(fit.diagnose())
+# Get the samples
+        samples = mcmc.get_samples()
+        
+        
+        
+        # import pickle
 
-        # Update fit and sampling time trackers
-        fit_tracker.append(fit.summary())
-        sampling_time_tracker.append(sampling_time)
+        # # Assuming `samples` is the dictionary of samples returned by mcmc.get_samples()
+        # with open('mcmc_samples.pcl', 'wb') as file:
+        #     pickle.dump(samples, file)
 
-        # Extract samples
-        theta_adj_samples = fit.stan_variable("theta")
-        gamma_adj_samples = fit.stan_variable("gamma")
-        theta_coe_adj_samples = fit.stan_variable("beta_theta")
-        gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+        # print("Samples saved to 'numpyro.pcl'.")
 
+        theta_adj_samples = samples['theta']
+        gamma_adj_samples = samples['gamma']
+        theta_coe_adj_samples = samples["beta_theta"]
+        gamma_coe_adj_samples = samples["beta_gamma"]
+        print("theta",theta_adj_samples.shape)
+        print("theta_coe",theta_coe_adj_samples.shape)
+        # print("end here")
+        # import sys; sys.exit()
+        
+        
+        
+        # model_data = dict(
+        #     T=T,
+        #     S=num_sites,
+        #     alpha=alpha,
+        #     zbar_2017=zbar_2017,
+        #     forest_area_2017=forest_area_2017,
+        #     zeta=zeta,
+        #     xi=xi,
+        #     kappa=kappa,
+        #     pa=pa,
+        #     pa_2017=pa_2017,
+        #     pf=pe,
+        #     **trajectories,
+        #     **_dynamics_matrices(T, dt, alpha, delta),
+        #     **theta_adj_reg_data(num_sites, site_theta_df),
+        #     **gamma_adj_reg_data(num_sites, site_gamma_df),
+        #     **baseline_hyperparams(municipal_theta_df, "theta"),
+        #     **baseline_hyperparams(municipal_gamma_df, "gamma"),
+        # )
+
+        # # Sampling from adjusted distribution
+        # sampling_time = time.time()
+        # fit = sampler.sample(
+        #     data=model_data,
+        #     **stan_kwargs,
+        # )
+        # sampling_time = time.time() - sampling_time
+        # print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
+        # print(fit.diagnose())
+
+        # # Update fit and sampling time trackers
+        # fit_tracker.append(fit.summary())
+        # sampling_time_tracker.append(sampling_time)
+
+        # # Extract samples
+        # theta_adj_samples = fit.stan_variable("theta")
+        # gamma_adj_samples = fit.stan_variable("gamma")
+        # theta_coe_adj_samples = fit.stan_variable("beta_theta")
+        # gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+        # print("theta",theta_adj_samples.shape)
+        # print("end here")
+        # import sys; sys.exit()
+        
         uncertainty_adj_samples = np.concatenate(
             (theta_adj_samples, gamma_adj_samples), axis=1
         )
@@ -255,17 +398,47 @@ def sample(
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
-    stan_kwargs["iter_sampling"] = final_sample_size
-    fit = sampler.sample(
-        data=model_data,
-        **stan_kwargs,
-    )
+    
+    mcmc = MCMC(nuts_kernel, num_warmup=1000, num_samples=5000)
+
+    # Run the MCMC
+    mcmc.run(jax.random.PRNGKey(0),
+            T=T, S=num_sites, 
+            alpha=alpha, 
+            zbar_2017=zbar_2017, 
+            forest_area_2017=forest_area_2017, 
+            zeta=zeta, 
+            xi=xi, 
+            kappa=kappa, 
+            pa=pa, 
+            pa_2017=pa_2017,
+            pf=pe, 
+            **trajectories,
+            **_dynamics_matrices(T, dt, alpha, delta),
+            **theta_adj_reg_data(num_sites, site_theta_df),
+            **gamma_adj_reg_data(num_sites, site_gamma_df),
+            **baseline_hyperparams(municipal_theta_df, "theta"),
+            **baseline_hyperparams(municipal_gamma_df, "gamma"),
+        )
+
+# Get the samples
+    final_samples = mcmc.get_samples()
+
+    theta_adj_samples = final_samples['theta']
+    gamma_adj_samples = final_samples['gamma']
+    theta_coe_adj_samples = final_samples['beta_theta']
+    gamma_coe_adj_samples = final_samples['beta_gamma']
+    # stan_kwargs["iter_sampling"] = final_sample_size
+    # fit = sampler.sample(
+    #     data=model_data,
+    #     **stan_kwargs,
+    # )
 
     # Extract samples
-    theta_adj_samples = fit.stan_variable("theta")
-    gamma_adj_samples = fit.stan_variable("gamma")
-    theta_coe_adj_samples = fit.stan_variable("beta_theta")
-    gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+    # theta_adj_samples = fit.stan_variable("theta")
+    # gamma_adj_samples = fit.stan_variable("gamma")
+    # theta_coe_adj_samples = fit.stan_variable("beta_theta")
+    # gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
 
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
