@@ -6,7 +6,7 @@ from pysrc.services.data_service import load_site_data
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="full_model_v3")
+parser.add_argument("--model", type=str, default="deterministic")
 parser.add_argument("--xi", type=float, default=1.0)
 parser.add_argument("--pf", type=float, default=25)
 parser.add_argument("--pa", type=float, default=44.75)
