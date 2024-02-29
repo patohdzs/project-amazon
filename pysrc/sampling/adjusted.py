@@ -8,7 +8,7 @@ import jax
 from jax.scipy.linalg import cholesky
 import numpyro
 import numpyro.distributions as dist
-from numpyro.infer import MCMC, NUTS
+from numpyro.infer import MCMC, NUTS, init_to_value
 from functools import partial
 
 from pysrc.sampling import baseline
@@ -64,23 +64,33 @@ def log_value_jax(gamma, theta, T, S, alpha, sol_val_X, sol_val_Ua, sol_val_Up, 
 def numpyro_model(T, S, alpha, sol_val_X, sol_val_Ua, sol_val_Up,sol_val_Um,sol_val_Z, zbar_2017, forest_area_2017, 
                   alpha_p_Adym, Bdym, ds_vect, zeta, xi, kappa, pa, pf, N_theta, N_gamma, 
                   K_theta, K_gamma, X_theta, G_theta, X_gamma, G_gamma, pa_2017, 
-                  inv_Q_theta, m_theta, a_theta, b_theta, inv_Q_gamma, m_gamma, a_gamma, b_gamma):
+                  inv_Q_theta, m_theta, a_theta, b_theta, inv_Q_gamma, m_gamma, a_gamma, b_gamma,sigma_sq_theta_init=None, sigma_sq_gamma_init=None):
     # Transformed data
     L_theta = cholesky(inv_Q_theta)
     L_gamma = cholesky(inv_Q_gamma)
 
     # Parameters
-    sigma_sq_theta = numpyro.sample('sigma_sq_theta', dist.InverseGamma(a_theta, b_theta))
-    alpha_theta = numpyro.sample('alpha_theta', dist.Normal(0, 1).expand([K_theta]))
+    sigma_sq_theta_base = numpyro.sample('sigma_sq_theta_base', dist.InverseGamma(a_theta, b_theta))
+    sigma_sq_gamma_base = numpyro.sample('sigma_sq_gamma_base', dist.InverseGamma(a_gamma, b_gamma))
     
-    sigma_sq_gamma = numpyro.sample('sigma_sq_gamma', dist.InverseGamma(a_gamma, b_gamma))
-    alpha_gamma = numpyro.sample('alpha_gamma', dist.Normal(0, 1).expand([K_gamma]))
+    # Apply transformation to enforce the constraint implicitly
+    sigma_sq_theta = numpyro.deterministic('sigma_sq_theta', jnp.minimum(sigma_sq_theta_base, 0.2))
+    sigma_sq_gamma = numpyro.deterministic('sigma_sq_gamma', jnp.minimum(sigma_sq_gamma_base, 0.2))
+    
+    # sigma_sq_theta = numpyro.param("sigma_sq_theta", init_value=sigma_sq_theta_init)
+    # sigma_sq_gamma = numpyro.param("sigma_sq_gamma", init_value=sigma_sq_gamma_init)
+    
+    
+    # alpha_gamma = numpyro.sample('alpha_gamma', dist.Normal(0, 1).expand([K_gamma]))
+    beta_theta = numpyro.sample('beta_theta',dist.MultivariateNormal(m_theta,covariance_matrix=sigma_sq_theta*inv_Q_theta))
+    beta_gamma = numpyro.sample('beta_gamma',dist.MultivariateNormal(m_gamma,covariance_matrix=sigma_sq_gamma*inv_Q_gamma))
+    
     
     # Transformed parameters
-    beta_theta = m_theta + jnp.sqrt(sigma_sq_theta) * jnp.dot(L_theta, alpha_theta)
-    beta_gamma = m_gamma + jnp.sqrt(sigma_sq_gamma) * jnp.dot(L_gamma, alpha_gamma)
-    beta_theta= numpyro.deterministic("beta_theta", beta_theta)
-    beta_gamma= numpyro.deterministic("beta_gamma", beta_gamma)
+    # beta_theta = m_theta + jnp.sqrt(sigma_sq_theta) * jnp.dot(L_theta, alpha_theta)
+    # beta_gamma = m_gamma + jnp.sqrt(sigma_sq_gamma) * jnp.dot(L_gamma, alpha_gamma)
+    # beta_theta= numpyro.deterministic("beta_theta", beta_theta)
+    # beta_gamma= numpyro.deterministic("beta_gamma", beta_gamma)
     
     theta = jnp.exp(jnp.dot(X_theta, beta_theta)) / pa_2017
     gamma = jnp.exp(jnp.dot(X_gamma, beta_gamma))
@@ -240,10 +250,16 @@ def sample(
         
         
         nuts_kernel = NUTS(numpyro_model)
-        print("test2")
-# Setup the MCMC run
+
+        # Setup the MCMC run
         mcmc = MCMC(nuts_kernel, num_warmup=500, num_samples=4000)
-        print("test3")
+
+# Initial values dictionary
+        init_values = {
+            'sigma_sq_gamma_init': 0.1,  # Initial value for sigma_sq_gamma
+            'sigma_sq_theta_init': 0.01   # Initial value for sigma_sq_theta
+        }
+
         # Run the MCMC
         mcmc.run(jax.random.PRNGKey(0),
                 T=T, S=num_sites, 
@@ -269,13 +285,13 @@ def sample(
         
         
         
-        # import pickle
+        import pickle
 
-        # # Assuming `samples` is the dictionary of samples returned by mcmc.get_samples()
-        # with open('mcmc_samples.pcl', 'wb') as file:
-        #     pickle.dump(samples, file)
+        # Assuming `samples` is the dictionary of samples returned by mcmc.get_samples()
+        with open('mcmc_samples.pcl', 'wb') as file:
+            pickle.dump(samples, file)
 
-        # print("Samples saved to 'numpyro.pcl'.")
+        print("Samples saved to 'numpyro.pcl'.")
 
         theta_adj_samples = samples['theta']
         gamma_adj_samples = samples['gamma']
