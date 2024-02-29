@@ -56,11 +56,11 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    fit = baseline.sample(
+    baseline_fit = baseline.sample(
         model_name=model_name, num_samples=final_sample_size, num_sites=num_sites
     )
-    theta_vals = fit.stan_variable("theta").mean(axis=0)
-    gamma_vals = fit.stan_variable("gamma").mean(axis=0)
+    theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
+    gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -91,6 +91,7 @@ def sample(
         pa=pa,
         xi=xi,
         zeta=zeta,
+        baseline_fit=baseline_fit,
         final_sample_size=final_sample_size,
         weight=weight,
     )
