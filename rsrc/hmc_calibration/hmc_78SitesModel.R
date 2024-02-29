@@ -19,7 +19,7 @@ conflicts_prefer(dplyr::filter)
 
 # SETUP
 # START TIMER
-tictoc::tic(msg = "hmc_78SitesModel.R script", log = T)
+tictoc::tic(msg = "hmc_78SitesModel.R script", log = TRUE)
 
 # TERRA OPTIONS (specify temporary file location)
 terra::terraOptions(tempdir = here::here("data", "_temp"))

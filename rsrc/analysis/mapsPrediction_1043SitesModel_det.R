@@ -37,7 +37,7 @@ options(scipen = 999)
 # load(here::here("data/calibration/globalModel", "calibration_globalModel.Rdata"))
 
 # extract high and low price
-p_high <- 42.03
+p_high <- 41.11
 
 
 # # clear unnecessary objects
@@ -51,7 +51,7 @@ load(here::here("data/hmc", "hmc_1043SitesModel.Rdata"))
 
 
 # 1043 SITES AGGREGATE PREDICTION
-aux.prices <- c(8.0, 18.0, 23.0, 28.0)
+aux.prices <- c(7.6, 17.6, 22.6, 27.6,32.6)
 
 
 
@@ -122,7 +122,7 @@ clean.amazonBiome <- sf::st_transform(clean.amazonBiome, sf::st_crs(prediction.1
 # z_2017_1043Sites
 z_2017_1043Sites <-
     ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                      dplyr::filter(time == 0, p_e == 23.0) %>%
+                      dplyr::filter(time == 0, p_e == 22.6) %>%
                       dplyr::mutate(z_t = cut(round(z_t,1),
                                               breaks = c(0,0.5,20,40,60,80,105),
                                               include.lowest = T,
@@ -146,7 +146,7 @@ z_2017_1043Sites <-
 
 # gamma_1043Sites
 gamma_1043Sites <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 8.0) %>%
+  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 7.6) %>%
                     dplyr::mutate(rank_gamma_1043Sites = cut(round(rank_gamma_1043Sites), breaks = c(1, 212, 423, 634, 845, 1043), include.lowest = T, dig.lab = 4))) +
   ggplot2::geom_sf(aes(fill = rank_gamma_1043Sites)) +
   ggplot2::scale_fill_brewer(name = expression(paste(gamma^"i", ~"(rank)")), palette = "YlOrRd", direction = -1) +
@@ -165,7 +165,7 @@ gamma_1043Sites <-
 
 # theta_1043Sites
 theta_1043Sites <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 8.0) %>%
+  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 7.6) %>%
                     dplyr::mutate(rank_theta_1043Sites = cut(round(rank_theta_1043Sites), breaks = c(1, 212, 423, 634, 845, 1043), include.lowest = T, dig.lab = 4))) +
   ggplot2::geom_sf(aes(fill = rank_theta_1043Sites)) +
   ggplot2::scale_fill_brewer(name = expression(paste(theta^"i", ~"(rank)")), palette = "YlOrRd", direction = -1) +
@@ -187,7 +187,7 @@ theta_1043Sites <-
 mapList <- list()
 mapIndex <- 1
 for (price in aux.prices) {
-  transfer <- price-8.0
+  transfer <- price-7.6
   # z50 map (vary by model)
   mapList[[mapIndex]] <-
     ggplot2::ggplot(data = prediction.1043SitesModel %>%
@@ -229,17 +229,64 @@ ggpubr::ggarrange(gamma_1043Sites, theta_1043Sites, z_2017_1043Sites, "",
   ggpubr::ggexport(filename = here::here(glue::glue("results/prediction/1043-det/map_z0z50GammaTheta_1043Sites_allPrices_det.png")),
                    width = 2700, height = 1500)
 
+#### 30 years
+# LOOP ACROSS PRICES TO GENERATE Z50 MAP AND SAVE Z0, Z50, GAMMA, AND THETA MAPS BY PRICE
+mapList <- list()
+mapIndex <- 1
+for (price in aux.prices) {
+  transfer <- price-7.6
+  # z50 map (vary by model)
+  mapList[[mapIndex]] <-
+    ggplot2::ggplot(data = prediction.1043SitesModel %>%
+                            dplyr::filter(time == 30, p_e == price) %>%
+                            dplyr::mutate(z_t = cut(round(z_t,5),
+                                                    breaks = c(0,0.5,20,40,60,80,105),
+                                                    include.lowest = T,
+                                                    dig.lab = 3,
+                                                    labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")))) +
+    ggplot2::geom_sf(aes(fill = z_t)) +
+    ggplot2::scale_fill_manual(name = expr(paste("Z"[2047]^"i", ~"(%), ", "b", "=", !!transfer)), values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
+    ggplot2::geom_sf(data = clean.amazonBiome, fill = NA, color = "darkgreen", size = 1.2) +
+    ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
+    ggplot2::theme(panel.grid.major = element_line(colour = "white"),
+                   panel.grid.minor = element_line(colour = "white"),
+                   panel.background = element_blank(),
+                   strip.background = element_rect(fill = NA),
+                   axis.line = element_blank(), axis.ticks = element_blank(),
+                   axis.title = element_blank(), axis.text = element_blank(),
+                   legend.title = element_text(hjust = 0.5, size = 40, face = "bold"),
+                   legend.position = "bottom", legend.margin=margin(t=-1, r=-0, b=0.3, l=-0, unit="cm"),
+                   legend.text = element_text(size = 28, face = "bold"),
+                   plot.margin=unit(c(t=-0.5,r=-1,b=-0,l=-1), "cm"))
+
+    # SAVE MAP Z0, Z50, GAMMA, THETA
+    ggpubr::ggarrange(mapList[[mapIndex]]) %>%
+      ggpubr::ggexport(filename = here::here(glue::glue("results/prediction/1043-det/map_z30_1043Sites_pe{price}.png")),
+                       width = 2400, height = 1500)
+
+    mapIndex <- mapIndex + 1
+
+}
+
+# FIGURE WTIH ALL MAPS
+# SAVE MAP Z0, GAMMA, THETA, with varying prices
+ggpubr::ggarrange( z_2017_1043Sites, 
+                  mapList[[1]], mapList[[2]], mapList[[5]],
+                  ncol = 4, nrow = 1) %>%
+  ggpubr::ggexport(filename = here::here(glue::glue("results/prediction/1043-det/map_z0z30GammaTheta_1043Sites_allPrices_det.png")),
+                   width = 2700, height = 800)
+
 
 
 # LOOP ACROSS PRICE AND YEARS TO GENERATE Z DYNAMICS FOR EACH PRICE IN A SINGLE FIGURE
 # years
-aux.years <- c(2017, 2022, 2027, 2032, 2037, 2067)
+aux.years <- c(2017, 2022, 2027, 2032, 2037, 2047)
 
 # generate empty map list
 for (p in seq_along(aux.prices)) {
 
   aux.mapList <- list()
-  transfer <- aux.prices[p]-8.0
+  transfer <- aux.prices[p]-7.6
 
   for (y in seq_along(aux.years)) {
 
@@ -289,7 +336,7 @@ for (y in seq_along(aux.years)) {
 
   # z50 map (vary by model)
     ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                      dplyr::filter(time == aux.years[y]-2017, p_e == 23.0) %>%
+                      dplyr::filter(time == aux.years[y]-2017, p_e == 22.6) %>%
                       dplyr::mutate(z_t = cut(round(z_t,2),
                                               breaks = c(0,0.5,20,40,60,80,105),
                                               include.lowest = T,
@@ -312,6 +359,7 @@ for (y in seq_along(aux.years)) {
   ggplot2::ggsave(here::here(glue::glue("results/prediction/1043-det/map_z{aux.years[y]}_1043Sites_pe20.76.png")), width = 12, height = 9, dpi = 300)
 
 }
+
 
 
 
