@@ -72,7 +72,6 @@ df <- muni_theta_prep_data %>%
     lat_sq,
     log_cattle_price,
     distance,
-    zbar_2017_muni,
     log_cattleSlaughter_valuePerHa_2017,
     weights
   )

@@ -362,7 +362,7 @@ rm(reg.cattleValueperHa.2017, aux.min.positive.cattleSlaughter.value.ha.fitted.2
 # match munis with Sites
 site.theta.2017 <- sf::st_intersection(calibration.24SitesModel %>% dplyr::select(id),
                                        muniTheta.prepData       %>% dplyr::select(muni_code, muni_area, cattleSlaughter_valuePerHa_fitted_2017,
-                                                                                  pasture_area_2017, d_theta_winsorized_2017,zbar_2017_muni))
+                                                                                  pasture_area_2017, d_theta_winsorized_2017))
 
 
 
@@ -381,7 +381,6 @@ site.theta.2017 <-
 # calculate cattleSlaughter_valuePerHa_fitted and pastureArea_value by site (for each muni adjust the value by the share of the muni area inside the site)
 aux.theta.2017 <-
   site.theta.2017 %>%
-  dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
   dplyr::summarise(theta2017_24Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = muni_site_area, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),
