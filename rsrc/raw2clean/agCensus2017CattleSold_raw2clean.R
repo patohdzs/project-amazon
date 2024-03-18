@@ -12,14 +12,13 @@
 
 
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -33,7 +32,7 @@ tictoc::tic(msg = "agCensus2017CattleSold_raw2clean.R script", log = T)
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 # read csv file
-raw.agCensus2017CattleSold <- readr::read_csv(file = paste(getwd(), "data/raw2clean/agCensus2017CattleSold_ibge/input/agCensus2017_cattleSold.csv", sep = "/"),
+raw.agCensus2017CattleSold <- readr::read_csv(file =  "data/raw2clean/agCensus2017CattleSold_ibge/input/agCensus2017_cattleSold.csv",
                                   skip = 6,
                                   na = c("..."),
                                   col_names = c("muni_code",
@@ -42,7 +41,7 @@ raw.agCensus2017CattleSold <- readr::read_csv(file = paste(getwd(), "data/raw2cl
                                   col_types = "n--cccc")
 
 
-stop()
+
 
 # DATA EXPLORATION [disabled for speed]
 # summary(raw.agCensus2017CattleSold)
@@ -119,7 +118,7 @@ save(clean.agCensus2017CattleSold,
 tictoc::toc(log = T)
 
 # export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# ExportTimeProcessing("code/raw2clean")
 
 
 

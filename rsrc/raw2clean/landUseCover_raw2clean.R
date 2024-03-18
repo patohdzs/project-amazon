@@ -16,7 +16,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -68,7 +68,7 @@ gc()
 tictoc::toc(log = T)
 
 # export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# ExportTimeProcessing("code/raw2clean")
 
 
 

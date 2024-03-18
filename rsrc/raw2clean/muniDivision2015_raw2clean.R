@@ -17,7 +17,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -30,7 +30,7 @@ tictoc::tic(msg = "muniDivision2015_raw2clean.R script", log = T)
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 # read shapefile
-raw.muni <- sf::st_read(dsn   = paste(getwd(),"data/raw2clean/muniDivision2015_ibge/input", sep = "/"),
+raw.muni <- sf::st_read(dsn   = here::here("data/raw2clean/muniDivision2015_ibge/input"),
                         layer = "BRMUE250GC_SIR")
 
 
@@ -39,7 +39,6 @@ raw.muni <- sf::st_read(dsn   = paste(getwd(),"data/raw2clean/muniDivision2015_i
 # summary(raw.muni)
 # View(raw.muni)
 # plot(raw.muni$geometry)
-
 
 
 
@@ -113,9 +112,14 @@ raw.muni <- sf::st_transform(x = raw.muni, crs = 5880) # SIRGAS 2000 / Brazil Po
 
 
 
-file_path <- paste(getwd(), "data/calibration", paste0("raw_muni", ".Rdata"), sep = "/")
+file_path <- paste(getwd(), "data/raw2clean/muniDivision2015_ibge/output", paste0("raw_muni", ".Rdata"), sep = "/")
 
 save(raw.muni, file = file_path)
+
+# save(raw.muni,
+#      file = here::here("data/calibration/",
+#                       "raw_muni.Rdata"))
+
 
 
 
@@ -167,8 +171,8 @@ save(clean.muniDivision2015,
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# # export time to csv table
+# ExportTimeProcessing("code/raw2clean")
 
 
 
