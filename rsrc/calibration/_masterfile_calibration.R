@@ -105,6 +105,39 @@ source(here::here("rsrc/hmc_calibration/hmc_GlobalSitesModel.R"), encoding = "UT
 rm(list = ls())
 
 
+source(here::here("rsrc/hmc_calibration/site_boundaries/10_sites.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
+
+source(here::here("rsrc/hmc_calibration/site_boundaries/24_sites.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
+
+
+source(here::here("rsrc/hmc_calibration/site_boundaries/40_sites.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
+
+source(here::here("rsrc/hmc_calibration/site_boundaries/78_sites.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
+
+
+
+# Prepare for HMC
+source(here::here("rsrc/hmc_calibration/data_prep/gamma.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
+
+source(here::here("rsrc/hmc_calibration/data_prep/theta.R"), encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
 
 
 
