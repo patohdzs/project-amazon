@@ -11,14 +11,12 @@
 # 1: -
 
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
-
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -35,22 +33,16 @@ terra::terraOptions(tmpdir = here::here("data/_temp"),
 
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
-
-
 # MAPBIOMAS SAMPLE
-load("data/calibration/prepData/pixelPrimaryForest2018_prepData.Rdata")
+load(here::here("data/calibration/prepData/pixelPrimaryForest2018_prepData.Rdata"))
 
 
 
 # ABOVEGROUND BIOMASS RASTERS
-path <- "data/raw2clean/abovegroundBiomass_esa/input"
-
-
-agb.raster <- purrr::map(list.files(path, pattern = "(_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2017-fv3.0.tif)", full.names = T),
+agb.raster <- purrr::map(list.files(here::here("data/raw2clean/abovegroundBiomass_esa/input"), pattern = "_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2017-fv3.0.tif", full.names = T),
                          terra::rast)
 
-agb_sd_raster <- purrr::map(list.files(path, pattern = "(_ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2017-fv3.0.tif)", full.names = T),
-                            terra::rast)
+
 
 
 # DATA MANIPULATION ----------------------------------------------------------------------------------------------------------------------------------
@@ -62,36 +54,44 @@ pixelPrimaryForest.prepData <- sf::st_as_sf(x = pixelPrimaryForest.prepData,
                                             crs = sf::st_crs(4326))
 
 
-extract_and_merge <- function(raster_list, column_name) {
-  data <- purrr::map_df(.x = seq_along(raster_list),
-                        .f = function(.x) {
-                          
-                          aux.polygons <- terra::vect(pixelPrimaryForest.prepData)
-                          aux.polygons <- terra::crop(aux.polygons, raster_list[[.x]])
-                          
-                          if (is.null(aux.polygons)) {
-                            return(NULL)  # Changed from 'next()' for safe data.frame return
-                          }
-                          
-                          names(raster_list[[.x]]) <- column_name
-                          aux.data <- terra::extract(raster_list[[.x]], aux.polygons, xy = TRUE)
-                          aux.data <- aux.data %>% dplyr::rename(lon = x, lat = y) %>% dplyr::select(-ID)
-                          
-                          return(aux.data)
-                        })
-  
-  return(data)
-}
+
+# MERGE AGB DATA WITH MAPBIOMAS SAMPLE
+pixelBiomass2017.prepData <-
+  purrr::map_df(.x = seq_along(agb.raster),
+                .f = function(.x) {
+
+                # transform to spatVector
+                aux.polygons <- terra::vect(pixelPrimaryForest.prepData)
+
+                # crop spatial points to raster extent
+                aux.polygons <- terra::crop(aux.polygons, agb.raster[[.x]])
+
+                # skip raster with no intersection with the sample
+                if (is.null(aux.polygons)) {
+                  next()
+                }
+
+                # change raster layer name
+                names(agb.raster[[.x]]) <- "agb_2017"
+
+                # extract agb raster data by spatial point
+                aux.agb <- terra::extract(agb.raster[[.x]], aux.polygons, xy = TRUE)
+
+                # adjust and select column names
+                aux.agb <- aux.agb %>% dplyr::rename(lon = x, lat = y) %>% dplyr::select(-ID)
+
+              })
 
 
-pixelBiomass2017.prepData <- extract_and_merge(agb.raster, "agb_2017")
-pixelBiomass2017_sd.prepData <- extract_and_merge(agb_sd_raster, "agbSD_2017")
-pixelBiomass2017.prepData <- dplyr::left_join(pixelBiomass2017.prepData, pixelBiomass2017_sd.prepData, by = c("lon", "lat"))
+# clear environment
+rm(agb.raster)
 
+# transform to sf
 pixelBiomass2017.prepData <-
   sf::st_as_sf(x = pixelBiomass2017.prepData,
                coords = c("lon", "lat"),
                crs = sf::st_crs(4326))
+
 
 
 # check if all points were extracted
@@ -124,16 +124,17 @@ sjlabelled::set_label(pixelBiomass2017.prepData$agb_2017) <- "aboveground biomas
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-file_path <- paste(getwd(), "data/calibration/prepData", paste0("pixelBiomass2017_prepData", ".Rdata"), sep = "/")
+save(pixelBiomass2017.prepData,
+     file = here::here("data/calibration/prepData",
+                       paste0("pixelBiomass2017_prepData", ".Rdata")))
 
-save(pixelBiomass2017.prepData, file = file_path)
 
 
-# END TIMER
-tictoc::toc(log = T)
+# # END TIMER
+# tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("rsrc/calibration")
 
 
 

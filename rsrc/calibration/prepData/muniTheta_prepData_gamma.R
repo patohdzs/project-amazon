@@ -11,22 +11,15 @@
 # 1: -
 
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
-
-
-
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
 tictoc::tic(msg = "muniTheta_prepData.R script", log = T)
 
-
-# SOURCE FUNCTIONS
-source("code/_functions/ExportTimeProcessing.R")
 
 
 
@@ -34,12 +27,15 @@ source("code/_functions/ExportTimeProcessing.R")
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 
-load("data/calibration/muni_Biomass2017_prepData.Rdata")
-gamma_merge<-sfdata_with_muni %>%
+# Gamma MUNI LEVEL
+load(here::here("data/calibration/prepData/muni_Biomass2017_prepData.Rdata"))
+
+gamma_merge<-gamma_muni_2017 %>%
   group_by(muni_code)%>%
   summarise(
     agb_2017=mean(agb_2017,na.rm = TRUE)
   )
+
 gamma_merge_df <- st_set_geometry(gamma_merge, NULL)
 
 
@@ -80,23 +76,23 @@ raster.temp <- terra::rast("data/raw2clean/temperature_worldClim/output/clean_te
 raster.precip <- terra::rast("data/raw2clean/precipitation_worldClim/output/clean_precipitation.tif")
 
 
-load("data/calibration/z_muni_2017.Rdata")
+# load("data/calibration/z_muni_2017.Rdata")
 
 
-z_muni_2017_merge<-z_muni_2017 %>%
-  group_by(muni_code)%>%
-  summarise(
-    agriculturaluse_2017=mean(share_agriculturalUse_2017,na.rm = TRUE),
-    forest_2017=mean(share_forest_2017,na.rm = TRUE),
-    other_2017=mean(share_other_2017,na.rm = TRUE),
-    agriculturaluse_1995=mean(share_agriculturalUse_1995,na.rm = TRUE),
-    forest_1995=mean(share_forest_1995,na.rm = TRUE),
-    other_1995=mean(share_other_1995,na.rm = TRUE),
-    agriculturaluse_2008=mean(share_agriculturalUse_2008,na.rm = TRUE),
-    forest_2008=mean(share_forest_2008,na.rm = TRUE),
-    other_2008=mean(share_other_2008,na.rm = TRUE)
-  )
-z_muni_2017_merge_df <- st_set_geometry(z_muni_2017_merge, NULL)
+# z_muni_2017_merge<-z_muni_2017 %>%
+#   group_by(muni_code)%>%
+#   summarise(
+#     agriculturaluse_2017=mean(share_agriculturalUse_2017,na.rm = TRUE),
+#     forest_2017=mean(share_forest_2017,na.rm = TRUE),
+#     other_2017=mean(share_other_2017,na.rm = TRUE),
+#     agriculturaluse_1995=mean(share_agriculturalUse_1995,na.rm = TRUE),
+#     forest_1995=mean(share_forest_1995,na.rm = TRUE),
+#     other_1995=mean(share_other_1995,na.rm = TRUE),
+#     agriculturaluse_2008=mean(share_agriculturalUse_2008,na.rm = TRUE),
+#     forest_2008=mean(share_forest_2008,na.rm = TRUE),
+#     other_2008=mean(share_other_2008,na.rm = TRUE)
+#   )
+# z_muni_2017_merge_df <- st_set_geometry(z_muni_2017_merge, NULL)
 
 
 
@@ -206,7 +202,6 @@ muniTheta.prepData <-
   dplyr::left_join(clean.agCensus2017AgUseArea, by = c("muni_code")) %>%
   dplyr::left_join(clean.agCensus2006CattleSlaughter, by = c("muni_code")) %>%
   dplyr::left_join(clean.agCensus2006AgUseArea, by = c("muni_code")) %>%
-  dplyr::left_join(z_muni_2017_merge_df, by = c("muni_code")) %>%
   dplyr::left_join(gamma_merge_df,by=c("muni_code"))%>%
   dplyr::filter(!is.na(biomeAmazon_share)) %>% # remove municipalities outside amazon biome
   # CREATE AGRICULTURAL CENSUS VARIABLES
@@ -216,27 +211,27 @@ muniTheta.prepData <-
                 cattleSlaughter_farmGatePrice_2017 = if_else(cattleSlaughter_head_2017  == 0, as.numeric(NA), cattleSlaughter_value_2017/(cattleSlaughter_head_2017*15))) %>%  # USD/@ (average cattle weight 15@)
   dplyr::mutate(cattleSlaughter_carcassWeightPerHa_2006 = if_else(pasture_area_2006  == 0, as.numeric(NA), 225*cattleSlaughter_head_2006/pasture_area_2006), # average cattle weight 225 kg
                 cattleSlaughter_farmGatePrice_2006 = if_else(cattleSlaughter_head_2006  == 0, as.numeric(NA), cattleSlaughter_value_2006/(cattleSlaughter_head_2006*15))) %>%  # USD/@ (average cattle weight 15@)
-  dplyr::mutate(                forestArea_2017_ha_muni = forest_2017*muni_area,
-                                z_2017_muni = agriculturaluse_2017*muni_area,
-                                otherArea_2017_ha_muni = other_2017*muni_area,
-                                zbar_2017_muni = forestArea_2017_ha_muni + z_2017_muni,
-                                forestArea_1995_ha_muni = forest_1995*muni_area,
-                                z_1995_muni = agriculturaluse_1995*muni_area,
-                                otherArea_1995_ha_muni = other_1995*muni_area,
-                                zbar_1995_muni = forestArea_1995_ha_muni + z_1995_muni,
-                                forestArea_2008_ha_muni = forest_2008*muni_area,
-                                z_2008_muni = agriculturaluse_2008*muni_area,
-                                otherArea_2008_ha_muni = other_2008*muni_area,
-                                zbar_2008_muni = forestArea_2008_ha_muni + z_2008_muni)%>%
+  # dplyr::mutate(                forestArea_2017_ha_muni = forest_2017*muni_area,
+  #                               z_2017_muni = agriculturaluse_2017*muni_area,
+  #                               otherArea_2017_ha_muni = other_2017*muni_area,
+  #                               zbar_2017_muni = forestArea_2017_ha_muni + z_2017_muni,
+  #                               forestArea_1995_ha_muni = forest_1995*muni_area,
+  #                               z_1995_muni = agriculturaluse_1995*muni_area,
+  #                               otherArea_1995_ha_muni = other_1995*muni_area,
+  #                               zbar_1995_muni = forestArea_1995_ha_muni + z_1995_muni,
+  #                               forestArea_2008_ha_muni = forest_2008*muni_area,
+  #                               z_2008_muni = agriculturaluse_2008*muni_area,
+  #                               otherArea_2008_ha_muni = other_2008*muni_area,
+  #                               zbar_2008_muni = forestArea_2008_ha_muni + z_2008_muni)%>%
   # SELECT VARIABLES OF INTEREST
   dplyr::select(muni_code, muni_area, biomeAmazon_share,
                 agUse_area_2017, agUse_area_2006,
                 cattleSlaughter_valuePerHa_2017, cattleSlaughter_carcassWeightPerHa_2017, cattleSlaughter_farmGatePrice_2017, pasture_area_2017, cattleSlaughter_head_2017,
                 cattleSlaughter_valuePerHa_2006, cattleSlaughter_carcassWeightPerHa_2006, cattleSlaughter_farmGatePrice_2006, pasture_area_2006, cattleSlaughter_head_2006,
-                lon, lat, historical_precip, historical_temp, geometry,
-                forestArea_2017_ha_muni,z_2017_muni,otherArea_2017_ha_muni,zbar_2017_muni,agb_2017,
-                forestArea_2008_ha_muni,z_2008_muni,otherArea_2008_ha_muni,zbar_2008_muni,
-                forestArea_1995_ha_muni,z_1995_muni,otherArea_1995_ha_muni,zbar_1995_muni)
+                lon, lat, historical_precip, historical_temp, geometry,agb_2017)
+                # forestArea_2017_ha_muni,z_2017_muni,otherArea_2017_ha_muni,zbar_2017_muni,agb_2017,
+                # forestArea_2008_ha_muni,z_2008_muni,otherArea_2008_ha_muni,zbar_2008_muni,
+                # forestArea_1995_ha_muni,z_1995_muni,otherArea_1995_ha_muni,zbar_1995_muni)
 
 
 # clear environment
@@ -276,15 +271,15 @@ sjlabelled::set_label(muniTheta.prepData$cattleSlaughter_farmGatePrice_2006) <- 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
 save(muniTheta.prepData,
-     file = "data/calibration/prepData/muniTheta_prepData_new.Rdata")
+     file = "data/calibration/prepData/muniTheta_prepData.Rdata")
 
 
 
-# END TIMER
-tictoc::toc(log = T)
+# # END TIMER
+# tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

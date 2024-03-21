@@ -27,7 +27,7 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 
 # DATA INPUT
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster_78_sites <- terra::rast(list.files(here::here("data/calibration/1055SitesModel/aux_tifs"),
+raster_78_sites <- terra::rast(list.files(here::here("data/calibration/1043SitesModel/aux_tifs"),
   pattern = "raster_",
   full.names = TRUE
 ))
@@ -125,7 +125,7 @@ calibration_78_sites_model$id <- seq_len(nrow(calibration_78_sites_model))
 # PARAMETER GAMMA
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 muniTheta.prepData <- muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017 / 2) * (44 / 12))
@@ -292,12 +292,12 @@ calibration_78_sites_model <-
 
 # PARAMETER THETA
 distance_data <-
-  read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
+  read_excel("data/raw2clean/distance_to_capital/ipeadata[21-08-2023-01-28].xls")
 
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
@@ -325,7 +325,7 @@ geo_backup <- geo_backup[-c(142, 106, 112)]
 
 
 predicted_values <-
-  read_excel("data/calibration/farm_gate_price.xlsx")
+  read_excel("data/raw2clean/farm_gate_price/farm_gate_price.xlsx")
 
 # Combine back into an sf object
 muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)

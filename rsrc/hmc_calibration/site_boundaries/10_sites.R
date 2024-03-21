@@ -33,7 +33,7 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
 raster_10_sites <-
   terra::rast(list.files(
-    paste(getwd(), "data/calibration/1055SitesModel/aux_tifs", sep = "/"),
+    paste(getwd(), "data/calibration/1043SitesModel/aux_tifs", sep = "/"),
     pattern = "raster_",
     full.names = TRUE
   ))

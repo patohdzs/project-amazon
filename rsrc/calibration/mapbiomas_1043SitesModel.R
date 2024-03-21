@@ -17,7 +17,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -33,7 +33,7 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 # DATASET CLEANUP AND PREP ---------------------------------------------------------------------------------------------------------------------------
 
 mapbiomas.class <- c("forest", "agriculturalUse", "other")
-aux.year <- c(1995, 2008)
+aux.year <- c(1995, 2008,2017)
 
 for (class in mapbiomas.class) {
   for (year in aux.year) {
@@ -75,7 +75,7 @@ for (class in mapbiomas.class) {
   # save unified tif
 
   #terra::writeRaster(raw.raster, paste0("C:/Users/pengyu/Desktop/code_data_20230628/data/calibration/1055SitesModel/aux_tifs/raster_mapbiomas_", class, "_", year, "_1055SitesModel.tif"), overwrite = T)
-  terra::writeRaster(raw.raster, here::here(glue::glue("data/calibration/1055SitesModel/aux_tifs/raster_mapbiomas_{class}_{year}_1055SitesModel.tif")),
+  terra::writeRaster(raw.raster, here::here(glue::glue("data/calibration/1043SitesModel/aux_tifs/raster_mapbiomas_{class}_{year}_1043SitesModel.tif")),
                      overwrite = T)
   
   # clean environment
@@ -96,7 +96,7 @@ for (class in mapbiomas.class) {
 tictoc::toc(log = T)
 
 # export time to csv table
-ExportTimeProcessing("code/calibration")
+# ExportTimeProcessing("code/calibration")
 
 
 
