@@ -136,10 +136,10 @@ rm(list = ls())
 
 # DOWNLOAD ABOVERGROUND BIOMASS/CARBON DATA (ESA BIOMASS - 2010, 2017, 2018)
 # DOWNLOAD PROCESS IS OPTIONAL GIVEN THAT THE DATA IS PROVIDED
-source(here::here("rsrc/raw2clean/abovegroundBiomassESA_download.R"), encoding = "UTF-8", echo = T)
+# source(here::here("rsrc/raw2clean/abovegroundBiomassESA_download.R"), encoding = "UTF-8", echo = T)
 
-# clear environment
-rm(list = ls())
+# # clear environment
+# rm(list = ls())
 
 
 
