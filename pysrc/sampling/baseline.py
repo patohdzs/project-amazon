@@ -12,8 +12,6 @@ def sample(model_name: str, num_sites: int, **stan_kwargs):
         _,
         _,
         _,
-        _,
-        _,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,

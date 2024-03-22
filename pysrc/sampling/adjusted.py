@@ -45,10 +45,8 @@ def sample(
     # Load sites' data
     (
         zbar_2017,
-        _,
         z_2017,
         forest_area_2017,
-        _,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,

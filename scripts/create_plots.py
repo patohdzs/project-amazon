@@ -46,10 +46,8 @@ with open(output_dir / "results.pcl", "rb") as f:
 # Load site data
 (
     zbar_2017,
-    _,
     z_2017,
     forest_area_2017,
-    _,
     site_theta_2017_df,
     site_gamma_2017_df,
     municipal_theta_df,

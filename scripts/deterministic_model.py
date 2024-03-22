@@ -27,10 +27,8 @@ logs_dir = logs_dir_path(**vars(args))
 # Load site data
 (
     zbar_2017,
-    _,
     z_2017,
     forest_area_2017,
-    _,
     _,
     _,
     _,
