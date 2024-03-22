@@ -6,7 +6,7 @@ from ..services.data_service import load_site_data
 from ..services.file_service import stan_model_path
 
 
-def sample(model_name: str, num_samples: int, num_sites: int):
+def sample(model_name: str, num_sites: int, **stan_kwargs):
     # Load sites data
     (
         _,
@@ -37,8 +37,8 @@ def sample(model_name: str, num_samples: int, num_sites: int):
     # Sampling
     fit = sampler.sample(
         data=model_data,
-        iter_sampling=num_samples,
         fixed_param=True,
+        **stan_kwargs,
     )
     return fit
 

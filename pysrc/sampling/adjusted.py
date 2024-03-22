@@ -57,7 +57,9 @@ def sample(
 
     # Set initial theta & gamma using baseline mean
     baseline_fit = baseline.sample(
-        model_name=model_name, num_samples=final_sample_size, num_sites=num_sites
+        model_name=model_name,
+        num_sites=num_sites,
+        **stan_kwargs,
     )
     theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
     gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
