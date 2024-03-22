@@ -16,11 +16,11 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
-tictoc::tic(msg = "pixelArea_1055SitesModel.R script", log = T)
+tictoc::tic(msg = "pixelArea_1043SitesModel.R script", log = T)
 
 
 # TERRA OPTIONS (specify temporary file location)
@@ -33,7 +33,7 @@ terra::terraOptions(tempdir = here::here("data", "_temp"))
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RASTER DATA
-raster.biome <- terra::rast(here::here("data/calibration/1055SitesModel/aux_tifs/raster_amazonBiome_1055SitesModel.tif"))
+raster.biome <- terra::rast(here::here("data/calibration/1043SitesModel/aux_tifs/raster_amazonBiome_1043SitesModel.tif"))
 
 
 
@@ -54,7 +54,7 @@ names(raster.pixelArea) <- "pixelArea_ha"
 
 # EXPORT
 # save unified tif
-terra::writeRaster(raster.pixelArea, here::here("data/calibration/1055SitesModel/aux_tifs/raster_pixelArea_1055SitesModel.tif"), overwrite = T)
+terra::writeRaster(raster.pixelArea, here::here("data/calibration/1043SitesModel/aux_tifs/raster_pixelArea_1043SitesModel.tif"), overwrite = T)
 
 # clean environment
 rm(raster.pixelArea)
@@ -70,8 +70,8 @@ gc()
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

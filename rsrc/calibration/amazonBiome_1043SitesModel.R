@@ -16,11 +16,11 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
-tictoc::tic(msg = "amazonBiome_1055SitesModel.R script", log = T)
+tictoc::tic(msg = "amazonBiome_1043SitesModel.R script", log = T)
 
 
 # TERRA OPTIONS (specify temporary file location)
@@ -65,7 +65,7 @@ names(raster.biome) <- "share_amazonBiome"
 
 # EXPORT
 # save unified tif
-terra::writeRaster(raster.biome, here::here("data/calibration/1055SitesModel/aux_tifs/raster_amazonBiome_1055SitesModel.tif"), overwrite = T)
+terra::writeRaster(raster.biome, here::here("data/calibration/1043SitesModel/aux_tifs/raster_amazonBiome_1043SitesModel.tif"), overwrite = T)
 
 # clean environment
 rm(raster.biome)
@@ -81,8 +81,8 @@ gc()
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

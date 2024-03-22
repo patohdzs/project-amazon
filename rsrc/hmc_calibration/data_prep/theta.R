@@ -11,11 +11,11 @@ load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 
 # load farm gate price data
 fgp_data <-
-  read_excel("data/calibration/farm_gate_price.xlsx")
+  read_excel("data/raw2clean/farm_gate_price/farm_gate_price.xlsx")
 
 # load distance data
 distance_data <-
-  read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls") %>%
+  read_excel("data/raw2clean/distance_to_capital/ipeadata[21-08-2023-01-28].xls") %>%
   mutate(muni_code = as.numeric(muni_code))
 
 
@@ -72,7 +72,6 @@ df <- muni_theta_prep_data %>%
     lat_sq,
     log_cattle_price,
     distance,
-    zbar_2017_muni,
     log_cattleSlaughter_valuePerHa_2017,
     weights
   )

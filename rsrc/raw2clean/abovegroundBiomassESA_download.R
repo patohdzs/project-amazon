@@ -17,15 +17,13 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
 tictoc::tic(msg = "abovegroundBiomassESA_download.R script", log = T)
 
-
-
-
+options(timeout=300)
 
 # DATA DOWNLOAD --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -52,8 +50,8 @@ purrr::map2(.x = aux.params$tile,
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# # export time to csv table
+# ExportTimeProcessing("code/raw2clean")
 
 
 

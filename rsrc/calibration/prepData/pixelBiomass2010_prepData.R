@@ -16,7 +16,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -131,11 +131,11 @@ save(pixelBiomass2010.prepData,
 
 
 
-# END TIMER
-tictoc::toc(log = T)
+# # END TIMER
+# tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

@@ -16,15 +16,15 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
 tictoc::tic(msg = "sampleConstructionPixel_prepData.R script", log = T)
 
 
-# SOURCE FUNCTIONS
-source(here::here("code/_functions/ExportTimeProcessing.R"))
+# # SOURCE FUNCTIONS
+# source(here::here("code/_functions/ExportTimeProcessing.R"))
 
 
 # RASTER OPTIONS
@@ -111,11 +111,11 @@ save(samplePixel.prepData,
 
 
 
-# END TIMER
-tictoc::toc(log = T)
+# # END TIMER
+# tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

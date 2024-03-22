@@ -17,7 +17,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -115,8 +115,8 @@ save(clean.agCensus2006AgUseArea,
 # END TIMER
 tictoc::toc(log = T)
 
-# export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# # export time to csv table
+# ExportTimeProcessing("code/raw2clean")
 
 
 

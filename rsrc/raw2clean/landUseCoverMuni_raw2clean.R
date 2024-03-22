@@ -17,7 +17,7 @@
 # SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
 
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("code/setup.R")
+source("rsrc/setup.R")
 
 
 # START TIMER
@@ -25,7 +25,6 @@ tictoc::tic(msg = "landUseCoverMuni_raw2clean.R script", log = T)
 
 
 
-setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 
 
 
@@ -34,10 +33,10 @@ setwd("C:/Users/pengyu/Desktop/code_data_20230628")
 # read csv file
 #raw.mapbiomas <- readxl::read_xlsx(path = here::here("data/raw2clean/landUseCoverMuni_mapbiomas/input/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx"),
                                    #sheet = 3)
-raw.mapbiomas <- readxl::read_xlsx(path = paste0(getwd(), "/data/raw2clean/landUseCoverMuni_mapbiomas/input/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx"),
+raw.mapbiomas <- readxl::read_xlsx(path = here::here("data/raw2clean/landUseCoverMuni_mapbiomas/input/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx"),
                                    sheet = 3)
 
-stop()
+
 
 # DATA EXPLORATION
 #summary(raw.mapbiomas)    # object is a list of data frames
@@ -148,7 +147,7 @@ save(clean.landUseCoverMuni,
 tictoc::toc(log = T)
 
 # export time to csv table
-ExportTimeProcessing("code/raw2clean")
+# ExportTimeProcessing("code/raw2clean")
 
 
 

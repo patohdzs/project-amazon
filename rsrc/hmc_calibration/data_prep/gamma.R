@@ -2,7 +2,7 @@ library(tidyverse)
 library(sf)
 
 # DATA INPUT
-load("data/calibration/prepData/muniTheta_prepData_gamma.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 # Convert biomass into CO2e, add column of ones, take logs, and scale
 df <- muniTheta.prepData %>%
