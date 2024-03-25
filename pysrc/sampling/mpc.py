@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import shutil
 from ..services.data_service import load_site_data
 from pysrc.sampling import baseline
 
@@ -165,3 +166,59 @@ def gdx_files(location,num_sites=78):
     thetadata.to_csv(saveto)
 
     return("gdx file is done")
+
+
+def paste_file(root,ori,des,model="unconstrained"):
+    
+    # Create subfolders 'mc_1' to 'mc_100' inside the 'calculation' folder
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        os.makedirs(mc_subfolder, exist_ok=True)
+
+    # Copy 'mc_i.csv' files into their respective subfolders
+    for i in range(1, 201):
+        mc_csv_file_src = os.path.join(ori, f'mc_{i}.csv')
+        mc_csv_file_dest = os.path.join(des, f'mc_{i}', 'mc_1.csv')
+        shutil.copy(mc_csv_file_src, mc_csv_file_dest)
+
+    # Copy the 'gms' file into each subfolder
+    if model == "constrained":
+        target_file="mpc_con.gms"
+    else:
+        target_file="mpc_uncon.gms"
+        
+    gms_file = os.path.join(root, target_file)
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+
+
+    gms_file = os.path.join(des, 'GammaData.csv')
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+        
+    gms_file = os.path.join(des, 'ThetaData.csv')
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+        
+        
+    gms_file = os.path.join(des, 'X0Data.csv')
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+        
+    gms_file = os.path.join(des, 'Z0Data.csv')
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+        
+        
+    gms_file = os.path.join(des, 'ZbarData.csv')
+    for i in range(1, 201):
+        mc_subfolder = os.path.join(des, f'mc_{i}')
+        shutil.copy(gms_file, mc_subfolder)
+    
+    
+    return("movement is done")
