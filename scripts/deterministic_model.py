@@ -2,6 +2,7 @@ import argparse
 import pickle
 
 from pysrc.optimization import gams, gurobi
+from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import logs_dir_path, output_dir_path, plots_dir_path
 
@@ -26,15 +27,25 @@ logs_dir = logs_dir_path(**vars(args))
 # Load site data
 (
     zbar_2017,
-    gamma,
     z_2017,
     forest_area_2017,
-    theta,
     _,
     _,
     _,
     _,
 ) = load_site_data(args.sitenum)
+
+# Set productivity parameters using baseline mean
+baseline_fit = baseline.sample(
+    model_name="full_model",
+    num_sites=args.sitenum,
+    iter_sampling=10**4,
+    chains=5,
+    seed=1,
+)
+
+theta = baseline_fit.stan_variable("theta").mean(axis=0)
+gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 
 # Computing carbon absorbed in start period
 x0_vals = gamma * forest_area_2017

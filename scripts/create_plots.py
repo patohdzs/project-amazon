@@ -46,10 +46,8 @@ with open(output_dir / "results.pcl", "rb") as f:
 # Load site data
 (
     zbar_2017,
-    gamma,
     z_2017,
     forest_area_2017,
-    theta,
     site_theta_2017_df,
     site_gamma_2017_df,
     municipal_theta_df,
@@ -58,7 +56,14 @@ with open(output_dir / "results.pcl", "rb") as f:
 
 
 # Load coef baseline samples
-fit = baseline.sample(model_name=args.model, num_samples=10000, num_sites=args.sitenum)
+fit = baseline.sample(
+    model_name=args.model,
+    num_sites=args.sitenum,
+    iter_sampling=10**4,
+    chains=5,
+    seed=1,
+)
+
 base_samples = np.concatenate(
     (fit.stan_variable("theta"), fit.stan_variable("gamma")), axis=1
 )
