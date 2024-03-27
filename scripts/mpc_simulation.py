@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 from pysrc.sampling import mpc
 
+## This script will create markov chain samples for both constrained and unconstrained model
 
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")

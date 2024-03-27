@@ -4,19 +4,22 @@ import os
 import shutil
 from ..services.data_service import load_site_data
 from pysrc.sampling import baseline
+from pysrc.sampling import mpc_estimation
 
 def mc_samples_constrained(location):
     
     np.random.seed(123)
-    # Simulate samples for model unconstrained variance
+
+    aic, ll, bic, mus, sigmas, P, sta_dist, sta_price,annual_P = mpc_estimation.iteration_est([0.5, 0.5], num_iterations=5, var='con')
+    
     num_simulations = 200
 
-    states = {'low': 32.44, 'high': 42.78}
+    states = {'low': mus[0], 'high': mus[1]}
     initial_state = 'high' 
 
     probability_matrix = {
-        'low': {'low': 0.766, 'high': 0.234},
-        'high': {'low': 0.046, 'high': 0.954}
+        'low': {'low': annual_P[0,0], 'high': annual_P[0,1]},
+        'high': {'low': annual_P[1,0], 'high': annual_P[1,1]}
     }
 
     # Number of observations
@@ -35,7 +38,7 @@ def mc_samples_constrained(location):
             markov_chain.append(states[next_state])
             current_state = next_state
 
-        transformed_markov_chain = [1 if price == 32.44 else 2 for price in markov_chain]
+        transformed_markov_chain = [1 if price == mus[0] else 2 for price in markov_chain]
 
         # Creating an index from 1 to 200
         index = range(1, num_observations + 1)
@@ -57,14 +60,16 @@ def mc_samples_unconstrained(location):
     
     np.random.seed(123)
 
+    aic, ll, bic, mus, sigmas, P, sta_dist, sta_price,annual_P = mpc_estimation.iteration_est([0.5, 0.5], num_iterations=5, var='uncon')
+    
     num_simulations = 200
 
-    states = {'low': 35.7, 'high': 44.3}
+    states = {'low': mus[0], 'high': mus[1]}
     initial_state = 'high' 
 
     probability_matrix = {
-        'low': {'low': 0.706, 'high': 0.294},
-        'high': {'low': 0.171, 'high': 0.829}
+        'low': {'low': annual_P[0,0], 'high': annual_P[0,1]},
+        'high': {'low': annual_P[1,0], 'high': annual_P[1,1]}
     }
 
     # Number of observations
@@ -82,7 +87,7 @@ def mc_samples_unconstrained(location):
             markov_chain.append(states[next_state])
             current_state = next_state
 
-        transformed_markov_chain = [1 if price == 35.7 else 2 for price in markov_chain]
+        transformed_markov_chain = [1 if price == mus[0] else 2 for price in markov_chain]
 
         # Creating an index from 1 to 200
         index = range(1, num_observations + 1)
