@@ -15,6 +15,9 @@ def value_decomposition(
     b=0,
     pa=44.75,
 ):
+    # Remove initial condition
+    Z = Z[1:]
+
     # Compute change in X
     X_dot = np.diff(X, axis=0)
 
