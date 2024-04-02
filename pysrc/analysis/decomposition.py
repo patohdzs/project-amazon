@@ -19,10 +19,9 @@ def value_decomposition(
     X_dot = np.diff(X, axis=0)
 
     # Compute agricultural output
-    results_AO = []
-    for t in range(T):
-        result_AO = pa * np.dot(Z[t], theta[0]) / ((1 + delta) ** (t + 1))
-        results_AO.append(result_AO)
+    results_AO = [
+        pa * np.dot(Z[t], theta[0]) / ((1 + delta) ** (t + 1)) for t in range(T)
+    ]
     total_AO = np.sum(results_AO)
 
     # Compute net transfers
@@ -33,19 +32,17 @@ def value_decomposition(
     total_NT = np.sum(results_NT)
 
     # Compute climate services
-    results_CS = []
-    for t in range(T):
-        result_CS = -pee * (kappa * np.sum(Z[t]) - X_dot[t]) / ((1 + delta) ** (t + 1))
-        results_CS.append(result_CS)
+    results_CS = [
+        -pee * (kappa * np.sum(Z[t]) - X_dot[t]) / ((1 + delta) ** (t + 1))
+        for t in range(T)
+    ]
     total_CS = np.sum(results_CS)
 
     # Compute adjustment costs
-    results_AC = []
-    for t in range(T):
-        result_AC = (
-            (zeta / 2) * (np.sum(U[t]) + np.sum(V[t])) ** 2 / ((1 + delta) ** (t + 1))
-        )
-        results_AC.append(result_AC)
+    results_AC = [
+        (zeta / 2) * (np.sum(U[t]) + np.sum(V[t])) ** 2 / ((1 + delta) ** (t + 1))
+        for t in range(T)
+    ]
     total_AC = np.sum(results_AC)
 
     # Compute total net present value
