@@ -7,13 +7,13 @@ def value_decomposition(
     U,
     V,
     T,
+    pee,
+    pa,
+    b,
     theta,
     delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,
-    pee=20.76,
-    b=0,
-    pa=44.75,
 ):
     # Remove initial condition
     Z = Z[1:]
@@ -22,24 +22,22 @@ def value_decomposition(
     X_dot = np.diff(X, axis=0)
 
     # Compute agricultural output
-    results_AO = [
-        pa * np.dot(Z[t], theta[0]) / ((1 + delta) ** (t + 1)) for t in range(T)
-    ]
+    results_AO = [pa * np.dot(Z[t], theta) / ((1 + delta) ** (t + 1)) for t in range(T)]
     total_AO = np.sum(results_AO)
 
     # Compute net transfers
     results_NT = [
-        (-b * (kappa * np.sum(Z[t]) - X_dot[t]) / ((1 + delta) ** (t + 1)))
+        (-b * (kappa * np.sum(Z[t]) - np.sum(X_dot[t])) / ((1 + delta) ** (t + 1)))
         for t in range(T)
     ]
     total_NT = np.sum(results_NT)
 
-    # Compute climate services
-    results_CS = [
-        -pee * (kappa * np.sum(Z[t]) - X_dot[t]) / ((1 + delta) ** (t + 1))
+    # Compute forest services
+    results_FS = [
+        -pee * (kappa * np.sum(Z[t]) - np.sum(X_dot[t])) / ((1 + delta) ** (t + 1))
         for t in range(T)
     ]
-    total_CS = np.sum(results_CS)
+    total_FS = np.sum(results_FS)
 
     # Compute adjustment costs
     results_AC = [
@@ -49,7 +47,7 @@ def value_decomposition(
     total_AC = np.sum(results_AC)
 
     # Compute total net present value
-    total_PV = total_AO + total_NT + total_CS - total_AC
+    total_PV = total_AO + total_NT + total_FS - total_AC
 
     return {
         "pa": pa,
@@ -57,7 +55,7 @@ def value_decomposition(
         "b": b,
         "total_AO": total_AO,
         "total_NT": total_NT,
-        "total_CS": total_CS,
+        "total_FS": total_FS,
         "total_AC": total_AC,
         "total_PV": total_PV,
     }

@@ -89,6 +89,16 @@ def solve_planner_problem(
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
     w = np.array([model.w[t].value for t in model.T])
 
+    return {
+        "Z": Z,
+        "X": X,
+        "U": U,
+        "V": V,
+        "w": w,
+    }
+
+
+def format_trajectories(Z, X, U, V, w):
     X_agg = X.sum(axis=1)
     X_agg = X_agg.reshape(X_agg.size, 1)
 
