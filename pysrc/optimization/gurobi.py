@@ -98,7 +98,7 @@ def solve_planner_problem(
     }
 
 
-def format_trajectories(Z, X, U, V, w):
+def vectorize_trajectories(Z, X, U, V, w):
     X_agg = X.sum(axis=1)
     X_agg = X_agg.reshape(X_agg.size, 1)
 
