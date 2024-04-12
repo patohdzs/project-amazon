@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import seaborn as sns
 
-from pysrc import plots
+from pysrc.analysis import plots
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import (
