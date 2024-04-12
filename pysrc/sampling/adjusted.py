@@ -121,9 +121,11 @@ def sample(
         # Choose optimizer
         if optimizer == "gurobi":
             solve_planner_problem = gurobi.solve_planner_problem
+            vectorize_trajectories = gurobi.vectorize_trajectories
 
         elif optimizer == "gams":
             solve_planner_problem = gams.solve_planner_problem
+            vectorize_trajectories = gams.vectorize_trajectories
 
         else:
             raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
@@ -161,7 +163,7 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
-            **trajectories,
+            **vectorize_trajectories(trajectories),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
