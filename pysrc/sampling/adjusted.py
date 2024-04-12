@@ -125,6 +125,7 @@ def sample(
 
         elif optimizer == "gams":
             solve_planner_problem = gams.solve_planner_problem
+            vectorize_trajectories = gams.vectorize_trajectories
 
         else:
             raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
