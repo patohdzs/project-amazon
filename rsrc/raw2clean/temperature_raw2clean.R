@@ -1,4 +1,3 @@
-
 # > PROJECT INFO
 # NAME: CARBON PRICES AND FOREST PRESERVATION OVER SPACE AND TIME IN THE BRAZILIAN AMAZON
 # LEAD: JULIANO ASSUNÇÃO, LARS PETER HANSEN, TODD MUNSON, JOSÉ A. SCHEINKMAN
@@ -10,70 +9,41 @@
 # > NOTES
 # 1: -
 
-
-
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
+# SETUP
 # RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
 source("rsrc/setup.R")
-
 
 # START TIMER
 tictoc::tic(msg = "temperature_raw2clean.R script", log = T)
 
-
 # RASTER OPTIONS
-terra::terraOptions(tmpdir = here::here("data/_temp"),
-                    timer  = T)
+terra::terraOptions(
+  tmpdir = here::here("data/_temp"),
+  timer = T
+)
 
-
-
-
-
-# DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
-
+# DATA INPUT
 # RAW DATA
 # read all parts (12) of the year and merge them together
 raw.raster <- terra::rast(list.files(here::here("data/raw2clean/temperature_worldClim/input"),
-                                                       full.names = T,
-                                                       pattern = ".tif"))
+  full.names = T,
+  pattern = ".tif"
+))
 
-
-
-
-
-# DATASET CLEANUP AND PREP ---------------------------------------------------------------------------------------------------------------------------
-
+# DATASET CLEANUP AND PREP
 # change layer names
 names(raw.raster) <- paste0("historicalTemp_", 1:12)
-
-
-
-
-# EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
 # EXPORT
 # save unified tif
 terra::writeRaster(raw.raster, here::here("data/raw2clean/temperature_worldClim/output/clean_temperature.tif"), overwrite = T)
 
-
-
 # CLEAN TEMP DIR
 terra::tmpFiles(current = TRUE, remove = TRUE)
 gc()
-
-
 
 # END TIMER
 tictoc::toc(log = T)
 
 # export time to csv table
 # ExportTimeProcessing("code/raw2clean")
-
-
-
-
-
-
-# END OF SCRIPT --------------------------------------------------------------------------------------------------------------------------------------
