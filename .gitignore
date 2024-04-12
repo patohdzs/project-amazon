@@ -5,6 +5,13 @@
 # Data
 data/
 
+# Gams license
+gams_file/gams45.1_linux_x64_64_sfx
+
+# Gams files
+gams_file/mpc/computation
+gams_file/mpc/simulation
+
 # Stan executables
 adjusted
 baseline

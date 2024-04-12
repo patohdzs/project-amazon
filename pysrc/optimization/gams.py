@@ -59,10 +59,18 @@ def solve_planner_problem(
 
     # Create Gams Workspace
 
+    # ws = GamsWorkspace(
+    #     system_directory=os.path.dirname(os.path.dirname(os.getcwd()))
+    #     + "/gams/gams45.1_linux_x64_64_sfx",
+    #     working_directory=os.getcwd() + f"/gams_file/{num_sites}sites/",
+    # )
+    
     ws = GamsWorkspace(
+
         system_directory=_DATA_DIR
         + "/gams45.1_linux_x64_64_sfx",
         working_directory=_DATA_DIR + f"/{num_sites}sites/",
+
     )
 
     db = ws.add_database(in_model_name="myDB")
