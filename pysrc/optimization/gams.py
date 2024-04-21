@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from gams import GamsWorkspace
 from ..services.file_service import get_path
-
+from ..services.data_service import load_price_data
 
 
 def solve_planner_problem(
@@ -21,6 +21,7 @@ def solve_planner_problem(
     pa=44.75,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     scale=1e9,
+    model="prediction",
 ):
     # Default Path to the data folder
     _DATA_DIR = str(get_path("gams_file"))
@@ -31,6 +32,25 @@ def solve_planner_problem(
     zbar_2017 = zbar * scale
 
     working_directory = _DATA_DIR + f"/{num_sites}sites/"
+
+    if model=="prediction":
+        pa_data = pd.DataFrame({
+        'price': [pa] * 200  
+        })
+        pa_data.index = range(1, 201)
+        pa_data.index.name = None
+        saveto = os.path.join(working_directory, "p_a.csv")
+        pa_data.to_csv(saveto, header=True, index_label=None)
+    elif model=="shadow_price":
+        pa_list=load_price_data()
+        prices = np.concatenate((pa_list, np.full(200 - len(pa_list), pa)))
+        pa_data = pd.DataFrame({
+            'price': prices
+        })
+        pa_data.index = range(1, 201)
+        pa_data.index.name = None
+        saveto = os.path.join(working_directory, "p_a.csv")
+        pa_data.to_csv(saveto, header=True, index_label=None)
 
     x0data = pd.DataFrame(x0_vals)
     x0data.index = x0data.index + 1

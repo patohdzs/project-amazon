@@ -2,7 +2,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-
+import numpy as np
 from ..services.file_service import get_path
 
 # Default Path to the data folder
@@ -50,3 +50,13 @@ def load_site_data(
         municipal_theta_df,
         municipal_gamma_df,
     )
+    
+def load_price_data(
+    data_dir: Path = get_path("data", "hmc"),
+):
+    # Read data file
+    file_path = data_dir / f"seriesPriceCattle_prepared.csv"
+    df = pd.read_csv(file_path)
+    average_prices = df.groupby('year')['price_real_mon_cattle'].mean()
+    p_a_list = np.array(average_prices)
+    return p_a_list
