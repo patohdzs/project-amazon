@@ -5,7 +5,7 @@ from pathlib import Path
 from pysrc.optimization import gams, gurobi
 from pysrc.sampling import baseline
 from pysrc.services.file_service import get_path
-
+from pysrc.sampling import adjusted
 
 def load_site_data_1995(
     num_sites: int,
@@ -115,36 +115,95 @@ def shadow_price_opt(
 
 def shadow_price_cal(sitenum = 78,
                      pa=41.11,
-                     opt='gams',):
-    (
-        zbar_1995,
-        z_1995,
-        forest_area_1995,
-        _,
-        _,
-        _,
-        _,
-        z_2008,
-        theta,
-        gamma
-    ) = load_site_data_1995(sitenum)
+                     opt='gams',
+                     model='det',
+                     xi=1):
+    if model=='det':
+        (
+            zbar_1995,
+            z_1995,
+            forest_area_1995,
+            _,
+            _,
+            _,
+            _,
+            z_2008,
+            theta,
+            gamma
+        ) = load_site_data_1995(sitenum)
         
+        
+        pe_values = np.arange(5, 8, 0.1)
+        
+        results = np.array([shadow_price_opt(    zbar_1995,
+                                            z_1995,
+                                            forest_area_1995,
+                                            z_2008,
+                                            theta,
+                                            gamma,
+                                            sitenum=sitenum,
+                                            opt=opt,
+                                            timehzn=200,
+                                            pa=pa,
+                                            pe=pe,
+                                            ) for pe in pe_values])
+        
+    elif model=='hmc':
+        (
+            zbar_1995,
+            z_1995,
+            forest_area_1995,
+            _,
+            _,
+            _,
+            _,
+            z_2008,
+            theta,
+            gamma
+        ) = load_site_data_1995(sitenum)    
     
-    pe_values = np.arange(5, 10, 0.1)
-    results = np.array([shadow_price_opt(    zbar_1995,
-                                         z_1995,
-                                         forest_area_1995,
-                                         z_2008,
-                                         theta,
-                                         gamma,
-                                         sitenum=sitenum,
-                                         opt=opt,
-                                         timehzn=200,
-                                         pa=pa,
-                                         pe=pe,
-                                         ) for pe in pe_values])
     
     
+        pe_values = np.arange(5, 7, 0.1)
+        results = []
+        for pe in pe_values:
+            
+            samples = adjusted.sample(
+            model_name='full_model',
+            xi=xi,
+            pe=pe,
+            pa=pa,
+            weight=0.25,
+            num_sites=sitenum,
+            T=200,
+            optimizer=opt,
+            max_iter=100,
+            final_sample_size=5_000,
+            iter_sampling=1000,
+            iter_warmup=500,
+            show_progress=True,
+            seed=1,
+            inits=0.2,
+            )
+
+            theta=np.mean(samples['final_sample'][:,:78],axis=0)
+            gamma=np.mean(samples['final_sample'][:,78:],axis=0)
+            result = shadow_price_opt(    zbar_1995,
+                                                z_1995,
+                                                forest_area_1995,
+                                                z_2008,
+                                                theta,
+                                                gamma,
+                                                sitenum=sitenum,
+                                                opt=opt,
+                                                timehzn=200,
+                                                pa=pa,
+                                                pe=pe,
+                                                ) 
+            results.append(result)
+        results=np.array(results)
+
+
     min_index = np.argmin(results)
     min_result = results[min_index]
     min_pe = pe_values[min_index]
@@ -155,5 +214,5 @@ def shadow_price_cal(sitenum = 78,
     
 
     
-min_result,min_pe=shadow_price_cal(sitenum=1043)
+min_result,min_pe=shadow_price_cal(sitenum=78)
 print("min_result",min_result,"min_pe",min_pe)

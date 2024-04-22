@@ -16,7 +16,9 @@ def solve_planner_problem(
     zbar,
     z0,
     alpha=0.045007414,
+    delta=0.02,
     kappa=2.094215255,
+    dt=1,
     pe=20.76,
     pa=44.75,
     zeta=1.66e-4 * 1e9,  # use the same normalization factor

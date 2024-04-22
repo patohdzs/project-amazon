@@ -163,7 +163,7 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
-            **vectorize_trajectories(trajectories),
+            **vectorize_trajectories(trajectories['Z'], trajectories['X'], trajectories['U'],trajectories['V'],trajectories['w']),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
