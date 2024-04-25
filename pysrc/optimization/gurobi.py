@@ -91,6 +91,16 @@ def solve_planner_problem(
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
     w = np.array([model.w[t].value for t in model.T])
 
+    return {
+        "Z": Z,
+        "X": X,
+        "U": U,
+        "V": V,
+        "w": w,
+    }
+
+
+def vectorize_trajectories(Z, X, U, V, w):
     X_agg = X.sum(axis=1)
     X_agg = X_agg.reshape(X_agg.size, 1)
 
@@ -99,7 +109,13 @@ def solve_planner_problem(
     sol_val_Up = U[:-1, :].T
     sol_val_Um = V[:-1, :].T
     sol_val_Z = sol_val_Up - sol_val_Um
-    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
+    return {
+        "sol_val_X": sol_val_X,
+        "sol_val_Up": sol_val_Up,
+        "sol_val_Um": sol_val_Um,
+        "sol_val_Z": sol_val_Z,
+        "sol_val_Ua": sol_val_Ua,
+    }
 
 
 def _planner_obj(model):
@@ -108,11 +124,11 @@ def _planner_obj(model):
         * (
             -model.pe
             * pyo.quicksum(
-                model.kappa * model.z[t, s]
+                model.kappa * model.z[t + 1, s]
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa * sum(model.theta[s] * model.z[t, s] for s in model.S)
+            + model.pa * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt

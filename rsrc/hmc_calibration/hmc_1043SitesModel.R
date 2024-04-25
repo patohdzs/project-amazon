@@ -88,7 +88,7 @@ calibration.1043SitesModel <-
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 muniTheta.prepData<-muniTheta.prepData %>%
   dplyr::mutate(co2e_ha_2017 = (agb_2017/2)*(44/12))
@@ -249,12 +249,12 @@ calibration.1043SitesModel <-
 # PARAMETER THETA ------------------------------------------------------------------------------------------------------------------------------------
 
 distance_data <-
-  read_excel("data/calibration/ipeadata[21-08-2023-01-28].xls")
+  read_excel("data/raw2clean/distance_to_capital/ipeadata[21-08-2023-01-28].xls")
 
 distance_data$muni_code <- as.numeric(distance_data$muni_code)
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData_new.Rdata")
+load("data/calibration/prepData/muniTheta_prepData.Rdata")
 
 # load cattle price series
 load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
@@ -282,7 +282,7 @@ geo_backup <- geo_backup[-c(142, 106, 112)]
 
 
 predicted_values <-
-  read_excel("data/calibration/farm_gate_price.xlsx")
+  read_excel("data/raw2clean/farm_gate_price/farm_gate_price.xlsx")
 
 # Combine back into an sf object
 muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
@@ -357,7 +357,7 @@ rm(reg.cattleValueperHa.2017, aux.min.positive.cattleSlaughter.value.ha.fitted.2
 # match munis with sites
 site.theta.2017 <- sf::st_intersection(calibration.1043SitesModel %>% dplyr::select(id),
                                        muniTheta.prepData       %>% dplyr::select(muni_code, muni_area, cattleSlaughter_valuePerHa_fitted_2017,
-                                                                                  pasture_area_2017, d_theta_winsorized_2017,zbar_2017_muni))
+                                                                                  pasture_area_2017, d_theta_winsorized_2017))
 
 
 
@@ -375,7 +375,6 @@ site.theta.2017 <-
 # calculate cattleSlaughter_valuePerHa_fitted and pastureArea_value by site (for each muni adjust the value by the share of the muni area inside the site)
 aux.theta.2017 <-
   site.theta.2017 %>%
-  dplyr::filter(!is.na(zbar_2017_muni)) %>%
   dplyr::group_by(id) %>%
   dplyr::summarise(theta2017_1043Sites = weighted.mean(cattleSlaughter_valuePerHa_fitted_2017/aux.price.2017, w = muni_site_area, na.rm = T),
                    pasture_area_2017 = sum(pasture_area_2017*(muni_site_area/muni_area), na.rm = T),
@@ -511,8 +510,8 @@ tictoc::toc(log = T)
 
 
 
-# export time to csv table
-ExportTimeProcessing("code/calibration")
+# # export time to csv table
+# ExportTimeProcessing("code/calibration")
 
 
 

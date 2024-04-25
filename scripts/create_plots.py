@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import seaborn as sns
 
-from pysrc import plots
+from pysrc.analysis import plots
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import (
@@ -21,7 +21,7 @@ sns.set(font_scale=1.2)
 # Read arguments from stdin
 parser = argparse.ArgumentParser(description="parameter settings")
 
-parser.add_argument("--model", type=str, default="sigma_correction_model")
+parser.add_argument("--model", type=str, default="full_model_v3")
 parser.add_argument("--opt", type=str, default="gurobi")
 parser.add_argument("--xi", type=float, default=2.0)
 parser.add_argument("--pf", type=float, default=21.5)
@@ -46,10 +46,8 @@ with open(output_dir / "results.pcl", "rb") as f:
 # Load site data
 (
     zbar_2017,
-    gamma,
     z_2017,
     forest_area_2017,
-    theta,
     site_theta_2017_df,
     site_gamma_2017_df,
     municipal_theta_df,
@@ -58,7 +56,14 @@ with open(output_dir / "results.pcl", "rb") as f:
 
 
 # Load coef baseline samples
-fit = baseline.sample(model_name=args.model, num_samples=10000, num_sites=args.sitenum)
+fit = baseline.sample(
+    model_name=args.model,
+    num_sites=args.sitenum,
+    iter_sampling=10**4,
+    chains=5,
+    seed=1,
+)
+
 base_samples = np.concatenate(
     (fit.stan_variable("theta"), fit.stan_variable("gamma")), axis=1
 )

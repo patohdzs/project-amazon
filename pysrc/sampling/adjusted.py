@@ -1,5 +1,3 @@
-import os
-import pickle
 import time
 
 import numpy as np
@@ -16,14 +14,14 @@ from ..services.file_service import stan_model_path
 
 def sample(
     model_name,
-    output_dir,
     xi,
-    pf,
+    pe,
     pa,
     weight,
     num_sites,
+    # Model parameters
     T,
-    N=200,
+    dt=1,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
@@ -37,10 +35,6 @@ def sample(
     final_sample_size=5_000,
     **stan_kwargs,
 ):
-    # Create the output directory
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-
     # Instantiate stan sampler
     sampler = CmdStanModel(
         stan_file=stan_model_path(model_name) / "adjusted.stan",
@@ -51,10 +45,8 @@ def sample(
     # Load sites' data
     (
         zbar_2017,
-        gamma_vals,
         z_2017,
         forest_area_2017,
-        theta_vals,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
@@ -62,11 +54,13 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    fit = baseline.sample(
-        model_name=model_name, num_samples=final_sample_size, num_sites=num_sites
+    baseline_fit = baseline.sample(
+        model_name=model_name,
+        num_sites=num_sites,
+        **stan_kwargs,
     )
-    theta_vals = fit.stan_variable("theta").mean(axis=0)
-    gamma_vals = fit.stan_variable("gamma").mean(axis=0)
+    theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
+    gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -80,56 +74,35 @@ def sample(
     uncertain_vals_tracker = [uncertain_vals_old.copy()]
     abs_error_tracker = []
     pct_error_tracker = []
-    sol_val_X_tracker = []
-    sol_val_Ua_tracker = []
-    sol_val_Up_tracker = []
-    sol_val_Um_tracker = []
-    sol_val_Z_tracker = []
+    solution_tracker = []
     sampling_time_tracker = []
     fit_tracker = []
-
-    # Create dynamics matrices
-    arr = np.cumsum(
-        np.triu(np.ones((T, T))),
-        axis=1,
-    ).T
-    Bdym = (1 - alpha) ** (arr - 1)
-    Bdym[Bdym > 1] = 0.0
-    Adym = np.arange(1, T + 1)
-    alpha_p_Adym = np.power(1 - alpha, Adym)
-
-    # Time step
-    dt = T / N
-
-    # Other placeholders!
-    ds_vect = np.exp(-delta * np.arange(N + 1) * dt)
-    ds_vect = np.reshape(ds_vect, (ds_vect.size, 1))
 
     # Results dictionary
     results = dict(
         num_sites=num_sites,
         tol=tol,
         T=T,
-        N=N,
+        dt=dt,
         delta_t=delta,
         alpha=alpha,
         kappa=kappa,
-        pf=pf,
+        pf=pe,
         pa=pa,
         xi=xi,
         zeta=zeta,
+        baseline_fit=baseline_fit,
         final_sample_size=final_sample_size,
         weight=weight,
-        output_dir=output_dir,
     )
 
     # Initialize error & iteration counter
     abs_error = np.infty
-    percentage_error = np.infty
+    pct_error = np.infty
     cntr = 0
 
     # Loop until convergence
-    while cntr < max_iter and percentage_error > tol:
+    while cntr < max_iter and pct_error > tol:
         print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
 
         # Flatten uncertain values
@@ -148,20 +121,16 @@ def sample(
         # Choose optimizer
         if optimizer == "gurobi":
             solve_planner_problem = gurobi.solve_planner_problem
+            vectorize_trajectories = gurobi.vectorize_trajectories
 
         elif optimizer == "gams":
             solve_planner_problem = gams.solve_planner_problem
+            vectorize_trajectories = gams.vectorize_trajectories
 
         else:
             raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
 
-        (
-            sol_val_X,
-            sol_val_Up,
-            sol_val_Um,
-            sol_val_Z,
-            sol_val_Ua,
-        ) = solve_planner_problem(
+        trajectories = solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,
@@ -169,7 +138,7 @@ def sample(
             z0=z_2017,
             zbar=zbar_2017,
             dt=dt,
-            pe=pf,
+            pe=pe,
             pa=pa,
             alpha=alpha,
             delta=delta,
@@ -178,11 +147,7 @@ def sample(
         )
 
         # Update trackers
-        sol_val_X_tracker.append(sol_val_X)
-        sol_val_Ua_tracker.append(sol_val_Ua)
-        sol_val_Up_tracker.append(sol_val_Up)
-        sol_val_Um_tracker.append(sol_val_Um)
-        sol_val_Z_tracker.append(sol_val_Z)
+        solution_tracker.append(trajectories)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
@@ -190,20 +155,16 @@ def sample(
             T=T,
             S=num_sites,
             alpha=alpha,
-            sol_val_X=sol_val_X,
-            sol_val_Ua=sol_val_Ua,
-            sol_val_Up=sol_val_Up,
             zbar_2017=zbar_2017,
             forest_area_2017=forest_area_2017,
-            alpha_p_Adym=alpha_p_Adym,
-            Bdym=Bdym,
-            ds_vect=ds_vect.flatten(),
             zeta=zeta,
             xi=xi,
             kappa=kappa,
             pa=pa,
             pa_2017=pa_2017,
-            pf=pf,
+            pf=pe,
+            **vectorize_trajectories(trajectories),
+            **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
             **baseline_hyperparams(municipal_theta_df, "theta"),
@@ -260,17 +221,17 @@ def sample(
         # Evaluate error for convergence check
         # The percentage difference are changed to absolute difference
         abs_error = np.max(np.abs(uncertain_vals_old - uncertain_vals))
-        percentage_error = np.max(
+        pct_error = np.max(
             np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
         )
 
         abs_error_tracker.append(abs_error)
-        pct_error_tracker.append(percentage_error)
+        pct_error_tracker.append(pct_error)
 
         print(
             f"""
             Iteration [{cntr+1:4d}]: Absolute Error = {abs_error},
-            Percentage Error = {percentage_error}
+            Percentage Error = {pct_error}
             """
         )
 
@@ -289,19 +250,11 @@ def sample(
                 "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
                 "sampling_time_tracker": sampling_time_tracker,
                 "collected_ensembles": collected_ensembles,
-                "sol_val_X_tracker": sol_val_X_tracker,
-                "sol_val_Ua_tracker": sol_val_Ua_tracker,
-                "sol_val_Up_tracker": sol_val_Up_tracker,
-                "sol_val_Um_tracker": sol_val_Um_tracker,
-                "sol_val_Z_tracker": sol_val_Z_tracker,
+                "solution_tracker": solution_tracker,
                 "coe_ensembles": coe_ensembles,
                 "fit_tracker": fit_tracker,
             }
         )
-
-        # Save results (overwrite existing file)
-        saveto = output_dir / "results.pcl"
-        pickle.dump(results, open(saveto, "wb"))
 
     # Sample (densly) the final distribution
     print("Terminated. Sampling the final distribution...\n")
@@ -325,9 +278,21 @@ def sample(
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
 
-    # Save results (overwrite existing file)
-    saveto = output_dir / "results.pcl"
-    pickle.dump(results, open(saveto, "wb"))
-    print(f"Results saved to {saveto}")
-
     return results
+
+
+def _dynamics_matrices(T, dt, alpha, delta):
+    # Create dynamics matrices
+    arr = np.cumsum(
+        np.triu(np.ones((T, T))),
+        axis=1,
+    ).T
+    Bdym = (1 - alpha) ** (arr - 1)
+    Bdym[Bdym > 1] = 0.0
+    Adym = np.arange(1, T + 1)
+    alpha_p_Adym = np.power(1 - alpha, Adym)
+
+    # Other placeholders!
+    ds_vect = np.exp(-delta * np.arange(T + 1) * dt)
+    ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
+    return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}
