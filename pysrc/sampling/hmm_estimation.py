@@ -1,9 +1,8 @@
-import os
-
 import numpy as np
-import pandas as pd
 from hmmlearn import hmm
 from scipy.linalg import expm, logm
+
+from pysrc.services.data_service import load_cattle_prices
 
 
 def estimate_price_model(dist, num_iterations=5, var="uncon"):
@@ -23,17 +22,12 @@ def estimate_price_model(dist, num_iterations=5, var="uncon"):
 
 
 def _estimate(s_low=0.5, s_high=0.5, var="uncon"):
-    # need to input initial state prob s_low and s_high
-    data_folder = os.getcwd() + "/data/hmc/"
+    # Read data
+    price = load_cattle_prices()
+    log_price = np.log(price)
 
-    # read data
-    df = pd.read_csv(data_folder + "seriesPriceCattle_prepared.csv")
-    price = df["price_real_mon_cattle"].values.astype(float)
-    logprice = np.log(price)
-
-    # estimating the model
-
-    Q = logprice.reshape(logprice.shape[0], 1)
+    # Estimating the model
+    Q = log_price.reshape(log_price.shape[0], 1)
 
     np.random.seed(123)
 

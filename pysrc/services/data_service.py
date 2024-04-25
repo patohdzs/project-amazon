@@ -50,3 +50,12 @@ def load_site_data(
         municipal_theta_df,
         municipal_gamma_df,
     )
+
+
+def load_cattle_prices():
+    # Get filepath
+    file_path = get_path("data", "calibration", "prepData")
+
+    # Read data file
+    df = pd.read_csv(file_path / "seriesPriceCattle_prepared.csv")
+    return df["price_real_mon_cattle"].values.astype(float)

@@ -26,8 +26,8 @@ def solve_planner_problem(
     x0,
     z0,
     zbar,
-    M,
-    tau,
+    pa_paths,
+    pa_path_probs,
     dt=1,
     pe=20.76,
     alpha=0.045007414,
@@ -40,7 +40,7 @@ def solve_planner_problem(
     # Indexing sets for time and sites
     model.T = RangeSet(T + 1)
     model.S = RangeSet(gamma.size)
-    model.P = RangeSet(tau**2)
+    model.P = RangeSet(pa_paths.shape[0])
 
     # Parameters
     model.x0 = Param(model.S, initialize=np_to_dict(x0))
@@ -56,11 +56,10 @@ def solve_planner_problem(
     model.dt = Param(initialize=dt)
 
     # Cattle price parameters
-    pa_paths = price_paths(T, tau, True)
-    pa_path_probs = price_path_probs(M, price_paths)
-
-    model.pa = Param(model.P, model.T, initialize=pa_paths)
-    model.pa_prob = Param(model.P, initiaize=pa_path_probs)
+    model.pa = Param(
+        model.P, model.T, initialize=lambda model, p, t: pa_paths[p - 1, t - 1]
+    )
+    model.pa_prob = Param(model.P, initialize=lambda model, p: pa_path_probs[p - 1])
 
     # Variables
     model.w = Var(model.T)
@@ -163,15 +162,16 @@ def _w_const(model, t):
         return Constraint.Skip
 
 
-def price_paths(T, tau, start_high):
+def price_paths(T, tau, states, start_high=True):
     """
     Get matrix of all possible price paths
     """
-    # Compute initial state
-    p0 = np.ones(2**tau, np.int8) if start_high else np.zeros(2**tau, np.int8)
+    # Compute initial price state
+    p0 = np.ones(2**tau, np.int8)
+    p0 = states[1] * p0 if start_high else states[0] * p0
 
     # Get stochastic and deterministic horizon paths
-    rand_hzn = np.array(list(product([0, 1], repeat=tau)))
+    rand_hzn = np.array(list(product(states, repeat=tau)))
     det_hzn = np.tile(rand_hzn[:, -1][:, np.newaxis], T - tau)
 
     # Merge into full price path
@@ -179,19 +179,23 @@ def price_paths(T, tau, start_high):
     return price_paths
 
 
-def price_path_probs(M, paths):
+def price_path_probs(M, tau, paths):
     """
     Compute likelihood of a price path realization
     """
-    return [_price_path_prob(M, path) for path in paths]
+    # Turn into binary matrix (1 for high, 0 for low)
+    binary_paths = np.where(paths == paths.max(), 1, 0)
+    print(binary_paths)
+    # Find the probability of each path
+    return [_price_path_prob(M, tau, path) for path in binary_paths]
 
 
-def _price_path_prob(M, price_path):
+def _price_path_prob(M, tau, price_path):
     prob = 1.0
 
-    for i in range(len(price_path) - 1):
-        current_state = price_path[i]
-        next_state = price_path[i + 1]
+    for t in range(tau):
+        current_state = price_path[t]
+        next_state = price_path[t + 1]
         prob *= M[current_state, next_state]
 
     return prob
