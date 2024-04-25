@@ -26,7 +26,6 @@ def solve_planner_problem(
     x0,
     z0,
     zbar,
-    pa_history,
     M,
     tau,
     dt=1,
@@ -58,10 +57,10 @@ def solve_planner_problem(
 
     # Cattle price parameters
     pa_paths = price_paths(T, tau, True)
+    pa_path_probs = price_path_probs(M, price_paths)
 
-    model.pa_history = Param(model.T, initialize=pa_history)
-    model.pa_paths = Param(model.P, model.T, initialize=pa_paths)
-    model.pa_path_probs = Param(model.P)
+    model.pa = Param(model.P, model.T, initialize=pa_paths)
+    model.pa_prob = Param(model.P, initiaize=pa_path_probs)
 
     # Variables
     model.w = Var(model.T)
@@ -114,20 +113,24 @@ def solve_planner_problem(
 
 def _planner_obj(model):
     return sum(
-        math.exp(-model.delta * (t * model.dt - model.dt))
-        * (
-            -model.pe
-            * pyo.quicksum(
-                model.kappa * model.z[t, s]
-                - (model.x[t + 1, s] - model.x[t, s]) / model.dt
-                for s in model.S
+        model.pa_prob[p]
+        * sum(
+            math.exp(-model.delta * (t * model.dt - model.dt))
+            * (
+                -model.pe
+                * pyo.quicksum(
+                    model.kappa * model.z[t, s]
+                    - (model.x[t + 1, s] - model.x[t, s]) / model.dt
+                    for s in model.S
+                )
+                + model.pa[p, t] * sum(model.theta[s] * model.z[t, s] for s in model.S)
+                - model.zeta / 2 * (model.w[t] ** 2)
             )
-            + model.pa * sum(model.theta[s] * model.z[t, s] for s in model.S)
-            - model.zeta / 2 * (model.w[t] ** 2)
+            * model.dt
+            for t in model.T
+            if t < max(model.T)
         )
-        * model.dt
-        for t in model.T
-        if t < max(model.T)
+        for p in model.P
     )
 
 
