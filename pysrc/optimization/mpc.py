@@ -43,8 +43,8 @@ def solve_planner_problem(
     model.P = RangeSet(pa_paths.shape[0])
 
     # Parameters
-    model.x0 = Param(model.S, initialize=np_to_dict(x0))
-    model.z0 = Param(model.S, initialize=np_to_dict(z0))
+    model.x0 = Param(model.S, model.P, initialize=lambda model, s, p: x0[s - 1, p - 1])
+    model.z0 = Param(model.S, model.P, initialize=lambda model, s, p: z0[s - 1, p - 1])
     model.zbar = Param(model.S, initialize=np_to_dict(zbar))
     model.gamma = Param(model.S, initialize=np_to_dict(gamma))
     model.theta = Param(model.S, initialize=np_to_dict(theta))
@@ -62,28 +62,29 @@ def solve_planner_problem(
     model.pa_prob = Param(model.P, initialize=lambda model, p: pa_path_probs[p - 1])
 
     # Variables
-    model.w = Var(model.T)
-    model.x = Var(model.T, model.S)
-    model.z = Var(model.T, model.S, within=NonNegativeReals)
-    model.u = Var(model.T, model.S, within=NonNegativeReals)
-    model.v = Var(model.T, model.S, within=NonNegativeReals)
+    model.w = Var(model.T, model.P)
+    model.x = Var(model.T, model.S, model.P)
+    model.z = Var(model.T, model.S, model.P, within=NonNegativeReals)
+    model.u = Var(model.T, model.S, model.P, within=NonNegativeReals)
+    model.v = Var(model.T, model.S, model.P, within=NonNegativeReals)
 
     # Constraints
-    model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
-    model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
-    model.w_def = Constraint(model.T, rule=_w_const)
+    model.zdot_def = Constraint(model.T, model.S, model.P, rule=_zdot_const)
+    model.xdot_def = Constraint(model.T, model.S, model.P, rule=_xdot_const)
+    model.w_def = Constraint(model.T, model.P, rule=_w_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
 
     # Initial and terminal conditions
     for s in model.S:
-        model.z[:, s].setub(model.zbar[s])
-        model.x[min(model.T), s].fix(model.x0[s])
-        model.z[min(model.T), s].fix(model.z0[s])
-        model.u[max(model.T), s].fix(0)
-        model.v[max(model.T), s].fix(0)
-        model.w[max(model.T)].fix(0)
+        for p in model.P:
+            model.z[:, s, p].setub(model.zbar[s])
+            model.x[min(model.T), s, p].fix(model.x0[s, p])
+            model.z[min(model.T), s, p].fix(model.z0[s, p])
+            model.u[max(model.T), s, p].fix(0)
+            model.v[max(model.T), s, p].fix(0)
+            model.w[max(model.T), p].fix(0)
 
     # Solve the model
     solver = SolverFactory("gurobi")
@@ -93,21 +94,27 @@ def solve_planner_problem(
     solver.solve(model, tee=True)
     print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
-    Z = np.array([[model.z[t, r].value for r in model.S] for t in model.T])
-    X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
-    U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
-    V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
-    w = np.array([model.w[t].value for t in model.T])
+    Z = np.array(
+        [[[model.z[t, s, p].value for p in model.P] for s in model.S] for t in model.T]
+    )
+    X = np.array(
+        [[[model.x[t, s, p].value for p in model.P] for s in model.S] for t in model.T]
+    )
+    U = np.array(
+        [[[model.u[t, s, p].value for p in model.P] for s in model.S] for t in model.T]
+    )
+    V = np.array(
+        [[[model.v[t, s, p].value for p in model.P] for s in model.S] for t in model.T]
+    )
+    w = np.array([[model.w[t, p].value for p in model.P] for t in model.T])
 
-    X_agg = X.sum(axis=1)
-    X_agg = X_agg.reshape(X_agg.size, 1)
-
-    sol_val_Ua = (w[:-1] ** 2).T.flatten()
-    sol_val_X = np.concatenate((Z.T, X_agg.T, np.ones((1, Z.T.shape[1]))))
-    sol_val_Up = U[:-1, :].T
-    sol_val_Um = V[:-1, :].T
-    sol_val_Z = sol_val_Up - sol_val_Um
-    return (sol_val_X, sol_val_Up, sol_val_Um, sol_val_Z, sol_val_Ua)
+    return {
+        "Z": Z,
+        "X": X,
+        "U": U,
+        "V": V,
+        "w": w,
+    }
 
 
 def _planner_obj(model):
@@ -118,12 +125,13 @@ def _planner_obj(model):
             * (
                 -model.pe
                 * pyo.quicksum(
-                    model.kappa * model.z[t, s]
-                    - (model.x[t + 1, s] - model.x[t, s]) / model.dt
+                    model.kappa * model.z[t, s, p]
+                    - (model.x[t + 1, s, p] - model.x[t, s, p]) / model.dt
                     for s in model.S
                 )
-                + model.pa[p, t] * sum(model.theta[s] * model.z[t, s] for s in model.S)
-                - model.zeta / 2 * (model.w[t] ** 2)
+                + model.pa[p, t]
+                * sum(model.theta[s] * model.z[t, s, p] for s in model.S)
+                - model.zeta / 2 * (model.w[t, p] ** 2)
             )
             * model.dt
             for t in model.T
@@ -133,30 +141,30 @@ def _planner_obj(model):
     )
 
 
-def _zdot_const(model, t, s):
+def _zdot_const(model, t, s, p):
     if t < max(model.T):
-        return (model.z[t + 1, s] - model.z[t, s]) / model.dt == (
-            model.u[t, s] - model.v[t, s]
+        return (model.z[t + 1, s, p] - model.z[t, s, p]) / model.dt == (
+            model.u[t, s, p] - model.v[t, s, p]
         )
     else:
         return Constraint.Skip
 
 
-def _xdot_const(model, t, s):
+def _xdot_const(model, t, s, p):
     if t < max(model.T):
-        return (model.x[t + 1, s] - model.x[t, s]) / model.dt == (
-            -model.gamma[s] * model.u[t, s]
-            - model.alpha * model.x[t, s]
-            + model.alpha * model.gamma[s] * (model.zbar[s] - model.z[t, s])
+        return (model.x[t + 1, s, p] - model.x[t, s, p]) / model.dt == (
+            -model.gamma[s] * model.u[t, s, p]
+            - model.alpha * model.x[t, s, p]
+            + model.alpha * model.gamma[s] * (model.zbar[s] - model.z[t, s, p])
         )
     else:
         return Constraint.Skip
 
 
-def _w_const(model, t):
+def _w_const(model, t, p):
     if t < max(model.T):
-        return model.w[t] == pyo.quicksum(
-            model.u[t, s] + model.v[t, s] for s in model.S
+        return model.w[t, p] == pyo.quicksum(
+            model.u[t, s, p] + model.v[t, s, p] for s in model.S
         )
     else:
         return Constraint.Skip
@@ -185,7 +193,7 @@ def price_path_probs(M, tau, paths):
     """
     # Turn into binary matrix (1 for high, 0 for low)
     binary_paths = np.where(paths == paths.max(), 1, 0)
-    print(binary_paths)
+
     # Find the probability of each path
     return [_price_path_prob(M, tau, path) for path in binary_paths]
 

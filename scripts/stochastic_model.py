@@ -1,6 +1,8 @@
 import argparse
 import pickle
 
+import numpy as np
+
 from pysrc.optimization.mpc import price_path_probs, price_paths, solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.sampling.hmm_estimation import estimate_price_model
@@ -49,7 +51,7 @@ theta = baseline_fit.stan_variable("theta").mean(axis=0)
 gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 
 # Computing carbon absorbed in start period
-x0_vals = gamma * forest_area_2017
+x_2017 = gamma * forest_area_2017
 
 # Estimate HMM model for prices
 (
@@ -66,6 +68,12 @@ x0_vals = gamma * forest_area_2017
     [0.5, 0.5],
 )
 
+
+# Expand initial conditions
+x0 = np.tile(np.reshape(x_2017, (-1, 1)), (1, 2**args.tau))
+z0 = np.tile(np.reshape(z_2017, (-1, 1)), (1, 2**args.tau))
+print(x0.shape)
+
 # Compute possible price paths
 pa_paths = price_paths(args.timehzn, args.tau, states)
 
@@ -77,13 +85,18 @@ results = solve_planner_problem(
     T=args.timehzn,
     theta=theta,
     gamma=gamma,
-    x0=x0_vals,
+    x0=x0,
+    z0=z0,
     zbar=zbar_2017,
-    z0=z_2017,
     pa_paths=pa_paths,
     pa_path_probs=pa_path_probs,
     pe=args.pe,
 )
+
+print(results["Z"].shape)
+print(results["Z"][1, :, :])
+print(results["Z"][1, :, :].shape)
+
 
 # Save results
 outfile_path = output_dir / "results.pcl"
