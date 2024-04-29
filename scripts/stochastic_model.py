@@ -72,7 +72,6 @@ x_2017 = gamma * forest_area_2017
 # Expand initial conditions
 x0 = np.tile(np.reshape(x_2017, (-1, 1)), (1, 2**args.tau))
 z0 = np.tile(np.reshape(z_2017, (-1, 1)), (1, 2**args.tau))
-print(x0.shape)
 
 # Compute possible price paths
 pa_paths = price_paths(args.timehzn, args.tau, states)
@@ -92,10 +91,6 @@ results = solve_planner_problem(
     pa_path_probs=pa_path_probs,
     pe=args.pe,
 )
-
-print(results["Z"].shape)
-print(results["Z"][1, :, :])
-print(results["Z"][1, :, :].shape)
 
 
 # Save results

@@ -1,5 +1,6 @@
 import math
 import time
+from functools import partial
 from itertools import product
 
 import numpy as np
@@ -68,10 +69,29 @@ def solve_planner_problem(
     model.u = Var(model.T, model.S, model.P, within=NonNegativeReals)
     model.v = Var(model.T, model.S, model.P, within=NonNegativeReals)
 
-    # Constraints
+    # Law of motion constraints
     model.zdot_def = Constraint(model.T, model.S, model.P, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, model.P, rule=_xdot_const)
+
+    # Adjustment costs constraint
     model.w_def = Constraint(model.T, model.P, rule=_w_const)
+
+    # Price path constraints
+    model.zp_def = Constraint(
+        model.T, model.S, model.P, rule=partial(_zp_const, tau=max(model.P))
+    )
+    model.xp_def = Constraint(
+        model.T, model.S, model.P, rule=partial(_xp_const, tau=max(model.P))
+    )
+    model.up_def = Constraint(
+        model.T, model.S, model.P, rule=partial(_up_const, tau=max(model.P))
+    )
+    model.vp_def = Constraint(
+        model.T, model.S, model.P, rule=partial(_vp_const, tau=max(model.P))
+    )
+    model.wp_def = Constraint(
+        model.T, model.P, rule=partial(_wp_const, tau=max(model.P))
+    )
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -168,6 +188,63 @@ def _w_const(model, t, p):
         )
     else:
         return Constraint.Skip
+
+
+def _zp_const(model, t, s, p, tau):
+    if t <= tau:
+        pivot = _pivot_point(t, p, tau)
+        return model.z[t, s, p] == model.z[t, s, pivot]
+    else:
+        return Constraint.Skip
+
+
+def _xp_const(model, t, s, p, tau):
+    if t <= tau:
+        pivot = _pivot_point(t, p, tau)
+        return model.x[t, s, p] == model.x[t, s, pivot]
+    else:
+        return Constraint.Skip
+
+
+def _up_const(model, t, s, p, tau):
+    if t <= tau:
+        pivot = _pivot_point(t, p, tau)
+        return model.u[t, s, p] == model.u[t, s, pivot]
+    else:
+        return Constraint.Skip
+
+
+def _vp_const(model, t, s, p, tau):
+    if t <= tau:
+        pivot = _pivot_point(t, p, tau)
+        return model.v[t, s, p] == model.v[t, s, pivot]
+    else:
+        return Constraint.Skip
+
+
+def _wp_const(model, t, p, tau):
+    if t <= tau:
+        pivot = _pivot_point(t, p, tau)
+        return model.w[t, p] == model.w[t, pivot]
+    else:
+        return Constraint.Skip
+
+
+def _pivot_point(t, p, tau):
+    # Go back to zero-based indexing
+    t = t - 1
+
+    # Compute segment size
+    segment_size = 2 ** (tau - t)
+
+    # Find split points
+    points = [segment_size * i + 1 for i in range(2**t)]
+
+    # Find greatest upper bound among split points
+    for point in reversed(points):
+        if point <= p:
+            return point
+    return None
 
 
 def price_paths(T, tau, states, start_high=True):
