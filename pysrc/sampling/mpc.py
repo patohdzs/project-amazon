@@ -9,7 +9,7 @@ from pysrc.sampling import baseline, hmm_estimation
 from ..services.data_service import load_site_data
 
 
-def mc_samples_constrained(location):
+def sample_price_paths(location, var="uncon"):
     np.random.seed(123)
 
     (
@@ -22,69 +22,7 @@ def mc_samples_constrained(location):
         sta_dist,
         sta_price,
         annual_P,
-    ) = hmm_estimation.estimate_price_model([0.5, 0.5], num_iterations=5, var="con")
-
-    num_simulations = 200
-
-    states = {"low": mus[0], "high": mus[1]}
-    initial_state = "high"
-
-    probability_matrix = {
-        "low": {"low": annual_P[0, 0], "high": annual_P[0, 1]},
-        "high": {"low": annual_P[1, 0], "high": annual_P[1, 1]},
-    }
-
-    # Number of observations
-    num_observations = 200
-
-    for i in range(1, num_simulations + 1):
-        # Generating the Markov chain for each simulation
-        current_state = initial_state
-        markov_chain = [states[current_state]]
-
-        for _ in range(num_observations - 1):
-            next_state = np.random.choice(
-                list(probability_matrix[current_state].keys()),
-                p=list(probability_matrix[current_state].values()),
-            )
-            markov_chain.append(states[next_state])
-            current_state = next_state
-
-        transformed_markov_chain = [
-            1 if price == mus[0] else 2 for price in markov_chain
-        ]
-
-        # Creating an index from 1 to 200
-        index = range(1, num_observations + 1)
-
-        # Combine index and transformed Markov chain into a DataFrame
-        markov_chain_df = pd.DataFrame(
-            {"Index": index, "scenario": transformed_markov_chain}
-        )
-
-        # Specify the filename for each CSV file
-        csv_filename = f"/mc_{i}.csv"
-        output = location
-        # Output to CSV file
-        markov_chain_df.to_csv(output + csv_filename, index=False)
-
-    return "mc sampling is done"
-
-
-def mc_samples_unconstrained(location):
-    np.random.seed(123)
-
-    (
-        aic,
-        ll,
-        bic,
-        mus,
-        sigmas,
-        P,
-        sta_dist,
-        sta_price,
-        annual_P,
-    ) = hmm_estimation.estimate_price_model([0.5, 0.5], num_iterations=5, var="uncon")
+    ) = hmm_estimation.estimate_price_model([0.5, 0.5], num_iterations=5, var=var)
 
     num_simulations = 200
 
