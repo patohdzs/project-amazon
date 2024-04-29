@@ -12,26 +12,16 @@ from ..services.data_service import load_site_data
 def sample_price_paths(location, var="uncon"):
     np.random.seed(123)
 
-    (
-        aic,
-        ll,
-        bic,
-        mus,
-        sigmas,
-        P,
-        sta_dist,
-        sta_price,
-        annual_P,
-    ) = hmm_estimation.estimate_price_model([0.5, 0.5], num_iterations=5, var=var)
+    price_states, M = hmm_estimation.estimate_price_model(num_iter=5, var=var)
 
     num_simulations = 200
 
-    states = {"low": mus[0], "high": mus[1]}
+    states = {"low": price_states[0], "high": price_states[1]}
     initial_state = "high"
 
     probability_matrix = {
-        "low": {"low": annual_P[0, 0], "high": annual_P[0, 1]},
-        "high": {"low": annual_P[1, 0], "high": annual_P[1, 1]},
+        "low": {"low": M[0, 0], "high": M[0, 1]},
+        "high": {"low": M[1, 0], "high": M[1, 1]},
     }
 
     # Number of observations
@@ -51,7 +41,7 @@ def sample_price_paths(location, var="uncon"):
             current_state = next_state
 
         transformed_markov_chain = [
-            1 if price == mus[0] else 2 for price in markov_chain
+            1 if price == price_states[0] else 2 for price in markov_chain
         ]
 
         # Creating an index from 1 to 200

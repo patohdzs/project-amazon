@@ -54,19 +54,7 @@ gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 x_2017 = gamma * forest_area_2017
 
 # Estimate HMM model for prices
-(
-    aic,
-    ll,
-    bic,
-    states,
-    sigmas,
-    P,
-    sta_dist,
-    sta_price,
-    M,
-) = estimate_price_model(
-    [0.5, 0.5],
-)
+price_states, M = estimate_price_model()
 
 
 # Expand initial conditions
@@ -74,7 +62,7 @@ x0 = np.tile(np.reshape(x_2017, (-1, 1)), (1, 2**args.tau))
 z0 = np.tile(np.reshape(z_2017, (-1, 1)), (1, 2**args.tau))
 
 # Compute possible price paths
-pa_paths = price_paths(args.timehzn, args.tau, states)
+pa_paths = price_paths(args.timehzn, args.tau, price_states)
 
 # Compute likelihood of each path
 pa_path_probs = price_path_probs(M, args.tau, pa_paths)

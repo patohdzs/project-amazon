@@ -5,20 +5,20 @@ from scipy.linalg import expm, logm
 from pysrc.services.data_service import load_cattle_prices
 
 
-def estimate_price_model(dist, num_iterations=5, var="uncon"):
-    for i in range(num_iterations):
+def estimate_price_model(dist=[0.5, 0.5], num_iter=5, var="uncon"):
+    for _ in range(num_iter):
         s_low, s_high = dist[0], dist[1]
 
         # Estimate HMM transitions and states
-        aic, ll, bic, mus, sigmas, P = _estimate(s_low, s_high, var)
+        aic, ll, bic, price_states, sigmas, P = _estimate(s_low, s_high, var)
 
         # Compute stationary distribution
-        dist, sta_price = _stationary_distribution(P, mus)
+        dist, sta_price = _stationary_distribution(P, price_states)
 
         # Annualize transition matrix
-        annual_P = _annualize_transition_matrix(P)
+        M = _annualize_transition_matrix(P)
 
-    return aic, ll, bic, mus, sigmas, P, dist, sta_price, annual_P
+    return price_states, M
 
 
 def _estimate(s_low=0.5, s_high=0.5, var="uncon"):
