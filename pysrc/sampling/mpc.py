@@ -61,6 +61,19 @@ def sample_price_paths(location, var="uncon"):
     return "mc sampling is done"
 
 
+def sample_price_path(T, M, price_states):
+    # Start with high price
+    state = 1
+    price_path = [price_states[state]]
+
+    for _ in range(T - 1):
+        # Sample next state
+        state = np.random.choice(M.shape[0], p=M[state])
+        price_path.append(price_states[state])
+
+    return np.array(price_path)
+
+
 def gdx_files(location, num_sites=78):
     # Load site data
 
