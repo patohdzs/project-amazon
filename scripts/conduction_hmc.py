@@ -25,3 +25,6 @@ trajectory_diff(pe_hmc=5.3,pe_det=7.1,b=15,opt="gams",pa=41.11) # Figure 11
 
 value_decom(num_sites=78,pee=5.3,model='hmc')
 ambiguity_decom(num_sites=78,pe_det=7.1,pe_hmc=5.3) # Table 5
+
+
+print("hmc All done!")
