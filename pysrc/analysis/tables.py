@@ -375,3 +375,167 @@ def ambiguity_decom(pe_det=7.1,pe_hmc=5.3,num_sites=78,opt='gams',pa=41.11,xi=1)
         file.write(latex_code)
 
     return 
+
+
+
+
+def value_decom_mpc(pee=6.9,num_sites=78,opt='gams',model='unconstrained',b=0):
+
+    pe=pee+b
+    kappa   =   2.094215255 
+    zeta    =   1.66e-4*1e11
+    dft_np = read_theta(num_sites)
+    df_ori=pd.read_csv(str(get_path("data"))+"/hmc/hmc_78SitesModel.csv")
+    x0=df_ori['x_2017_78Sites'].to_numpy()
+    
+    output_folder = str(get_path("output"))+"/tables/"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    
+    if opt == 'gams':
+        
+        def gams_read_dat_file(filename):
+            data_dict = {}
+            
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+
+            current_y = None
+            values = []
+            p_a = None
+
+            for line in lines:
+                line = line.strip()  
+
+                if line.startswith('Y ='):
+                    if current_y is not None:
+                        data_dict[current_y] = {'p_a': p_a, 'values': values}
+                        values = []
+
+                    parts = line.split()
+                    current_y = int(parts[2])
+                    p_a = float(parts[5])
+
+                else:
+                    try:
+                        value = float(line)
+                        values.append(value)
+                    except ValueError:
+                        pass
+
+            if current_y is not None:
+                data_dict[current_y] = {'p_a': p_a, 'values': values}
+
+            return data_dict
+    
+        def gams_read_file(
+            result_directory
+        ):
+        
+            dfz = gams_read_dat_file(result_directory+'/amazon_data_z.dat')
+            dfz_np = np.array([np.array(dfz[i]['values']) for i in range(1, 201)])/1e11
+            p_a_values = np.array([dfz[i]['p_a'] for i in range(1, 201)])
+
+            dfx = gams_read_dat_file(result_directory+'/amazon_data_x.dat')
+            dfx_np = np.array([np.array(dfx[i]['values']) for i in range(1, 201)])/1e11
+            dfx_np=np.sum(dfx_np,axis=1)
+            dfxdot=np.diff(dfx_np,axis=0)
+
+            dfu = gams_read_dat_file(result_directory+'/amazon_data_u.dat')
+            dfu_np = np.array([np.array(dfu[i]['values']) for i in range(1, 201)])/1e11
+
+
+            dfv = gams_read_dat_file(result_directory+'/amazon_data_v.dat')
+            dfv_np = np.array([np.array(dfv[i]['values']) for i in range(1, 201)])/1e11
+
+            dfz_np = np.vstack((dfz_np, dfu_np[-1] - dfv_np[-1]))
+            
+            return(
+                dfz_np,
+                p_a_values,
+                dfxdot,
+                dfu_np,
+                dfv_np,
+                dfx_np
+            )
+   
+        results = []
+        for j in range(99):
+            
+            result_directory=str(get_path("output"))+f"/optimization/mpc/gams/78sites/model_{model}/"+f"pe_{pe}/mc_{j+1}"
+            
+            (   dfz_np,
+                p_a_values,
+                dfxdot,
+                dfu_np,
+                dfv_np,
+                dfx_np
+                )   =   gams_read_file(result_directory)
+            
+            x_det=np.insert(dfx_np,0,np.sum(x0)/1e11)
+            dfxdot=np.diff(x_det,axis=0)
+            
+            results_AO = []
+            for i in range(200):
+                result_AO =p_a_values[i]*np.dot(dfz_np[i+1], dft_np)/((1+0.02)**(i))
+                results_AO.append(result_AO)
+            total_AO = np.sum(results_AO)
+            
+            results_NT = []
+            for i in range(200):
+                result_NT =-b*(kappa*np.sum(dfz_np[i+1])-dfxdot[i])/((1+0.02)**(i))
+                results_NT.append(result_NT)
+            total_NT = np.sum(results_NT)
+            
+            results_CS = []
+            for i in range(200):
+                result_CS =-pee*(kappa*np.sum(dfz_np[i+1])-dfxdot[i])/((1+0.02)**(i))
+                results_CS.append(result_CS)
+            total_CS = np.sum(results_CS)
+            
+            results_AC = []
+            for i in range(200):
+                result_AC =(zeta/2)*(np.sum(dfu_np[i])+np.sum(dfv_np[i]))**2/((1+0.02)**(i))
+                results_AC.append(result_AC)
+            total_AC = np.sum(results_AC)
+            
+            total_PV=total_AO+total_NT+total_CS-total_AC
+            
+            iteration_results = {
+                "j":j+1,
+                "b":b,
+                "total_AO": total_AO,
+                "total_NT": total_NT,
+                "total_CS": total_CS,
+                "total_AC": total_AC,
+                "total_PV": total_PV
+            }
+
+            results.append(iteration_results)
+            
+        results_df = pd.DataFrame(results)
+
+        mean = results_df.mean()
+        sd = results_df.std()
+        sd_mean_ratio =  sd / mean
+        quantiles_10 = results_df.quantile(0.10)
+        quantiles_50 = results_df.quantile(0.50)
+        quantiles_90 = results_df.quantile(0.90)
+
+        # Create a new DataFrame for the summary table
+        summary_table_df = pd.DataFrame({
+            "": [ "10\%", "50\%", "90\%"],
+            "agricultural output value": [format_float(quantiles_10["total_AO"]), format_float(quantiles_50["total_AO"]), format_float(quantiles_90["total_AO"])],
+            "net transfers": [format_float(quantiles_10["total_NT"]), format_float(quantiles_50["total_NT"]), format_float(quantiles_90["total_NT"])],
+            "forest services": [format_float(quantiles_10["total_CS"]), format_float(quantiles_50["total_CS"]), format_float(quantiles_90["total_CS"])],
+            "adjustment costs": [format_float(quantiles_10["total_AC"]), format_float(quantiles_50["total_AC"]), format_float(quantiles_90["total_AC"])],
+            "planner value": [format_float(quantiles_10["total_PV"]), format_float(quantiles_50["total_PV"]), format_float(quantiles_90["total_PV"])]
+        })
+
+        # summary_table_df.to_csv(output_folder+f"present_value_mpc_b{b}.csv", index=False)
+
+    with open(output_folder + f"present_value_mpc_b{b}.tex", "w") as file:
+        file.write(summary_table_df.to_latex(index=False))
+
+    return print('done')
