@@ -9,11 +9,10 @@ from ..optimization import gams, gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
-from ..services.file_service import stan_model_path
+from ..services.file_service import get_path
 
 
 def sample(
-    model_name,
     xi,
     pe,
     pa,
@@ -37,7 +36,7 @@ def sample(
 ):
     # Instantiate stan sampler
     sampler = CmdStanModel(
-        stan_file=stan_model_path(model_name) / "adjusted.stan",
+        stan_file=get_path("stan_model") / "adjusted.stan",
         cpp_options={"STAN_THREADS": "true"},
         force_compile=True,
     )
@@ -54,11 +53,7 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    baseline_fit = baseline.sample(
-        model_name=model_name,
-        num_sites=num_sites,
-        **stan_kwargs,
-    )
+    baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
     theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
     gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
 
@@ -163,7 +158,13 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
-            **vectorize_trajectories(trajectories['Z'], trajectories['X'], trajectories['U'],trajectories['V'],trajectories['w']),
+            **vectorize_trajectories(
+                trajectories["Z"],
+                trajectories["X"],
+                trajectories["U"],
+                trajectories["V"],
+                trajectories["w"],
+            ),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
