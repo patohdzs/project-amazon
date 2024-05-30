@@ -91,11 +91,7 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
 
     # Get theta and gamma samples
     baseline_fit = baseline.sample(
-        model_name="full_model",
-        num_sites=num_sites,
-        iter_sampling=10**4,
-        chains=5,
-        seed=1,
+        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
     )
 
     theta = baseline_fit.stan_variable("theta").mean(axis=0)

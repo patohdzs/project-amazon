@@ -103,7 +103,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
         results = []
         for pe in pe_values:
             samples = adjusted.sample(
-                model_name="full_model",
                 xi=xi,
                 pe=pe,
                 pa=pa,

@@ -14,11 +14,7 @@ def format_float(value):
 
 def read_theta(num_sites):
     baseline_fit = baseline.sample(
-        model_name="full_model",
-        num_sites=num_sites,
-        iter_sampling=10**4,
-        chains=5,
-        seed=1,
+        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
     )
 
     dft_np = baseline_fit.stan_variable("theta").mean(axis=0)
@@ -598,8 +594,6 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
                 ],
             }
         )
-
-        # summary_table_df.to_csv(output_folder+f"present_value_mpc_b{b}.csv", index=False)
 
     with open(output_folder + f"present_value_mpc_b{b}.tex", "w") as file:
         file.write(summary_table_df.to_latex(index=False))
