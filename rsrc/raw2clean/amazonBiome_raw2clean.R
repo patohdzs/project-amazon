@@ -62,6 +62,11 @@ raw.biome <-
   raw.biome %>%
   dplyr::filter(biome_name == "AMAZON")
 
+
+output_path <- here::here("data/hmc/", "map.geojson")
+raw.biome2 <- sf::st_transform(x = raw.biome, crs = 4326) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+st_write(raw.biome2, output_path, driver = "GeoJSON", delete_layer = TRUE)
+
 # PROJECTION
 raw.biome <- sf::st_transform(x = raw.biome, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
 
