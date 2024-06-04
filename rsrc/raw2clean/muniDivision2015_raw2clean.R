@@ -9,41 +9,26 @@
 # > NOTES
 # 1: -
 
-# SETUP
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
-tictoc::tic(msg = "muniDivision2015_raw2clean.R script", log = T)
+tictoc::tic(msg = "muniDivision2015_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-# read shapefile
-raw.muni <- sf::st_read(
-  dsn = here::here("data/raw2clean/muniDivision2015_ibge/input"),
+# Read shapefile
+raw_muni <- sf::st_read(
+  dsn = "data/raw/ibge/muni_division_2015",
   layer = "BRMUE250GC_SIR"
 )
 
-# DATA EXPLORATION [disabled for speed]
-# summary(raw.muni)
-# View(raw.muni)
-# plot(raw.muni$geometry)
-
-# DATASET CLEANUP AND PREP
-# COLUMN CLEANUP
-# names
-colnames(raw.muni)
-
-# translate column names
-raw.muni <-
-  raw.muni %>%
+# Translate column names
+raw_muni <-
+  raw_muni %>%
   dplyr::rename(
     muni_code = CD_GEOCMU,
     muni_name = NM_MUNICIP
   )
 
-# add state_uf column
-raw.muni <-
-  raw.muni %>%
+# Add state_uf column
+raw_muni <-
+  raw_muni %>%
   dplyr::mutate(state_uf = case_when(
     str_sub(muni_code, 1, 2) == 11 ~ "RO",
     str_sub(muni_code, 1, 2) == 12 ~ "AC",
@@ -74,64 +59,54 @@ raw.muni <-
     str_sub(muni_code, 1, 2) == 53 ~ "DF"
   ))
 
-# class - muni_code should be numeric
-lapply(raw.muni, class)
+# Class - muni_code should be numeric
+lapply(raw_muni, class)
 
-raw.muni <- raw.muni %>% dplyr::mutate(muni_code = as.numeric(muni_code))
+raw_muni <- raw_muni %>% dplyr::mutate(muni_code = as.numeric(muni_code))
 
 # LATIN CHARACTER TREATMENT
-raw.muni <-
-  raw.muni %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), \(x) iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")))
+raw_muni <-
+  raw_muni %>%
+  dplyr::mutate(
+    dplyr::across(
+      tidyselect:::where(is.character),
+      \(x) iconv(x,
+        from = "UTF-8",
+        to = "ASCII//TRANSLIT"
+      )
+    )
+  )
 
 # LETTERS CAPITALIZATION
-raw.muni <-
-  raw.muni %>%
+raw_muni <-
+  raw_muni %>%
   dplyr::mutate(muni_name = toupper(muni_name))
 
 # PROJECTION
-raw.muni <- sf::st_transform(x = raw.muni, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+# SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+raw_muni <- sf::st_transform(x = raw_muni, crs = 5880)
 
-file_path <- paste(getwd(), "data/raw2clean/muniDivision2015_ibge/output", paste0("raw_muni", ".Rdata"), sep = "/")
+# Save as Rdata
+save(raw_muni, file = "data/clean/raw_muni.Rdata")
 
-save(raw.muni, file = file_path)
-
-# save(raw.muni,
-#      file = here::here("data/calibration/",
-#                       "raw_muni.Rdata"))
-
-# REMOVE POLYGONS IDENTIFIED AS BODY OF WATERS AND NOT MUNICIPALITIES - see muniDivision2007_raw2clean
-raw.muni <- raw.muni %>% dplyr::filter(!muni_code %in% c(4300001, 4300002))
+# REMOVE POLYGONS IDENTIFIED AS BODY OF WATERS AND NOT MUNICIPALITIES
+# see muniDivision2007_raw2clean
+raw_muni <- raw_muni %>% dplyr::filter(!muni_code %in% c(4300001, 4300002))
 
 # GEOMETRY CLEANUP
-raw.muni <- sf::st_make_valid(raw.muni)
+raw_muni <- sf::st_make_valid(raw_muni)
 
-# EXPORT PREP
 
 # LABELS
-sjlabelled::set_label(raw.muni$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(raw.muni$muni_name) <- "municipality name"
-sjlabelled::set_label(raw.muni$state_uf) <- "state name (abbreviation)"
+sjlabelled::set_label(raw_muni$muni_code) <- "municipality code (7-digit, IBGE)"
+sjlabelled::set_label(raw_muni$muni_name) <- "municipality name"
+sjlabelled::set_label(raw_muni$state_uf) <- "state name (abbreviation)"
 
-# change object name for exportation
-clean.muniDivision2015 <- raw.muni
+# Change object name before saving
+muni_division_2015 <- raw_muni
 
 # POST-TREATMENT OVERVIEW
-# summary(clean.muniDivision2015)
-# View(clean.muniDivision2015)
-# plot(clean.muniDivision2015$geoemtry)
-
-# EXPORT
-
-save(clean.muniDivision2015,
-  file = here::here(
-    "data/raw2clean/muniDivision2015_ibge/output",
-    "clean_muniDivision2015.Rdata"
-  )
-)
+save(muni_division_2015, file = "data/clean/muni_division_2015.Rdata")
 
 # END TIMER
-tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+tictoc::toc(log = TRUE)

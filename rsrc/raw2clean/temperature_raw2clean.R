@@ -9,41 +9,33 @@
 # > NOTES
 # 1: -
 
-# SETUP
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
+library(terra)
 
 # START TIMER
-tictoc::tic(msg = "temperature_raw2clean.R script", log = T)
+tictoc::tic(msg = "temperature_raw2clean.R script", log = TRUE)
 
 # RASTER OPTIONS
 terra::terraOptions(
   tmpdir = here::here("data/_temp"),
-  timer = T
+  timer = TRUE
 )
 
-# DATA INPUT
-# RAW DATA
-# read all parts (12) of the year and merge them together
-raw.raster <- terra::rast(list.files(here::here("data/raw2clean/temperature_worldClim/input"),
-  full.names = T,
+# Read and merge all layers (12) of the year
+raw_raster <- terra::rast(list.files(
+  "data/raw/worldclim/temperature",
+  full.names = TRUE,
   pattern = ".tif"
 ))
 
-# DATASET CLEANUP AND PREP
-# change layer names
-names(raw.raster) <- paste0("historicalTemp_", 1:12)
+# Change layer names
+names(raw_raster) <- paste0("historicalTemp_", 1:12)
 
-# EXPORT
-# save unified tif
-terra::writeRaster(raw.raster, here::here("data/raw2clean/temperature_worldClim/output/clean_temperature.tif"), overwrite = T)
+# Save unified raster
+terra::writeRaster(raw_raster, "data/clean/temperature.tif", overwrite = TRUE)
 
 # CLEAN TEMP DIR
 terra::tmpFiles(current = TRUE, remove = TRUE)
 gc()
 
 # END TIMER
-tictoc::toc(log = T)
-
-# export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+tictoc::toc(log = TRUE)
