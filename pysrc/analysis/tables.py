@@ -78,7 +78,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
             )
             with open(theta_folder + f"/pe_{pe[order]}/results.pcl", "rb") as f:
                 para_file = pickle.load(f)
-            dft_np = para_file["final_sample"][:16000, :78].mean(axis=0)
+            dft_np = para_file["final_sample"][:, :78].mean(axis=0)
 
         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
 
