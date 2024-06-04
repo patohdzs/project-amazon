@@ -9,10 +9,6 @@
 # > NOTES
 # 1: -
 
-# SETUP
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
 tictoc::tic(msg = "precipitation_raw2clean.R script", log = TRUE)
 
