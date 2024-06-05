@@ -134,7 +134,6 @@ def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
     result_folder = os.path.join(
         str(get_path("output")),
         "sampling",
-        model,
         opt,
         f"{num_sites}sites",
         f"pa_{pa}",
