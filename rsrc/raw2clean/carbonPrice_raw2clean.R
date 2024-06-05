@@ -9,11 +9,6 @@
 # > NOTES
 # 1: -
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
 tictoc::tic(msg = "carbonPrice_raw2clean.R script", log = T)
 

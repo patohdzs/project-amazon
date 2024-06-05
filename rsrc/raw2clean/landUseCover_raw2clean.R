@@ -9,33 +9,23 @@
 # > NOTES
 # 1: -
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
-tictoc::tic(msg = "landUseCover_raw2clean.R script", log = T)
+tictoc::tic(msg = "landUseCover_raw2clean.R script", log = TRUE)
 
 # RASTER OPTIONS
 terra::terraOptions(
   tmpdir = here::here("data/_temp"),
-  timer = T
+  timer = TRUE
 )
 
-# DATA INPUT
-# RAW DATA
-# read only year 2000 - used as the base for random sample extraction
-raw.raster <- terra::rast(here::here("data/raw2clean/landUseCover_mapbiomas/input/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2000.tif"))
+# Read only year 2000 - used as the base for random sample extraction
+raw_raster <- terra::rast("data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2000.tif")
 
-# DATASET CLEANUP AND PREP
-# RECLASSIFY
-# change 0s to NAs so that any value represents only areas inside the Amazon Biome
-raw.raster <- terra::subst(raw.raster, from = 0, to = as.numeric(NA))
+# Change 0s to NAs so that any value represents only areas inside the Amazon Biome
+raw_raster <- terra::subst(raw.raster, from = 0, to = as.numeric(NA))
 
-# EXPORT
-# save reclassified tif
-terra::writeRaster(raw.raster, here::here("data/raw2clean/landUseCover_mapbiomas/output/clean_landUseCover_2000.tif"), overwrite = T)
+# Save reclassified tif
+terra::writeRaster(raw.raster, here::here("data/clean/land_use_cover_2000.tif"), overwrite = TRUE)
 
 # CLEAN TEMP DIR
 terra::tmpFiles(current = TRUE, remove = TRUE)
@@ -43,6 +33,3 @@ gc()
 
 # END TIMER
 tictoc::toc(log = T)
-
-# export time to csv table
-# ExportTimeProcessing("code/raw2clean")

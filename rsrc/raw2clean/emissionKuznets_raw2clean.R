@@ -9,17 +9,10 @@
 # > NOTES
 # 1: -
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
-tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = T)
+tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read input file
+# Read input file
 raw.emissionKuznets <- readr::read_csv(file = here::here("data/raw2clean/emissionKuznets_worldbank/input/API_EN.ATM.CO2E.PC_DS2_en_csv_v2_3731558.csv"), skip = 4)
 raw.gdpKuznets <- readr::read_csv(file = here::here("data/raw2clean/emissionKuznets_worldbank/input/API_NY.GDP.PCAP.PP.CD_DS2_en_csv_v2_3731320.csv"), skip = 4)
 
