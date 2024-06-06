@@ -12,6 +12,7 @@
 
 # START TIMER
 tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = TRUE)
+tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = TRUE)
 
 # DATA INPUT
 

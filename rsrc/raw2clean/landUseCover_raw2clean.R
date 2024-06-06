@@ -12,6 +12,7 @@
 
 # START TIMER
 tictoc::tic(msg = "landUseCover_raw2clean.R script", log = TRUE)
+tictoc::tic(msg = "landUseCover_raw2clean.R script", log = TRUE)
 
 # RASTER OPTIONS
 terra::terraOptions(

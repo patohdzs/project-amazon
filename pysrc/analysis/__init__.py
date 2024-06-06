@@ -59,40 +59,37 @@ def value_decomposition(
 
 
 def transfers_decomposition(
+    years,
     Z,
     X,
-    T,
-    pee,
-    pa,
+    Z_base,
+    X_base,
     b,
-    theta,
     delta=0.02,
     kappa=2.094215255,
 ):
     # Compute change in X
     X_dot = np.diff(X, axis=0)
+    X_dot_base = np.diff(X_base, axis=0)
 
-    NCE_base = [-kappa * np.sum(Z[t + 1]) + X_dot[t] for t in range(30)]
-    total_NCE_base = np.sum(NCE_base) * 100
+    # Compute net captured emissions for base case
+    results_NCE_base = [-kappa * Z_base[t + 1] + X_dot_base[t] for t in range(years)]
+    total_NCE_base = np.sum(results_NCE_base)
 
-    NCE = [-kappa * np.sum(Z[t + 1]) + X_dot[t] for t in range(30)]
-    total_NCE = np.sum(NCE) * 100
+    # Compute NCE
+    results_NCE = [-kappa * Z[t + 1] + X_dot[t] for t in range(years)]
+    total_NCE = np.sum(results_NCE)
 
-    NT2 = [
-        -b * (kappa * np.sum(Z[t + 1]) - X_dot[t]) / ((1 + delta) ** t)
-        for t in range(30)
+    results_NT2 = [
+        -b * (kappa * Z[t + 1] - X_dot[t]) / ((1 + delta) ** t) for t in range(years)
     ]
-    total_NT2 = np.sum(NT2)
+    total_NT2 = np.sum(results_NT2)
 
-    total_EC = total_NT2 / (total_NCE - total_NCE_base) * 100
+    total_EC = total_NT2 / (total_NCE - total_NCE_base)
 
-    total_NCE = total_NCE.round(2)
-    total_NT2 = total_NT2.round(2)
-    total_EC = total_EC.round(2)
     return {
-        "pee": pee,
         "b": b,
-        "total_NCE": total_NCE,
-        "total_NT2": total_NT2,
-        "total_EC": total_EC,
+        "net captured emissions": total_NCE,
+        "discounted net transfers": total_NT2,
+        "discounted effective costs": total_EC,
     }
