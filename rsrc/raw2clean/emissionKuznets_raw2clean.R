@@ -9,57 +9,43 @@
 # > NOTES
 # 1: -
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
 
 # START TIMER
-tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = T)
+tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = TRUE)
 
 # DATA INPUT
 
 # read input file
-raw.emissionKuznets <- readr::read_csv(file = here::here("data/raw2clean/emissionKuznets_worldbank/input/API_EN.ATM.CO2E.PC_DS2_en_csv_v2_3731558.csv"), skip = 4)
-raw.gdpKuznets <- readr::read_csv(file = here::here("data/raw2clean/emissionKuznets_worldbank/input/API_NY.GDP.PCAP.PP.CD_DS2_en_csv_v2_3731320.csv"), skip = 4)
+raw_emissionKuznets <- readr::read_csv(file = "data/raw/worldbank/emission_kuznets/API_EN.ATM.CO2E.PC_DS2_en_csv_v2_3731558.csv", skip = 4)
+raw_gdpKuznets <- readr::read_csv(file = "data/raw/worldbank/emission_kuznets/API_NY.GDP.PCAP.PP.CD_DS2_en_csv_v2_3731320.csv", skip = 4)
 
-# DATA EXPLORATION [disabled for speed]
-# summary(raw.emissionKuznets)
-# View(raw.emissionKuznets)
 
 # DATASET CLEANUP AND PREP
 
-raw.emissionKuznets <-
-  raw.emissionKuznets %>%
+raw_emissionKuznets <-
+  raw_emissionKuznets %>%
   dplyr::select(`Country Name`, emissionPerCapita_2018 = `2018`) %>%
-  dplyr::left_join(raw.gdpKuznets) %>%
+  dplyr::left_join(raw_gdpKuznets) %>%
   dplyr::select(country_name = `Country Name`, gdpPerCapita_2018 = `2018`, emissionPerCapita_2018)
 
 # EXPORT PREP
 
 # LABELS
-sjlabelled::set_label(raw.emissionKuznets$country_name) <- "name of the country"
-sjlabelled::set_label(raw.emissionKuznets$gdpPerCapita_2018) <- "GDP per capita PPP in 2018 (current international $)"
-sjlabelled::set_label(raw.emissionKuznets$emissionPerCapita_2018) <- "Emission per capita in 2018 (metric tons)"
+sjlabelled::set_label(raw_emissionKuznets$country_name) <- "name of the country"
+sjlabelled::set_label(raw_emissionKuznets$gdpPerCapita_2018) <- "GDP per capita PPP in 2018 (current international $)"
+sjlabelled::set_label(raw_emissionKuznets$emissionPerCapita_2018) <- "Emission per capita in 2018 (metric tons)"
 
 # change object name for exportation
-clean.emissionKuznets <- raw.emissionKuznets
-
-# POST-TREATMENT OVERVIEW
-# summary(clean.emissionKuznets)
-# View(clean.emissionKuznets)
+clean_emissionKuznets <- raw_emissionKuznets
 
 # EXPORT
 
-save(clean.emissionKuznets,
-  file = here::here(
-    "data/raw2clean/emissionKuznets_worldbank/output",
-    "clean_emissionKuznets.Rdata"
-  )
+save(clean_emissionKuznets,
+  file = 
+    "data/clean/emission_kuznets.Rdata"
 )
 
 # END TIMER
-tictoc::toc(log = T)
+tictoc::toc(log = TRUE)
 
-# export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+

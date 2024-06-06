@@ -9,13 +9,18 @@
 # > NOTES
 # 1: -
 
-# SETUP
 
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
 
 # START TIMER
-tictoc::tic(msg = "_masterfile_raw2clean.R script", log = T)
+tictoc::tic(msg = "_masterfile_raw2clean.R script", log = TRUE)
+
+# Create folder
+if (!dir.exists("data/clean")) {
+    dir.create("data/clean", recursive = TRUE)
+}
+if (!dir.exists("data/hmc")) {
+    dir.create("data/hmc", recursive = TRUE)
+}
 
 # SOURCE
 # TREAT RAW DATA - AMAZON BIOME BOUNDARY (IBGE - 2019)
@@ -112,18 +117,11 @@ rm(list = ls())
 # DOWNLOAD PROCESS IS OPTIONAL GIVEN THAT THE DATA IS PROVIDED
 # source(here::here("rsrc/raw2clean/abovegroundBiomassESA_download.R"), encoding = "UTF-8", echo = T)
 
-# # clear environment
-# rm(list = ls())
 
 # # EXPORT TIME PROCESSING
 
-# # END TIMER
-# tictoc::toc(log = T)
+# END TIMER
+tictoc::toc(log = TRUE)
 
-# # SOURCE FUNCTIONS - after scripts to avoid rm(list = ls())
-# source(here::here("code/_functions/ExportTimeProcessing.R"))
-
-# # export time to csv table
-# ExportTimeProcessing("code/raw2clean")
 
 # END OF SCRIPT

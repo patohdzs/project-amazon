@@ -9,95 +9,79 @@
 # > NOTES
 # 1: -
 
-# SETUP
 
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
 
 # START TIMER
-tictoc::tic(msg = "amazonBiome_raw2clean.R script", log = T)
+tictoc::tic(msg = "amazonBiome_raw2clean.R script", log = TRUE)
 
 # DATA INPUT
 
 # read shapefile
-raw.biome <- sf::st_read(
-  dsn = here::here("data/raw2clean/amazonBiome_ibge/input"),
+raw_biome <- sf::st_read(
+  dsn = "data/raw/ibge/amazon_biome/",
   layer = "lm_bioma_250"
 )
-
-# DATA EXPLORATION [disabled for speed]
-# summary(raw.biome)
-# View(raw.biome@data)
-# plot(raw.biome)
 
 # DATASET CLEANUP AND PREP
 
 # COLUMN CLEANUP
 # names
-colnames(raw.biome)
+colnames(raw_biome)
 
 # translate column names
-raw.biome <-
-  raw.biome %>%
+raw_biome <-
+  raw_biome %>%
   dplyr::rename(
     biome_code = CD_Bioma,
     biome_name = Bioma
   )
 
 # class - no change needed
-lapply(raw.biome, class)
+lapply(raw_biome, class)
 
 # TRANSLATION
 # 'grepl' used to avoid encoding trouble with latin characters
-raw.biome$biome_name[which(grepl(pattern = "Amazônia", x = raw.biome$biome_name))] <- "Amazon"
-raw.biome$biome_name[which(grepl(pattern = "Mata Atlântica", x = raw.biome$biome_name))] <- "Atlantic Forest"
+raw_biome$biome_name[which(grepl(pattern = "Amazônia", x = raw_biome$biome_name))] <- "Amazon"
+raw_biome$biome_name[which(grepl(pattern = "Mata Atlântica", x = raw_biome$biome_name))] <- "Atlantic Forest"
 
 # LETTERS CAPITALIZATION
-raw.biome <-
-  raw.biome %>%
+raw_biome <-
+  raw_biome %>%
   dplyr::mutate(biome_name = toupper(biome_name))
 
 # FILTER BIOME OF INTEREST (AMAZON)
-raw.biome <-
-  raw.biome %>%
+raw_biome <-
+  raw_biome %>%
   dplyr::filter(biome_name == "AMAZON")
 
 
-output_path <- here::here("data/hmc/", "map.geojson")
-raw.biome2 <- sf::st_transform(x = raw.biome, crs = 4326) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
-st_write(raw.biome2, output_path, driver = "GeoJSON", delete_layer = TRUE)
+output_path <- "data/hmc/map.geojson"
+biome_output <- sf::st_transform(x = raw_biome, crs = 4326) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+st_write(biome_output, output_path, driver = "GeoJSON", delete_layer = TRUE)
 
 # PROJECTION
-raw.biome <- sf::st_transform(x = raw.biome, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+raw_biome <- sf::st_transform(x = raw_biome, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
 
 # GEOMETRY CLEANUP
-raw.biome <- sf::st_make_valid(raw.biome)
+raw_biome <- sf::st_make_valid(raw_biome)
 
 # EXPORT PREP
 
 # LABELS
-sjlabelled::set_label(raw.biome$biome_code) <- "biome code"
-sjlabelled::set_label(raw.biome$biome_name) <- "biome name"
+sjlabelled::set_label(raw_biome$biome_code) <- "biome code"
+sjlabelled::set_label(raw_biome$biome_name) <- "biome name"
 
 # change object name for exportation
-clean.amazonBiome <- raw.biome
-
-# POST-TREATMENT OVERVIEW
-# summary(clean.amazonBiome)
-# View(clean.amazonBiome@data)
-# plot(clean.amazonBiome$geometry)
+clean.amazonBiome <- raw_biome
 
 # EXPORT
 
 save(clean.amazonBiome,
-  file = here::here(
-    "data/raw2clean/amazonBiome_ibge/output",
-    "clean_amazonBiome.Rdata"
-  )
+  file = 
+    "data/clean/amazon_biome.Rdata"
 )
 
-# # END TIMER
-# tictoc::toc(log = T)
+# END TIMER
+tictoc::toc(log = TRUE)
 
-# # export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+

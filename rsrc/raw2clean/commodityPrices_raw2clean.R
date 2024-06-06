@@ -9,19 +9,15 @@
 # > NOTES
 # -
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
 
 # START TIMER
-tictoc::tic(msg = "commodityPrices_raw2clean.R script", log = T)
+tictoc::tic(msg = "commodityPrices_raw2clean.R script", log = TRUE)
 
 # DATA INPUT
 
 # read xls file
-raw.prices <- readxl::read_xls(
-  path = here::here("data/raw2clean/commodityPrices_seabpr/input/ipeadata[22-02-2021-10-04].xls"),
+raw_prices <- readxl::read_xls(
+  path = "data/raw/seabpr/commodity_prices/ipeadata[22-02-2021-10-04].xls",
   sheet = 1,
   col_names = c(
     "date", "price_rice", "price_cattle", "price_sugarcane",
@@ -31,47 +27,36 @@ raw.prices <- readxl::read_xls(
   skip = 1
 )
 
-# DATA EXPLORATION
-# summary(raw.prices)    # object is a list of data frames
-# class(raw.prices)
-# View(raw.prices)      # column names indicate file of origin
 
 # DATASET CLEANUP AND PREP
 
 # transform to date class
-raw.prices <-
-  raw.prices %>%
+raw_prices <-
+  raw_prices %>%
   mutate(date = lubridate::ymd(date, truncated = 1))
 
 # EXPORT PREP
 
 # LABELS
-sjlabelled::set_label(raw.prices$date) <- "calendar date (yyyy-mm-dd), monthly data, all 'dd' set to 01"
-sjlabelled::set_label(raw.prices$price_cattle) <- "price (nominal), average received by producer - cattle (1@; PR)"
-sjlabelled::set_label(raw.prices$price_cassava) <- "price (nominal), average received by producer - cassava (1t; PR)"
-sjlabelled::set_label(raw.prices$price_corn) <- "price (nominal), average received by producer - corn (60kg; PR)"
-sjlabelled::set_label(raw.prices$price_rice) <- "price (nominal), average received by producer - rice (50kg; PR)"
-sjlabelled::set_label(raw.prices$price_soybean) <- "price (nominal), average received by producer - soybean (60kg; PR)"
-sjlabelled::set_label(raw.prices$price_sugarcane) <- "price (nominal), average received by producer - sugarcane (1t; PR)"
+sjlabelled::set_label(raw_prices$date) <- "calendar date (yyyy-mm-dd), monthly data, all 'dd' set to 01"
+sjlabelled::set_label(raw_prices$price_cattle) <- "price (nominal), average received by producer - cattle (1@; PR)"
+sjlabelled::set_label(raw_prices$price_cassava) <- "price (nominal), average received by producer - cassava (1t; PR)"
+sjlabelled::set_label(raw_prices$price_corn) <- "price (nominal), average received by producer - corn (60kg; PR)"
+sjlabelled::set_label(raw_prices$price_rice) <- "price (nominal), average received by producer - rice (50kg; PR)"
+sjlabelled::set_label(raw_prices$price_soybean) <- "price (nominal), average received by producer - soybean (60kg; PR)"
+sjlabelled::set_label(raw_prices$price_sugarcane) <- "price (nominal), average received by producer - sugarcane (1t; PR)"
 
 # change object name for exportation
-clean.commodityPrices <- raw.prices
-
-# POST-TREATMENT OVERVIEW
-# summary(clean.commodityPrices)
-# View(clean.commodityPrices)
+clean_commodityPrices <- raw_prices
 
 # EXPORT
 
-save(clean.commodityPrices,
-  file = here::here(
-    "data/raw2clean/commodityPrices_seabpr/output",
-    "clean_commodityPrices.Rdata"
-  )
+save(clean_commodityPrices,
+  file = 
+    "data/clean/commodity_prices.Rdata"
 )
 
 # END TIMER
-tictoc::toc(log = T)
+tictoc::toc(log = TRUE)
 
-# # export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+
