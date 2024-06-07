@@ -18,8 +18,11 @@ tictoc::tic(msg = "_masterfile_raw2clean.R script", log = TRUE)
 if (!dir.exists("data/clean")) {
     dir.create("data/clean", recursive = TRUE)
 }
-if (!dir.exists("data/hmc")) {
-    dir.create("data/hmc", recursive = TRUE)
+if (!dir.exists("data/calibration")) {
+    dir.create("data/calibration", recursive = TRUE)
+}
+if (!dir.exists("data/calibration/hmc")) {
+    dir.create("data/calibration/hmc", recursive = TRUE)
 }
 
 # SOURCE
