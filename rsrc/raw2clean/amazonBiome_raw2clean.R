@@ -72,11 +72,11 @@ sjlabelled::set_label(raw_biome$biome_code) <- "biome code"
 sjlabelled::set_label(raw_biome$biome_name) <- "biome name"
 
 # change object name for exportation
-clean.amazonBiome <- raw_biome
+clean_amazonBiome <- raw_biome
 
 # EXPORT
 
-save(clean.amazonBiome,
+save(clean_amazonBiome,
   file = 
     "data/clean/amazon_biome.Rdata"
 )
