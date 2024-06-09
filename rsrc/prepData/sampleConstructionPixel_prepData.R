@@ -11,37 +11,19 @@
 # 1: -
 
 
-
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "sampleConstructionPixel_prepData.R script", log = T)
-
-
-# # SOURCE FUNCTIONS
-# source(here::here("code/_functions/ExportTimeProcessing.R"))
+tictoc::tic(msg = "sampleConstructionPixel_prepData.R script", log = TRUE)
 
 
 # RASTER OPTIONS
-terra::terraOptions(tmpdir = here::here("data/_temp"),
+terra::terraOptions(tmpdir = "data/_temp",
                     timer  = T)
-
-
-
 
 
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RAW DATA
-clean.mapbiomas <- terra::rast(here::here("data/raw2clean/landUseCover_mapbiomas/output/clean_landUseCover_2000.tif"))
-
-
-
+clean_mapbiomas <- terra::rast("data/clean/landusecover_2000.tif")
 
 
 # DATASET MANIPULATION -------------------------------------------------------------------------------------------------------------------------------
@@ -52,29 +34,29 @@ clean.mapbiomas <- terra::rast(here::here("data/raw2clean/landUseCover_mapbiomas
 set.seed(123)
 
 # extract random sample cells and keep only lon lat info
-samplePixel.prepData <- data.frame(terra::spatSample(clean.mapbiomas, 1200000, na.rm = T, xy = T)[, 1:2])
+samplePixel_prepData <- data.frame(terra::spatSample(clean_mapbiomas, 1200000, na.rm = T, xy = T)[, 1:2])
 
 # read all mapBiomas layers (one for each year)
-aux.mapbiomas <- terra::rast(list.files(here::here("data/raw2clean/landUseCover_mapbiomas/input/"),
+aux_mapbiomas <- terra::rast(list.files("data/raw/mapbiomas/land_use_cover/",
                                         pattern = "COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-\\d{4}",
                                         full.names = T))
 
 # change raster stack layer names
-names(aux.mapbiomas) <- c(1985:2019)
+names(aux_mapbiomas) <- c(1985:2019)
 
 # use points sample to extract complete panel
-samplePixel.prepData <- cbind(samplePixel.prepData, terra::extract(aux.mapbiomas, samplePixel.prepData, df = T)[, -1])
+samplePixel_prepData <- cbind(samplePixel_prepData, terra::extract(aux_mapbiomas, samplePixel_prepData, df = T)[, -1])
 
 # reshape
-samplePixel.prepData <- tidyr::pivot_longer(samplePixel.prepData,
+samplePixel_prepData <- tidyr::pivot_longer(samplePixel_prepData,
                                             cols = tidyselect:::matches("\\d{4}"), names_to = "year", values_to = "mapbiomas_class")
 
 # minor fix year column
-samplePixel.prepData$year <- as.numeric(stringr::str_extract(samplePixel.prepData$year, "\\d{4}"))
+samplePixel_prepData$year <- as.numeric(stringr::str_extract(samplePixel_prepData$year, "\\d{4}"))
 
 # rename columns
-samplePixel.prepData <-
-  samplePixel.prepData %>%
+samplePixel_prepData <-
+  samplePixel_prepData %>%
   dplyr::rename(lon = x, lat = y)
 
 
@@ -85,41 +67,23 @@ gc()
 
 
 
-
-
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # LABELS
-sjlabelled::set_label(samplePixel.prepData$lon)                <- "longitude of the pixel centroid (degrees)"
-sjlabelled::set_label(samplePixel.prepData$lat)                <- "latitude of the pixel centroid (degrees)"
-sjlabelled::set_label(samplePixel.prepData$year)               <- "year of reference"
-sjlabelled::set_label(samplePixel.prepData$mapbiomas_class)    <- "mapbiomas land use/cover classification (id)"
-
-
-# POST-TREATMENT OVERVIEW
-# summary(samplePixel.prepData)
-
-
+sjlabelled::set_label(samplePixel_prepData$lon)                <- "longitude of the pixel centroid (degrees)"
+sjlabelled::set_label(samplePixel_prepData$lat)                <- "latitude of the pixel centroid (degrees)"
+sjlabelled::set_label(samplePixel_prepData$year)               <- "year of reference"
+sjlabelled::set_label(samplePixel_prepData$mapbiomas_class)    <- "mapbiomas land use/cover classification (id)"
 
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(samplePixel.prepData,
-     file = here::here("data/calibration/prepData",
-                       paste0("samplePixel_prepData", ".Rdata")))
+save(samplePixel_prepData,
+     file = "data/prepData/samplePixel_prepData.Rdata")
 
-
-
-# # END TIMER
-# tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
-
-
-
-
+# END TIMER
+tictoc::toc(log = TRUE)
 
 
 # END OF SCRIPT --------------------------------------------------------------------------------------------------------------------------------------

@@ -13,14 +13,8 @@
 
 
 
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "stateEmission_prepData.R script", log = T)
+tictoc::tic(msg = "stateEmission_prepData.R script", log = TRUE)
 
 
 
@@ -29,17 +23,15 @@ tictoc::tic(msg = "stateEmission_prepData.R script", log = T)
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 # EMISSIONS DATA
-load(here::here("data/raw2clean/emission_seeg/output/clean_emission.Rdata"))
+load("data/clean/emission.Rdata")
 
 
 # LAND COVER AND USE (MAPBIOMAS - MUNI LEVEL)
-load(here::here("data/raw2clean/landUseCoverMuni_mapbiomas/output", "clean_landUseCoverMuni.Rdata"))
+load("data/clean/land_use_cover_muni.Rdata")
 
 
 # CROSS-SECTION MUNI-LEVEL SAMPLE
-load(here::here("data/calibration/prepData/sampleMuniCrossSection_prepData.Rdata"))
-
-
+load("data/prepData/sampleMuniCrossSection_prepData.Rdata")
 
 
 
@@ -48,8 +40,8 @@ load(here::here("data/calibration/prepData/sampleMuniCrossSection_prepData.Rdata
 # MAPBIOMAS LAND USE AND COVER
 
 # column and year selection + columns aggregation
-clean.landUseCoverMuni <-
-  clean.landUseCoverMuni %>%
+land_use_cover_muni <-
+  land_use_cover_muni %>%
   dplyr::mutate(agriculturalUse_area = mapbiomasLandCoverId_15 + mapbiomasLandCoverId_39 +
                   mapbiomasLandCoverId_41 + mapbiomasLandCoverId_20 + mapbiomasLandCoverId_21) %>% # generate variable of interest
   dplyr::select(muni_code, year, agriculturalUse_area)
@@ -61,10 +53,10 @@ clean.landUseCoverMuni <-
 # DATA MANIPULATION ----------------------------------------------------------------------------------------------------------------------------------
 
 # MERGE ALL DATASETS
-stateEmission.prepData <-
-  clean.landUseCoverMuni %>%
-  dplyr::left_join(sampleMuniCrossSection.prepData, by = c("muni_code")) %>%
-  dplyr::left_join(clean.emission, by = c("state_uf", "year")) %>%
+stateEmission_prepData <-
+  land_use_cover_muni %>%
+  dplyr::left_join(sampleMuniCrossSection_prepData, by = c("muni_code")) %>%
+  dplyr::left_join(clean_emission, by = c("state_uf", "year")) %>%
   dplyr::filter(year >= 1990) %>% # select period of interest
   dplyr::filter(!is.na(biomeAmazon_share)) %>% # remove municipalities outside amazon biome
   dplyr::group_by(state_uf, year, emission_co2e, netEmission_co2e) %>%
@@ -77,7 +69,7 @@ stateEmission.prepData <-
 
 
 # clear environment
-rm(clean.emission, clean.landUseCoverMuni, sampleMuniCrossSection.prepData)
+rm(clean_emission, land_use_cover_muni, sampleMuniCrossSection_prepData)
 
 
 
@@ -86,33 +78,22 @@ rm(clean.emission, clean.landUseCoverMuni, sampleMuniCrossSection.prepData)
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # LABELS
-sjlabelled::set_label(stateEmission.prepData$emission_co2e) <- "agricultural use emission factor adjusted by fraction of state area inside amazon biome (CO2e)"
-sjlabelled::set_label(stateEmission.prepData$netEmission_co2e) <- "agricultural use net emission factor adjusted by fraction of state area inside amazon biome (CO2e"
-sjlabelled::set_label(stateEmission.prepData$agriculturalUse_area) <- "agricultural area adjusted by fraction of state area inside amazon biome (ha)"
-
-
-
-# POST-TREATMENT OVERVIEW
-# summary(stateEmission.prepData)
-# View(stateEmission.prepData)
-
+sjlabelled::set_label(stateEmission_prepData$emission_co2e) <- "agricultural use emission factor adjusted by fraction of state area inside amazon biome (CO2e)"
+sjlabelled::set_label(stateEmission_prepData$netEmission_co2e) <- "agricultural use net emission factor adjusted by fraction of state area inside amazon biome (CO2e"
+sjlabelled::set_label(stateEmission_prepData$agriculturalUse_area) <- "agricultural area adjusted by fraction of state area inside amazon biome (ha)"
 
 
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(stateEmission.prepData,
-     file = file.path("data/calibration/prepData",
-                      paste0("stateEmission_prepData", ".Rdata")))
+save(stateEmission_prepData,
+     file = "data/prepData/stateEmission_prepData.Rdata")
 
 
 
-# # END TIMER
-# tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
+# END TIMER
+tictoc::toc(log = TRUE)
 
 
 

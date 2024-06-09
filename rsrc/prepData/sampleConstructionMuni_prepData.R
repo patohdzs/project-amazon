@@ -13,15 +13,8 @@
 
 
 
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "sampleConstructionMuni_prepData.R script", log = T)
+tictoc::tic(msg = "sampleConstructionMuni_prepData.R script", log = TRUE)
 
 
 
@@ -30,12 +23,12 @@ tictoc::tic(msg = "sampleConstructionMuni_prepData.R script", log = T)
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 # BRAZILIAN MUNICIPALITIES DIVISION 2015 SHAPEFILE
-load(here::here("data/raw2clean/muniDivision2015_ibge/output/clean_muniDivision2015.Rdata"))
+load("data/clean/muni_division_2015.Rdata")
 
 
 
 # AMAZON BIOME BOUNDARY
-load(here::here("data/raw2clean/amazonBiome_ibge/output/clean_amazonBiome.Rdata"))
+load("data/clean/amazon_biome.Rdata")
 
 
 
@@ -44,36 +37,36 @@ load(here::here("data/raw2clean/amazonBiome_ibge/output/clean_amazonBiome.Rdata"
 # DATA MANIPULATION ----------------------------------------------------------------------------------------------------------------------------------
 
 # calculate municipality area in square kilometers
-clean.muniDivision2015$muni_area <-
-  sf::st_area(clean.muniDivision2015) %>%
+muni_division_2015$muni_area <-
+  sf::st_area(muni_division_2015) %>%
   units::set_units(ha) %>%
   unclass()
 
 # select columns of interest
-clean.muniDivision2015 <-
-  clean.muniDivision2015 %>%
+muni_division_2015 <-
+  muni_division_2015 %>%
   dplyr::select(muni_code, muni_name, state_uf, muni_area, geometry)
 
-clean.amazonBiome <-
-  clean.amazonBiome %>%
+clean_amazonBiome <-
+  clean_amazonBiome %>%
   dplyr::select(biome_name, geometry)
 
 
 # combine municipalities with biomes
-aux.biomeMuni <- sf::st_intersection(clean.muniDivision2015, clean.amazonBiome)
+aux_biomeMuni <- sf::st_intersection(muni_division_2015, clean_amazonBiome)
 
 # clear environment
-rm(clean.amazonBiome)
+rm(clean_amazonBiome)
 
 # calculate biome areas inside each municipality
-aux.biomeMuni$biome_area <-
-  sf::st_area(aux.biomeMuni) %>%
+aux_biomeMuni$biome_area <-
+  sf::st_area(aux_biomeMuni) %>%
   units::set_units(ha) %>%
   unclass()
 
 # select municipalities of interest - in Amazon or Cerrado
-aux.biomeMuni <-
-  aux.biomeMuni %>%
+aux_biomeMuni <-
+  aux_biomeMuni %>%
   sf::st_drop_geometry() %>% # drop spatial dimension
   tidyr::pivot_wider(names_from = biome_name, values_from = biome_area, values_fill = 0) %>% # convert from long to wide - biome areas in columns
   dplyr::filter(AMAZON > 0) %>% # select municipalities of interest
@@ -81,13 +74,13 @@ aux.biomeMuni <-
   dplyr::select(-AMAZON)
 
 # merge original municipalities shapefile with biomes information
-sampleMuniSpatial.prepData <-
-  clean.muniDivision2015 %>%
-  dplyr::left_join(aux.biomeMuni) %>%
+sampleMuniSpatial_prepData <-
+  muni_division_2015 %>%
+  dplyr::left_join(aux_biomeMuni) %>%
   dplyr::filter(biomeAmazon_share > 0)
 
 # clear environment
-rm(aux.biomeMuni)
+rm(aux_biomeMuni)
 
 
 
@@ -96,59 +89,45 @@ rm(aux.biomeMuni)
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # LABELS
-sjlabelled::set_label(sampleMuniSpatial.prepData$muni_code)          <- "municipality code (7-digit, IBGE - 2015)"
-sjlabelled::set_label(sampleMuniSpatial.prepData$muni_name)          <- "municipality name"
-sjlabelled::set_label(sampleMuniSpatial.prepData$state_uf)           <- "state name (abbreviation)"
-sjlabelled::set_label(sampleMuniSpatial.prepData$muni_area)          <- "municipality area (ha, calculated from shapefile under SIRGAS2000 Polyconic projection)"
-sjlabelled::set_label(sampleMuniSpatial.prepData$biomeAmazon_share)  <- "share of the municipality area in the Amazon biome"
+sjlabelled::set_label(sampleMuniSpatial_prepData$muni_code)          <- "municipality code (7-digit, IBGE - 2015)"
+sjlabelled::set_label(sampleMuniSpatial_prepData$muni_name)          <- "municipality name"
+sjlabelled::set_label(sampleMuniSpatial_prepData$state_uf)           <- "state name (abbreviation)"
+sjlabelled::set_label(sampleMuniSpatial_prepData$muni_area)          <- "municipality area (ha, calculated from shapefile under SIRGAS2000 Polyconic projection)"
+sjlabelled::set_label(sampleMuniSpatial_prepData$biomeAmazon_share)  <- "share of the municipality area in the Amazon biome"
 
 
 
 
 # OTHER EXPORT FORMATS
 # extract data.frame from sampleSpatial data
-sampleMuniCrossSection.prepData <-
-  sampleMuniSpatial.prepData %>%
+sampleMuniCrossSection_prepData <-
+  sampleMuniSpatial_prepData %>%
   sf::st_drop_geometry()
 
 # create panel data from sampleCrossSection and add missing label
-sampleMuniPanel.prepData <- tidyr::expand_grid(sampleMuniCrossSection.prepData, year = 2000:2019)
-sjlabelled::set_label(sampleMuniPanel.prepData$year)     <- "year of reference (calendar or PRODES year)"
-
-
-
-# POST-TREATMENT OVERVIEW
-# summary(sampleMuniSpatial.prepData)
-# View(sampleMuniSpatial.prepData)
-# plot(sampleMuniSpatial.prepData$geometry)
-
-
+sampleMuniPanel_prepData <- tidyr::expand_grid(sampleMuniCrossSection_prepData, year = 2000:2019)
+sjlabelled::set_label(sampleMuniPanel_prepData$year)     <- "year of reference (calendar or PRODES year)"
 
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(sampleMuniSpatial.prepData,
-     file = file.path("data/calibration/prepData",
+save(sampleMuniSpatial_prepData,
+     file = file.path("data/prepData",
                       "sampleMuniSpatial_prepData.Rdata"))
 
-save(sampleMuniCrossSection.prepData,
-     file = file.path("data/calibration/prepData",
+save(sampleMuniCrossSection_prepData,
+     file = file.path("data/prepData",
                       "sampleMuniCrossSection_prepData.Rdata"))
 
-save(sampleMuniPanel.prepData,
-     file = file.path("data/calibration/prepData",
+save(sampleMuniPanel_prepData,
+     file = file.path("data/prepData",
                       "sampleMuniPanel_prepData.Rdata"))
 
 
 
-# # END TIMER
-# tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
-
-
+# END TIMER
+tictoc::toc(log = TRUE)
 
 
 

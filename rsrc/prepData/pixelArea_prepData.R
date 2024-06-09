@@ -12,79 +12,65 @@
 
 
 
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "pixelArea_prepData.R script", log = T)
+tictoc::tic(msg = "pixelArea_prepData.R script", log = TRUE)
 
 
 # RASTER OPTIONS
-terra::terraOptions(tmpdir = here::here("data/_temp"),
+terra::terraOptions(tmpdir = "data/_temp",
                       timer  = T)
-
-
-
-
 
 
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RASTER DATA
-clean.mapbiomas <- terra::rast(here::here("data/raw2clean/landUseCover_mapbiomas/output/clean_landUseCover_2000.tif"))
-
+clean_mapbiomas <- terra::rast("data/clean/landusecover_2000.tif")
 
 
 # MAPBIOMAS 30M-PIXELS SAMPLE
-load(here::here("data/calibration/prepData/samplePixel_prepData.Rdata"))
-
-
+load("data/prepData/samplePixel_prepData.Rdata")
 
 
 
 # DATASET CLEANUP AND PREP ---------------------------------------------------------------------------------------------------------------------------
 
 # calculate area of each pixel (sq km)
-clean.mapbiomasArea <- terra::cellSize(clean.mapbiomas, unit = "ha")
+clean_mapbiomasArea <- terra::cellSize(clean_mapbiomas, unit = "ha")
 
 # change raster layer name
-names(clean.mapbiomasArea) <- "pixel_area"
+names(clean_mapbiomasArea) <- "pixel_area"
 
 # clean environment
-rm(clean.mapbiomas)
+rm(clean_mapbiomas)
 
 # extract one year from sample to extract pixel area
-samplePixel.prepData.2000 <-
-  samplePixel.prepData %>%
+samplePixel_prepData_2000 <-
+  samplePixel_prepData %>%
   dplyr::filter(year == 2000) %>%
   dplyr::select(-year, -mapbiomas_class) # remove unncessary columns
 
 # transform to spatialPoints
-samplePixel.prepData.2000.sf <- sf::st_as_sf(x = samplePixel.prepData.2000,
+samplePixel_prepData_2000.sf <- sf::st_as_sf(x = samplePixel_prepData_2000,
                                             coords = c("lon", "lat"),
                                             remove = FALSE,
                                             crs = sf::st_crs(4326))
 
 # extract pixel area raster data for sample points
-aux.pixelArea <- terra::extract(clean.mapbiomasArea, samplePixel.prepData.2000.sf)
+aux_pixelArea <- terra::extract(clean_mapbiomasArea, samplePixel_prepData_2000.sf)
 
 # clean environment
-rm(samplePixel.prepData.2000.sf)
+rm(samplePixel_prepData_2000.sf)
 
 # merge pixel area variable with sample 2000
-samplePixel.prepData.2000$pixel_area <- aux.pixelArea
+samplePixel_prepData_2000$pixel_area <- aux_pixelArea
 
 # merge sample 2000 with panel sample
-pixelArea.prepData <-
-  samplePixel.prepData %>%
-  dplyr::left_join(samplePixel.prepData.2000)
+pixelArea_prepData <-
+  samplePixel_prepData %>%
+  dplyr::left_join(samplePixel_prepData_2000)
 
 # clear environmnet
-rm(samplePixel.prepData, samplePixel.prepData.2000, aux.pixelArea)
+rm(samplePixel_prepData, samplePixel_prepData_2000, aux_pixelArea)
 
 
 
@@ -94,37 +80,20 @@ gc()
 
 
 
-
-
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # LABELS
-sjlabelled::set_label(pixelArea.prepData$pixel_area) <- "pixel area (ha)"
-
-
-
-# POST-TREATMENT OVERVIEW
-# summary(pixelArea.prepData)
-
-
+sjlabelled::set_label(pixelArea_prepData$pixel_area) <- "pixel area (ha)"
 
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(pixelArea.prepData,
-     file = here::here("data/calibration/prepData",
-                      paste0("pixelArea_prepData", ".Rdata")))
+save(pixelArea_prepData,
+     file = "data/prepData/pixelArea_prepData.Rdata")
 
-
-
-# # END TIMER
-# tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
-
-
+# END TIMER
+tictoc::toc(log = TRUE)
 
 
 

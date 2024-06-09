@@ -13,33 +13,22 @@
 
 
 
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "amazonBiome_1043SitesModel.R script", log = T)
-
+tictoc::tic(msg = "amazonBiome_1043SitesModel.R script", log = TRUE)
 
 # TERRA OPTIONS (specify temporary file location)
-terra::terraOptions(tempdir = here::here("data", "_temp"))
-
-
-
-
+terra::terraOptions(tmpdir = "data/_temp",
+                      timer  = T)
 
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RASTER DATA - TO USE AS MASK (30M MINICELLS)
-raster.biome <- terra::rast(here::here("data/raw2clean/landUseCover_mapbiomas/input/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2017.tif"))
+raster_biome <- terra::rast("data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2017.tif")
 
 
 
 # AMAZON BIOME VECTOR DATA
-load(here::here("data/raw2clean/amazonBiome_ibge/output/clean_amazonBiome.Rdata"))
-
+load("data/clean/amazon_biome.Rdata")
 
 
 
@@ -47,28 +36,31 @@ load(here::here("data/raw2clean/amazonBiome_ibge/output/clean_amazonBiome.Rdata"
 # DATASET CLEANUP AND PREP ---------------------------------------------------------------------------------------------------------------------------
 
 # change projection to match raster
-clean.amazonBiome <- sf::st_transform(clean.amazonBiome, crs(raster.biome))
+clean_amazonBiome <- sf::st_transform(clean_amazonBiome, crs(raster_biome))
 
 
 # rasterize amazon biome into 30m raster resolution to minimize area distortion
-raster.biome <- terra::rasterize(terra::vect(clean.amazonBiome), raster.biome, field = 1)
+raster_biome <- terra::rasterize(terra::vect(clean_amazonBiome), raster_biome, field = 1)
 
 # clean environment
-rm(clean.amazonBiome)
+rm(clean_amazonBiome)
 
 # aggregate raster calculating the share of minicells that are in the biome
-raster.biome <- terra::aggregate(raster.biome, fact = 2250, fun = sum, na.rm = T)/(2250^2) # (2250^2) is the total number of minicells
+raster_biome <- terra::aggregate(raster_biome, fact = 2250, fun = sum, na.rm = T)/(2250^2) # (2250^2) is the total number of minicells
 
 # add name
-names(raster.biome) <- "share_amazonBiome"
+names(raster_biome) <- "share_amazonBiome"
 
 
+if (!dir.exists("data/calibration/1043SitesModel/aux_tifs")) {
+    dir.create("data/calibration/1043SitesModel/aux_tifs", recursive = TRUE)
+}
 # EXPORT
 # save unified tif
-terra::writeRaster(raster.biome, here::here("data/calibration/1043SitesModel/aux_tifs/raster_amazonBiome_1043SitesModel.tif"), overwrite = T)
+terra::writeRaster(raster_biome, "data/calibration/1043SitesModel/aux_tifs/raster_amazonBiome_1043SitesModel.tif", overwrite = T)
 
 # clean environment
-rm(raster.biome)
+rm(raster_biome)
 
 
 
@@ -79,10 +71,8 @@ gc()
 
 
 # END TIMER
-tictoc::toc(log = T)
+tictoc::toc(log = TRUE)
 
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
 
 
 

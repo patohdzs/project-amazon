@@ -12,34 +12,23 @@
 
 
 
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "pixelBiomass2010_prepData.R script", log = T)
+tictoc::tic(msg = "pixelBiomass2010_prepData.R script", log = TRUE)
 
 
 # RASTER OPTIONS
-terra::terraOptions(tmpdir = here::here("data/_temp"),
+terra::terraOptions(tmpdir = "data/_temp",
                     timer  = T)
-
-
-
 
 
 # DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
 
 # MAPBIOMAS SAMPLE
-load(here::here("data/calibration/prepData/pixelPrimaryForest2018_prepData.Rdata"))
-
+load("data/prepData/pixelPrimaryForest2018_prepData.Rdata")
 
 
 # ABOVEGROUND BIOMASS RASTERS
-agb.raster <- purrr::map(list.files(here::here("data/raw2clean/abovegroundBiomass_esa/input"), pattern = "_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2010-fv3.0.tif", full.names = T),
+agb_raster <- purrr::map(list.files("data/raw/esa/above_ground_biomass/", pattern = "_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2010-fv3.0.tif", full.names = T),
                          terra::rast)
 
 
@@ -48,7 +37,7 @@ agb.raster <- purrr::map(list.files(here::here("data/raw2clean/abovegroundBiomas
 # DATA MANIPULATION ----------------------------------------------------------------------------------------------------------------------------------
 
 # transform to sf
-pixelPrimaryForest.prepData <- sf::st_as_sf(x = pixelPrimaryForest.prepData,
+pixelPrimaryForest_prepData <- sf::st_as_sf(x = pixelPrimaryForest_prepData,
                                             coords = c("lon", "lat"),
                                             remove = FALSE,
                                             crs = sf::st_crs(4326))
@@ -56,46 +45,46 @@ pixelPrimaryForest.prepData <- sf::st_as_sf(x = pixelPrimaryForest.prepData,
 
 
 # MERGE AGB DATA WITH MAPBIOMAS SAMPLE
-pixelBiomass2010.prepData <-
-  purrr::map_df(.x = seq_along(agb.raster),
+pixelBiomass2010_prepData <-
+  purrr::map_df(.x = seq_along(agb_raster),
                 .f = function(.x) {
 
                   # transform to spatVector
-                  aux.polygons <- terra::vect(pixelPrimaryForest.prepData)
+                  aux_polygons <- terra::vect(pixelPrimaryForest_prepData)
 
                   # crop spatial points to raster extent
-                  aux.polygons <- terra::crop(aux.polygons, agb.raster[[.x]])
+                  aux_polygons <- terra::crop(aux_polygons, agb_raster[[.x]])
 
                   # skip raster with no intersection with the sample
-                  if (is.null(aux.polygons)) {
+                  if (is.null(aux_polygons)) {
                     next()
                   }
 
                   # change raster layer name
-                  names(agb.raster[[.x]]) <- "agb_2010"
+                  names(agb_raster[[.x]]) <- "agb_2010"
 
                   # extract agb raster data by spatial point
-                  aux.agb <- terra::extract(agb.raster[[.x]], aux.polygons, xy = TRUE)
+                  aux_agb <- terra::extract(agb_raster[[.x]], aux_polygons, xy = TRUE)
 
                   # adjust and select column names
-                  aux.agb <- aux.agb %>% dplyr::rename(lon = x, lat = y) %>% dplyr::select(-ID)
+                  aux_agb <- aux_agb %>% dplyr::rename(lon = x, lat = y) %>% dplyr::select(-ID)
 
                 })
 
 
 # clear environment
-rm(agb.raster)
+rm(agb_raster)
 
 # transform to sf
-pixelBiomass2010.prepData <-
-  sf::st_as_sf(x = pixelBiomass2010.prepData,
+pixelBiomass2010_prepData <-
+  sf::st_as_sf(x = pixelBiomass2010_prepData,
                coords = c("lon", "lat"),
                crs = sf::st_crs(4326))
 
 
 
 # check if all points were extracted
-if (length(pixelBiomass2010.prepData$lon) != length(pixelPrimaryForest.prepData$lon)) {
+if (length(pixelBiomass2010_prepData$lon) != length(pixelPrimaryForest_prepData$lon)) {
   print("Different number of spatial points between original and final sample! Check script!")
 }
 
@@ -111,33 +100,20 @@ gc()
 # EXPORT PREP ----------------------------------------------------------------------------------------------------------------------------------------
 
 # LABELS
-sjlabelled::set_label(pixelBiomass2010.prepData$agb_2010) <- "aboveground biomass in 2010 (Mg per ha)"
-
-
-
-# POST-TREATMENT OVERVIEW
-# summary(pixelBiomass2010.prepData)
-# View(pixelBiomass2010.prepData)
-
+sjlabelled::set_label(pixelBiomass2010_prepData$agb_2010) <- "aboveground biomass in 2010 (Mg per ha)"
 
 
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
 
-save(pixelBiomass2010.prepData,
-     file = here::here("data/calibration/prepData",
-                       paste0("pixelBiomass2010_prepData", ".Rdata")))
+save(pixelBiomass2010_prepData,
+     file = "data/prepData/pixelBiomass2010_prepData.Rdata")
 
 
 
-# # END TIMER
-# tictoc::toc(log = T)
-
-# # export time to csv table
-# ExportTimeProcessing("code/calibration")
-
-
+# END TIMER
+tictoc::toc(log = TRUE)
 
 
 
