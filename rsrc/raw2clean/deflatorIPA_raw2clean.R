@@ -11,10 +11,10 @@
 
 
 # START TIMER
-tictoc::tic(msg = "deflatorIPA_raw2clean.R script", log = TRUE)
+tic(msg = "deflatorIPA_raw2clean.R script", log = TRUE)
 
 # Read CSV file
-deflator <- readr::read_csv2(
+deflator <- read_csv2(
   file = "data/raw/fgv/deflator_ipa/ipeadata[23-02-2021-10-02].csv",
   col_names = c("date", "deflator_ipa"),
   col_types = c("c", "n"),
@@ -24,16 +24,16 @@ deflator <- readr::read_csv2(
 # Transform to date class
 deflator <-
   deflator %>%
-  dplyr::mutate(date = lubridate::ymd(date, truncated = 1))
+  mutate(date = ymd(date, truncated = 1))
 
 
 # Set labels
-sjlabelled::set_label(deflator$date) <- "calendar date (yyyy-mm-dd), monthly data, all 'dd' set to 01"
-sjlabelled::set_label(deflator$deflator_ipa) <- "deflator (IPA-DI; 1994-08-01 = 100)"
+set_label(deflator$date) <- "calendar date (yyyy-mm-dd), monthly data, all 'dd' set to 01"
+set_label(deflator$deflator_ipa) <- "deflator (IPA-DI; 1994-08-01 = 100)"
 
 
 # Save data set
 save(deflator, file = "data/clean/deflator.Rdata")
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)

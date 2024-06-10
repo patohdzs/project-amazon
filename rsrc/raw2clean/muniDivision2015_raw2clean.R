@@ -17,7 +17,7 @@ library(sf)
 tic(msg = "muniDivision2015_raw2clean.R script", log = TRUE)
 
 # Read shapefile
-raw_muni <- sf::st_read(
+raw_muni <- st_read(
   dsn = "data/raw/ibge/muni_division_2015",
   layer = "BRMUE250GC_SIR"
 )
@@ -73,7 +73,7 @@ raw_muni <-
   raw_muni %>%
   mutate(
     across(
-      tidyselect:::where(is.character),
+      where(is.character),
       \(x) iconv(x,
         from = "UTF-8",
         to = "ASCII//TRANSLIT"
@@ -88,7 +88,7 @@ raw_muni <-
 
 # PROJECTION
 # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
-raw_muni <- sf::st_transform(x = raw_muni, crs = 5880)
+raw_muni <- st_transform(x = raw_muni, crs = 5880)
 
 # Save as Rdata
 save(raw_muni, file = "data/clean/raw_muni.Rdata")
@@ -98,13 +98,13 @@ save(raw_muni, file = "data/clean/raw_muni.Rdata")
 raw_muni <- raw_muni %>% filter(!muni_code %in% c(4300001, 4300002))
 
 # GEOMETRY CLEANUP
-raw_muni <- sf::st_make_valid(raw_muni)
+raw_muni <- st_make_valid(raw_muni)
 
 
 # Set labels
-sjlabelled::set_label(raw_muni$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(raw_muni$muni_name) <- "municipality name"
-sjlabelled::set_label(raw_muni$state_uf) <- "state name (abbreviation)"
+set_label(raw_muni$muni_code) <- "municipality code (7-digit, IBGE)"
+set_label(raw_muni$muni_name) <- "municipality name"
+set_label(raw_muni$state_uf) <- "state name (abbreviation)"
 
 # Change object name before saving
 muni_division_2015 <- raw_muni

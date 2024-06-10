@@ -9,17 +9,13 @@
 # > NOTES
 # 1: -
 
-# START TIMER
-tictoc::tic(msg = "precipitation_raw2clean.R script", log = TRUE)
+library(terra)
 
-# RASTER OPTIONS
-terra::terraOptions(
-  tmpdir = here::here("data/_temp"),
-  timer = TRUE
-)
+# START TIMER
+tic(msg = "precipitation_raw2clean.R script", log = TRUE)
 
 # Read and merge all layers (12) of the year
-raw_raster <- terra::rast(list.files(
+raw_raster <- rast(list.files(
   "data/raw/worldclim/precipitation/",
   full.names = TRUE,
   pattern = ".tif"
@@ -30,11 +26,11 @@ names(raw_raster) <- paste0("historicalPrecip_", 1:12)
 
 # Save unified raster
 out_path <- "data/clean/precipitation.tif"
-terra::writeRaster(raw_raster, out_path, overwrite = TRUE)
+writeRaster(raw_raster, out_path, overwrite = TRUE)
 
 # CLEAN TEMP DIR
-terra::tmpFiles(current = TRUE, remove = TRUE)
+tmpFiles(current = TRUE, remove = TRUE)
 gc()
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)

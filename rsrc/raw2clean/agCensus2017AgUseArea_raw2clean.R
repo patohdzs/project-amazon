@@ -9,12 +9,21 @@
 # > NOTES
 # 1: -
 
+library(sf)
+library(tidyverse)
+library(tictoc)
+library(sjlabelled)
+library(conflicted)
+
+# Resolve conflicts
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::lag)
 
 # START TIMER
-tictoc::tic(msg = "agCensus2017AgUseArea_raw2clean.R script", log = TRUE)
+tic(msg = "agCensus2017AgUseArea_raw2clean.R script", log = TRUE)
 
 # Read csv file
-use_area_2017 <- readr::read_csv(
+use_area_2017 <- read_csv(
   file = "data/raw/ibge/ag_census_2017_ag_use_area/agCensus2017_agUseArea.csv",
   skip = 7,
   na = c("..."),
@@ -37,10 +46,10 @@ use_area_2017 <- use_area_2017[-(5564:5577), ]
 # Transform "-" values to "0" as explained in the table notes
 use_area_2017 <-
   use_area_2017 %>%
-  dplyr::mutate(
-    dplyr::across(
-      tidyselect:::where(is.character),
-      function(x) dplyr::if_else(x == "-", "0", x)
+  mutate(
+    across(
+      where(is.character),
+      function(x) if_else(x == "-", "0", x)
     )
   )
 
@@ -48,19 +57,19 @@ use_area_2017 <-
 # (NA's identify values that had to be omitted to avoid informant identification)
 use_area_2017 <-
   use_area_2017 %>%
-  dplyr::mutate(
-    dplyr::across(
-      tidyselect:::where(is.character),
-      function(x) dplyr::if_else(x == "X", NA_character_, x)
+  mutate(
+    across(
+      where(is.character),
+      function(x) if_else(x == "X", NA_character_, x)
     )
   )
 
 # Latin character treatment
 use_area_2017 <-
   use_area_2017 %>%
-  dplyr::mutate(
-    dplyr::across(
-      tidyselect:::where(is.character),
+  mutate(
+    across(
+      where(is.character),
       \(x) iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")
     )
   )
@@ -68,9 +77,9 @@ use_area_2017 <-
 # Transform column class
 use_area_2017 <-
   use_area_2017 %>%
-  dplyr::mutate(
-    dplyr::across(
-      tidyselect:::ends_with("_area_2017"),
+  mutate(
+    across(
+      ends_with("_area_2017"),
       function(x) as.numeric(x)
     )
   )
@@ -78,20 +87,20 @@ use_area_2017 <-
 # Sum pasture, crop, and agricultural use area
 use_area_2017 <-
   use_area_2017 %>%
-  dplyr::mutate(
+  mutate(
     pasture_area_2017 = rowSums(across(c("pastureNatural_area_2017", "pasturePlantedGood_area_2017", "pasturePlantedBad_area_2017")), na.rm = TRUE),
     crop_area_2017 = rowSums(across(c("cropPerm_area_2017", "cropTemp_area_2017", "cropFlower_area_2017")), na.rm = TRUE),
     agUse_area_2017 = rowSums(across(c("pasture_area_2017", "crop_area_2017")), na.rm = TRUE)
   )
 
 # Set labels
-sjlabelled::set_label(use_area_2017$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(use_area_2017$pasture_area_2017) <- "pasture area (ha, 2017 Ag Census)"
-sjlabelled::set_label(use_area_2017$crop_area_2017) <- "crop area (ha, 2017 Ag Census)"
-sjlabelled::set_label(use_area_2017$agUse_area_2017) <- "agricultural use area (ha, 2017 Ag Census)"
+set_label(use_area_2017$muni_code) <- "municipality code (7-digit, IBGE)"
+set_label(use_area_2017$pasture_area_2017) <- "pasture area (ha, 2017 Ag Census)"
+set_label(use_area_2017$crop_area_2017) <- "crop area (ha, 2017 Ag Census)"
+set_label(use_area_2017$agUse_area_2017) <- "agricultural use area (ha, 2017 Ag Census)"
 
 # Save data set
 save(use_area_2017, file = "data/clean/use_area_2017.Rdata")
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)

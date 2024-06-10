@@ -9,15 +9,21 @@
 # > NOTES
 # 1: -
 
+library(sf)
+library(tidyverse)
+library(tictoc)
+library(sjlabelled)
+library(conflicted)
 
+# Resolve conflicts
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::lag)
 
 # START TIMER
-tictoc::tic(msg = "amazonBiome_raw2clean.R script", log = TRUE)
+tic(msg = "amazonBiome_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read shapefile
-raw_biome <- sf::st_read(
+# Read shapefile
+raw_biome <- st_read(
   dsn = "data/raw/ibge/amazon_biome/",
   layer = "lm_bioma_250"
 )
@@ -29,7 +35,7 @@ colnames(raw_biome)
 # Translate column names
 raw_biome <-
   raw_biome %>%
-  dplyr::rename(
+  rename(
     biome_code = CD_Bioma,
     biome_name = Bioma
   )
@@ -45,28 +51,30 @@ raw_biome$biome_name[which(grepl(pattern = "Mata Atlântica", x = raw_biome$biom
 # LETTERS CAPITALIZATION
 raw_biome <-
   raw_biome %>%
-  dplyr::mutate(biome_name = toupper(biome_name))
+  mutate(biome_name = toupper(biome_name))
 
 # FILTER BIOME OF INTEREST (AMAZON)
 raw_biome <-
   raw_biome %>%
-  dplyr::filter(biome_name == "AMAZON")
+  filter(biome_name == "AMAZON")
 
 
+# Project to CRS 4326 and save
 output_path <- "data/calibration/hmc/map.geojson"
-biome_output <- sf::st_transform(x = raw_biome, crs = 4326) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
-st_write(biome_output, output_path, driver = "GeoJSON", delete_layer = TRUE)
+raw_biome %>%
+  st_transform(crs = 4326) %>%
+  st_write(output_path, driver = "GeoJSON")
 
 # PROJECTION
 # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
-raw_biome <- sf::st_transform(x = raw_biome, crs = 5880)
+raw_biome <- st_transform(x = raw_biome, crs = 5880)
 
 # GEOMETRY CLEANUP
-raw_biome <- sf::st_make_valid(raw_biome)
+raw_biome <- st_make_valid(raw_biome)
 
 # LABELS
-sjlabelled::set_label(raw_biome$biome_code) <- "biome code"
-sjlabelled::set_label(raw_biome$biome_name) <- "biome name"
+set_label(raw_biome$biome_code) <- "biome code"
+set_label(raw_biome$biome_name) <- "biome name"
 
 # Change object name before saving
 amazon_biome <- raw_biome
@@ -75,4 +83,4 @@ amazon_biome <- raw_biome
 save(amazon_biome, file = "data/clean/amazon_biome.Rdata")
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)

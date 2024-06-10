@@ -12,16 +12,10 @@
 library(terra)
 
 # START TIMER
-tictoc::tic(msg = "temperature_raw2clean.R script", log = TRUE)
-
-# RASTER OPTIONS
-terra::terraOptions(
-  tmpdir = here::here("data/_temp"),
-  timer = TRUE
-)
+tic(msg = "temperature_raw2clean.R script", log = TRUE)
 
 # Read and merge all layers (12) of the year
-raw_raster <- terra::rast(list.files(
+raw_raster <- rast(list.files(
   "data/raw/worldclim/temperature",
   full.names = TRUE,
   pattern = ".tif"
@@ -31,11 +25,11 @@ raw_raster <- terra::rast(list.files(
 names(raw_raster) <- paste0("historicalTemp_", 1:12)
 
 # Save unified raster
-terra::writeRaster(raw_raster, "data/clean/temperature.tif", overwrite = TRUE)
+writeRaster(raw_raster, "data/clean/temperature.tif", overwrite = TRUE)
 
 # CLEAN TEMP DIR
-terra::tmpFiles(current = TRUE, remove = TRUE)
+tmpFiles(current = TRUE, remove = TRUE)
 gc()
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)
