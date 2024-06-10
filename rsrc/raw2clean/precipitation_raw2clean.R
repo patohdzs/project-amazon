@@ -28,9 +28,9 @@ raw_raster <- terra::rast(list.files(
 # Change layer names
 names(raw_raster) <- paste0("historicalPrecip_", 1:12)
 
-# EXPORT
-# save unified tif
-terra::writeRaster(raw_raster, "data/clean/precipitation.tif", overwrite = TRUE)
+# Save unified raster
+out_path <- "data/clean/precipitation.tif"
+terra::writeRaster(raw_raster, out_path, overwrite = TRUE)
 
 # CLEAN TEMP DIR
 terra::tmpFiles(current = TRUE, remove = TRUE)

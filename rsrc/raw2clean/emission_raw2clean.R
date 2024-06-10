@@ -11,11 +11,9 @@
 
 
 # START TIMER
-tictoc::tic(msg = "emission_raw2clean.R script", log = T)
+tictoc::tic(msg = "emission_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read csv file
+# Read Excel file
 raw_emission <- readxl::read_xlsx(
   path = "data/raw/seeg/emission/emission_agriculture_states.xlsx",
   sheet = 1, col_names = c("state_uf", 1990:2019), skip = 1
@@ -25,9 +23,6 @@ raw_removal <- readxl::read_xlsx(
   path = "data/raw/seeg/emission/removalNCI_agriculture_states.xlsx",
   sheet = 1, col_names = c("state_uf", 1990:2019), skip = 1
 )
-
-
-# DATASET CLEANUP AND PREP
 
 # RESHAPE
 raw_emission <-
@@ -49,10 +44,8 @@ raw_emission <-
   dplyr::mutate(netEmission_co2e = emission_co2e + removal_co2e) %>%
   dplyr::mutate(year = as.numeric(year))
 
-# clean environmnet
+# Clean environmnet
 rm(raw_removal)
-
-# EXPORT PREP
 
 # sjlabelled::set_labelS
 sjlabelled::set_label(raw_emission$state_uf) <- "state name abbreviation"
@@ -61,18 +54,12 @@ sjlabelled::set_label(raw_emission$emission_co2e) <- "total emissions from agric
 sjlabelled::set_label(raw_emission$removal_co2e) <- "total removals from agricultural land (CO2e-GWP-AR5)"
 sjlabelled::set_label(raw_emission$netEmission_co2e) <- "total net emissions from agricultural land (CO2e-GWP-AR5)"
 
-# change object name for exportation
+# Change object name before saving
 clean_emission <- raw_emission
 
-
-# EXPORT
-
 save(clean_emission,
-  file = 
-    "data/clean/emission.Rdata"
+  file = "data/clean/emission.Rdata"
 )
 
 # END TIMER
 tictoc::toc(log = TRUE)
-
-

@@ -8,6 +8,8 @@
 #
 # > NOTES
 # -
+library(tidyverse)
+library(readxl)
 
 # START TIMER
 tictoc::tic(msg = "landUseCoverMuni_raw2clean.R script", log = TRUE)
@@ -97,7 +99,8 @@ sjlabelled::set_label(raw_mapbiomas$mapbiomasLandCoverId_13) <- "(calendar year)
 land_use_cover_muni <- raw_mapbiomas
 
 # EXPORT
-save(land_use_cover_muni, file = "data/clean/land_use_cover_muni.Rdata")
+out_path <- "data/clean/land_use_cover_muni.Rdata"
+save(land_use_cover_muni, file = out_path)
 
 # END TIMER
 tictoc::toc(log = TRUE)

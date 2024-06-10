@@ -22,13 +22,11 @@ raw_biome <- sf::st_read(
   layer = "lm_bioma_250"
 )
 
-# DATASET CLEANUP AND PREP
 
-# COLUMN CLEANUP
-# names
+# Column names
 colnames(raw_biome)
 
-# translate column names
+# Translate column names
 raw_biome <-
   raw_biome %>%
   dplyr::rename(
@@ -36,7 +34,7 @@ raw_biome <-
     biome_name = Bioma
   )
 
-# class - no change needed
+# Class - no change needed
 lapply(raw_biome, class)
 
 # TRANSLATION
@@ -60,28 +58,23 @@ biome_output <- sf::st_transform(x = raw_biome, crs = 4326) # SIRGAS 2000 / Braz
 st_write(biome_output, output_path, driver = "GeoJSON", delete_layer = TRUE)
 
 # PROJECTION
-raw_biome <- sf::st_transform(x = raw_biome, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+# SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
+raw_biome <- sf::st_transform(x = raw_biome, crs = 5880)
 
 # GEOMETRY CLEANUP
 raw_biome <- sf::st_make_valid(raw_biome)
-
-# EXPORT PREP
 
 # LABELS
 sjlabelled::set_label(raw_biome$biome_code) <- "biome code"
 sjlabelled::set_label(raw_biome$biome_name) <- "biome name"
 
 # change object name for exportation
-clean_amazonBiome <- raw_biome
+clean_amazon_biome <- raw_biome
 
-# EXPORT
-
-save(clean_amazonBiome,
-  file = 
-    "data/clean/amazon_biome.Rdata"
+# Save data set
+save(clean_amazon_biome,
+  file = "data/clean/amazon_biome.Rdata"
 )
 
 # END TIMER
 tictoc::toc(log = TRUE)
-
-

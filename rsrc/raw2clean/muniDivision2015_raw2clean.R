@@ -9,8 +9,12 @@
 # > NOTES
 # 1: -
 
+library(tidyverse)
+library(tictoc)
+library(sf)
+
 # START TIMER
-tictoc::tic(msg = "muniDivision2015_raw2clean.R script", log = TRUE)
+tic(msg = "muniDivision2015_raw2clean.R script", log = TRUE)
 
 # Read shapefile
 raw_muni <- sf::st_read(
@@ -21,7 +25,7 @@ raw_muni <- sf::st_read(
 # Translate column names
 raw_muni <-
   raw_muni %>%
-  dplyr::rename(
+  rename(
     muni_code = CD_GEOCMU,
     muni_name = NM_MUNICIP
   )
@@ -29,7 +33,7 @@ raw_muni <-
 # Add state_uf column
 raw_muni <-
   raw_muni %>%
-  dplyr::mutate(state_uf = case_when(
+  mutate(state_uf = case_when(
     str_sub(muni_code, 1, 2) == 11 ~ "RO",
     str_sub(muni_code, 1, 2) == 12 ~ "AC",
     str_sub(muni_code, 1, 2) == 13 ~ "AM",
@@ -62,13 +66,13 @@ raw_muni <-
 # Class - muni_code should be numeric
 lapply(raw_muni, class)
 
-raw_muni <- raw_muni %>% dplyr::mutate(muni_code = as.numeric(muni_code))
+raw_muni <- raw_muni %>% mutate(muni_code = as.numeric(muni_code))
 
 # LATIN CHARACTER TREATMENT
 raw_muni <-
   raw_muni %>%
-  dplyr::mutate(
-    dplyr::across(
+  mutate(
+    across(
       tidyselect:::where(is.character),
       \(x) iconv(x,
         from = "UTF-8",
@@ -80,7 +84,7 @@ raw_muni <-
 # LETTERS CAPITALIZATION
 raw_muni <-
   raw_muni %>%
-  dplyr::mutate(muni_name = toupper(muni_name))
+  mutate(muni_name = toupper(muni_name))
 
 # PROJECTION
 # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
@@ -91,7 +95,7 @@ save(raw_muni, file = "data/clean/raw_muni.Rdata")
 
 # REMOVE POLYGONS IDENTIFIED AS BODY OF WATERS AND NOT MUNICIPALITIES
 # see muniDivision2007_raw2clean
-raw_muni <- raw_muni %>% dplyr::filter(!muni_code %in% c(4300001, 4300002))
+raw_muni <- raw_muni %>% filter(!muni_code %in% c(4300001, 4300002))
 
 # GEOMETRY CLEANUP
 raw_muni <- sf::st_make_valid(raw_muni)
@@ -106,7 +110,8 @@ sjlabelled::set_label(raw_muni$state_uf) <- "state name (abbreviation)"
 muni_division_2015 <- raw_muni
 
 # POST-TREATMENT OVERVIEW
-save(muni_division_2015, file = "data/clean/muni_division_2015.Rdata")
+out_path <- "data/clean/muni_division_2015.Rdata"
+save(muni_division_2015, file = out_path)
 
 # END TIMER
-tictoc::toc(log = TRUE)
+toc(log = TRUE)

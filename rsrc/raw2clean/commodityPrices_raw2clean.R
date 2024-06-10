@@ -13,9 +13,7 @@
 # START TIMER
 tictoc::tic(msg = "commodityPrices_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read xls file
+# Read XLS file
 raw_prices <- readxl::read_xls(
   path = "data/raw/seabpr/commodity_prices/ipeadata[22-02-2021-10-04].xls",
   sheet = 1,
@@ -27,10 +25,7 @@ raw_prices <- readxl::read_xls(
   skip = 1
 )
 
-
-# DATASET CLEANUP AND PREP
-
-# transform to date class
+# Transform to date class
 raw_prices <-
   raw_prices %>%
   mutate(date = lubridate::ymd(date, truncated = 1))
@@ -47,16 +42,12 @@ sjlabelled::set_label(raw_prices$price_soybean) <- "price (nominal), average rec
 sjlabelled::set_label(raw_prices$price_sugarcane) <- "price (nominal), average received by producer - sugarcane (1t; PR)"
 
 # change object name for exportation
-clean_commodityPrices <- raw_prices
+clean_commodity_prices <- raw_prices
 
-# EXPORT
-
-save(clean_commodityPrices,
-  file = 
-    "data/clean/commodity_prices.Rdata"
+# Save data set
+save(clean_commodity_prices,
+  file = "data/clean/commodity_prices.Rdata"
 )
 
 # END TIMER
 tictoc::toc(log = TRUE)
-
-

@@ -20,19 +20,16 @@ terra::terraOptions(
   timer = T
 )
 
-# DATA INPUT
-# RAW DATA
-# read only year 2000 - used as the base for random sample extraction
-raw_raster <- terra::rast("data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2000.tif")
+# Read only year 2000 - used as the base for random sample extraction
+in_path <- "data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2000.tif"
+raw_raster <- terra::rast(in_path)
 
-# DATASET CLEANUP AND PREP
-# RECLASSIFY
-# change 0s to NAs so that any value represents only areas inside the Amazon Biome
+# Change 0s to NAs to represent only areas inside the Amazon Biome
 raw_raster <- terra::subst(raw_raster, from = 0, to = as.numeric(NA))
 
-# EXPORT
-# save reclassified tif
-terra::writeRaster(raw_raster, "data/clean/landusecover_2000.tif", overwrite = T)
+# Save reclassified tif
+out_path <- "data/clean/land_use_cover_2000.tif"
+terra::writeRaster(raw_raster, out_path, overwrite = TRUE)
 
 # CLEAN TEMP DIR
 terra::tmpFiles(current = TRUE, remove = TRUE)
@@ -40,5 +37,3 @@ gc()
 
 # END TIMER
 tictoc::toc(log = TRUE)
-
-
