@@ -23,17 +23,17 @@ tictoc::tic(msg = "seriesPriceCattle_prepData.R script", log = TRUE)
 load("data/clean/commodity_prices.Rdata")
 
 # DEFLATOR (IPA-EP-DI)
-load("data/clean/deflatorIPA.Rdata")
+load("data/clean/deflator.Rdata")
 
 
 # DATA MANIPULATION ----------------------------------------------------------------------------------------------------------------------------------
 
-aux_01_2017 <- clean_deflatorIPA[clean_deflatorIPA$date == "2017-01-01",]$deflator_ipa
+aux_01_2017 <- deflator[deflator$date == "2017-01-01",]$deflator_ipa
 
 # TRANSFORM NOMINAL MONTHLY COMMODITY PRICES TO REAL STANDARDIZED PRICES
 seriesPriceCattle_prepData <-
-  clean_commodityPrices %>%
-  dplyr::left_join(clean_deflatorIPA) %>% # merge commodity nominal prices with deflator index
+  commodity_prices %>%
+  dplyr::left_join(deflator) %>% # merge commodity nominal prices with deflator index
   dplyr::mutate(deflator_ipa = deflator_ipa/aux_01_2017) %>% # change base year to january 2017
   dplyr::mutate(price_real_mon_cattle = price_cattle/deflator_ipa) %>%  # transform to real price (constant january 2017)
   dplyr::mutate(month = lubridate::month(date),

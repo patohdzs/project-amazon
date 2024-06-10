@@ -47,16 +47,16 @@ muni_division_2015 <-
   muni_division_2015 %>%
   dplyr::select(muni_code, muni_name, state_uf, muni_area, geometry)
 
-clean_amazonBiome <-
-  clean_amazonBiome %>%
+amazon_biome <-
+  amazon_biome %>%
   dplyr::select(biome_name, geometry)
 
 
 # combine municipalities with biomes
-aux_biomeMuni <- sf::st_intersection(muni_division_2015, clean_amazonBiome)
+aux_biomeMuni <- sf::st_intersection(muni_division_2015, amazon_biome)
 
 # clear environment
-rm(clean_amazonBiome)
+rm(amazon_biome)
 
 # calculate biome areas inside each municipality
 aux_biomeMuni$biome_area <-

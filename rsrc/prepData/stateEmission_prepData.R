@@ -56,7 +56,7 @@ land_use_cover_muni <-
 stateEmission_prepData <-
   land_use_cover_muni %>%
   dplyr::left_join(sampleMuniCrossSection_prepData, by = c("muni_code")) %>%
-  dplyr::left_join(clean_emission, by = c("state_uf", "year")) %>%
+  dplyr::left_join(emission, by = c("state_uf", "year")) %>%
   dplyr::filter(year >= 1990) %>% # select period of interest
   dplyr::filter(!is.na(biomeAmazon_share)) %>% # remove municipalities outside amazon biome
   dplyr::group_by(state_uf, year, emission_co2e, netEmission_co2e) %>%
@@ -69,7 +69,7 @@ stateEmission_prepData <-
 
 
 # clear environment
-rm(clean_emission, land_use_cover_muni, sampleMuniCrossSection_prepData)
+rm(emission, land_use_cover_muni, sampleMuniCrossSection_prepData)
 
 
 

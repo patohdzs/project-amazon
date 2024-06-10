@@ -24,7 +24,7 @@ terra::terraOptions(tmpdir = "data/_temp",
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RASTER DATA
-clean_mapbiomas <- terra::rast("data/clean/landusecover_2000.tif")
+clean_mapbiomas <- terra::rast("data/clean/land_use_cover_2000.tif")
 
 
 # MAPBIOMAS 30M-PIXELS SAMPLE

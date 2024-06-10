@@ -54,7 +54,7 @@ clean.emissionKuznets <- raw.emissionKuznets
 save(clean.emissionKuznets,
   file = here::here(
     "data/raw2clean/emissionKuznets_worldbank/output",
-    "clean_emissionKuznets.Rdata"
+    "emission_kuznets.Rdata"
   )
 )
 

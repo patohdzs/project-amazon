@@ -23,7 +23,7 @@ terra::terraOptions(tmpdir = "data/_temp",
 # DATA INPUT ----------------------------------------------------------------------------------------------------------------------------------------
 
 # RAW DATA
-clean_mapbiomas <- terra::rast("data/clean/landusecover_2000.tif")
+clean_mapbiomas <- terra::rast("data/clean/land_use_cover_2000.tif")
 
 
 # DATASET MANIPULATION -------------------------------------------------------------------------------------------------------------------------------

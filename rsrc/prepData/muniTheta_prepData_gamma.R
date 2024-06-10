@@ -40,11 +40,11 @@ load("data/prepData/sampleMuniSpatial_prepData.Rdata")
 
 
 # 2017 AG CENSUS CATTLE SOLD
-load("data/clean/agcensus2017_cattlesold.Rdata")
+load("data/clean/cattle_sold_2017.Rdata")
 
 
 # 2017 AG CENSUS AGRICULTURAL USE AREA
-load("data/clean/agcensus2017_ag_usearea.Rdata")
+load("data/clean/use_area_2017.Rdata")
 
 
 # LAND COVER AND USE (MAPBIOMAS - MUNI LEVEL)
@@ -52,15 +52,15 @@ load("data/clean/land_use_cover_muni.Rdata")
 
 
 # 2006 AG CENSUS CATTLE FOR SLAUGHTER
-load("data/clean/agcensus2006_cattlesold.Rdata")
+load("data/clean/cattle_slaughter_2006.Rdata")
 
 
 # 2006 AG CENSUS AGRICULTURAL USE AREA
-load("data/clean/agcensus2006_ag_usearea.Rdata")
+load("data/clean/use_area_2006.Rdata")
 
 
 # DEFLATOR (IPA-EP-DI)
-load("data/clean/deflatorIPA.Rdata")
+load("data/clean/deflator.Rdata")
 
 
 
@@ -77,8 +77,8 @@ raster_precip <- terra::rast("data/clean/precipitation.tif")
 # DATA PREP ------------------------------------------------------------------------------------------------------------------------------------------
 
 # AGGREGATE DEFLATOR BY YEAR
-clean_deflatorIPA <-
-  clean_deflatorIPA %>%
+deflator <-
+  deflator %>%
   dplyr::mutate(year = lubridate::year(date)) %>% # construct year, month and trimester variables
   dplyr::group_by(year) %>%
   dplyr::summarise(deflator_ipa = mean(deflator_ipa)) %>%
@@ -86,42 +86,42 @@ clean_deflatorIPA <-
   dplyr::filter(year >= 2000) # select period of interest
 
 # CHANGE DEFLATOR BASE TO 2017
-aux_deflator2017 <- clean_deflatorIPA[clean_deflatorIPA$year == 2017,]$deflator_ipa
-clean_deflatorIPA <-
-  clean_deflatorIPA %>%
+aux_deflator2017 <- deflator[deflator$year == 2017,]$deflator_ipa
+deflator <-
+  deflator %>%
   dplyr::mutate(deflator_ipa = deflator_ipa/aux_deflator2017)
 
 rm(aux_deflator2017)
 
 
 # DEFLATE CATTLE SLAUGHTER 2006 AND CONVERT TO USD
-clean_agCensus2006CattleSlaughter <-
-  clean_agCensus2006CattleSlaughter %>%
-  dplyr::mutate(cattleSlaughter_value_2006 = cattleSlaughter2006_value/clean_deflatorIPA[clean_deflatorIPA$year == 2006,]$deflator_ipa,
+cattle_slaughter_2006 <-
+  cattle_slaughter_2006 %>%
+  dplyr::mutate(cattleSlaughter_value_2006 = cattleSlaughter2006_value/deflator[deflator$year == 2006,]$deflator_ipa,
                 cattleSlaughter_value_2006 = 1000*cattleSlaughter_value_2006/3.192) %>%  # change from thousand BRL to BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
   dplyr::rename(cattleSlaughter_head_2006 = cattleSlaughter2006_head) %>%
   dplyr::select(muni_code, cattleSlaughter_value_2006, cattleSlaughter_head_2006)
 
 # remove object
-rm(clean_deflatorIPA)
+rm(deflator)
 
 
 # CONVERT CATTLE SOLD VALUE TO USD
-clean_agCensus2017CattleSold <-
-  clean_agCensus2017CattleSold %>%
+cattle_sold_2017 <-
+  cattle_sold_2017 %>%
   dplyr::mutate(cattleSlaughter_value_2017 = 1000*cattleSoldSlaughterLargeProp_value_2017/3.192) %>%  # change from thousand BRL to BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
   dplyr::rename(cattleSlaughter_head_2017 = cattleSoldSlaughterLargeProp_head_2017) %>%
   dplyr::select(muni_code, cattleSlaughter_value_2017, cattleSlaughter_head_2017)
 
 
 # SELECT VARIABLES
-clean_agCensus2017AgUseArea <-
-  clean_agCensus2017AgUseArea %>%
+use_area_2017 <-
+  use_area_2017 %>%
   dplyr::select(muni_code, agUse_area_2017, pasture_area_2017, crop_area_2017)
 
 # ADJUST VARIABLE NAMES
-clean_agCensus2006AgUseArea <-
-  clean_agCensus2006AgUseArea %>%
+use_area_2006 <-
+  use_area_2006 %>%
   dplyr::select(muni_code, agUse_area_2006, pasture_area_2006, crop_area_2006)
 
 
@@ -175,10 +175,10 @@ rm(aux_centroids)
 # MERGE ALL DATASETS AND CREATE VARIABLES OF INTEREST
 muniTheta_prepData <-
   sampleMuniSpatial_prepData %>%
-  dplyr::left_join(clean_agCensus2017CattleSold, by = c("muni_code")) %>%
-  dplyr::left_join(clean_agCensus2017AgUseArea, by = c("muni_code")) %>%
-  dplyr::left_join(clean_agCensus2006CattleSlaughter, by = c("muni_code")) %>%
-  dplyr::left_join(clean_agCensus2006AgUseArea, by = c("muni_code")) %>%
+  dplyr::left_join(cattle_sold_2017, by = c("muni_code")) %>%
+  dplyr::left_join(use_area_2017, by = c("muni_code")) %>%
+  dplyr::left_join(cattle_slaughter_2006, by = c("muni_code")) %>%
+  dplyr::left_join(use_area_2006, by = c("muni_code")) %>%
   dplyr::left_join(gamma_merge_df,by=c("muni_code"))%>%
   dplyr::filter(!is.na(biomeAmazon_share)) %>% # remove municipalities outside amazon biome
   # CREATE AGRICULTURAL CENSUS VARIABLES
@@ -199,9 +199,9 @@ muniTheta_prepData <-
 
 
 # clear environment
-rm(clean_agCensus2017AgUseArea, sampleMuniSpatial_prepData,
-   clean_agCensus2017CattleSold,
-   clean_agCensus2006AgUseArea, clean_agCensus2006CattleSlaughter)
+rm(use_area_2017, sampleMuniSpatial_prepData,
+   cattle_sold_2017,
+   use_area_2006, cattle_slaughter_2006)
 
 
 

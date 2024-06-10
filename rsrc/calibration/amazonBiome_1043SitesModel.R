@@ -36,14 +36,14 @@ load("data/clean/amazon_biome.Rdata")
 # DATASET CLEANUP AND PREP ---------------------------------------------------------------------------------------------------------------------------
 
 # change projection to match raster
-clean_amazonBiome <- sf::st_transform(clean_amazonBiome, crs(raster_biome))
+amazon_biome <- sf::st_transform(amazon_biome, crs(raster_biome))
 
 
 # rasterize amazon biome into 30m raster resolution to minimize area distortion
-raster_biome <- terra::rasterize(terra::vect(clean_amazonBiome), raster_biome, field = 1)
+raster_biome <- terra::rasterize(terra::vect(amazon_biome), raster_biome, field = 1)
 
 # clean environment
-rm(clean_amazonBiome)
+rm(amazon_biome)
 
 # aggregate raster calculating the share of minicells that are in the biome
 raster_biome <- terra::aggregate(raster_biome, fact = 2250, fun = sum, na.rm = T)/(2250^2) # (2250^2) is the total number of minicells
