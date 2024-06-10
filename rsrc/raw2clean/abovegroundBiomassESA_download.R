@@ -9,11 +9,6 @@
 # > NOTES
 # 1: DOWNLOAD PROCESS IS OPTIONAL GIVEN THAT THE DATA IS PROVIDED
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
 # START TIMER
 tictoc::tic(msg = "abovegroundBiomassESA_download.R script", log = T)
 
