@@ -61,6 +61,9 @@ raw_biome <-
 
 # Project to CRS 4326 and save
 output_path <- "data/calibration/hmc/map.geojson"
+if (file.exists(output_path)) {
+  file.remove(output_path)
+}
 raw_biome %>%
   st_transform(crs = 4326) %>%
   st_write(output_path, driver = "GeoJSON")
