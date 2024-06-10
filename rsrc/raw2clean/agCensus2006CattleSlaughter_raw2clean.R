@@ -13,66 +13,77 @@
 # START TIMER
 tictoc::tic(msg = "agCensus2006CattleSlaughter_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
+# Read csv file
+in_path <- "data/raw/ibge/ag_census_2006_cattle_slaughter/agCensus2006_cattleSlaughter.csv"
 
-# read csv file
-raw_agCensus2006CattleSlaughter <- readr::read_csv(
-  file = "data/raw/ibge/ag_census_2006_cattle_sold/agCensus2006_cattleSlaughter.csv",
+cattle_slaughter_2006 <- readr::read_csv(
+  file = in_path,
   skip = 9,
   na = c("..."),
-  col_names = c("muni_code", "cattleSlaughter_type", "cattleSlaughter_value", "cattleSlaughter_head"),
+  col_names = c(
+    "muni_code",
+    "cattleSlaughter_type",
+    "cattleSlaughter_value",
+    "cattleSlaughter_head"
+  ),
   col_types = "ncccc"
 )
 
 
-# DATASET CLEANUP AND PREP
+# Remove last rows of the table with notes information
+cattle_slaughter_2006 <- cattle_slaughter_2006[-c(16030:16041), ]
 
-# ROW CLEANUP
-# remove last rows of the table with notes information
-raw_agCensus2006CattleSlaughter <- raw_agCensus2006CattleSlaughter[-c(16030:16041), ]
+# Transform "-" values to "0" as explained in the table notes
+cattle_slaughter_2006 <-
+  cattle_slaughter_2006 %>%
+  dplyr::mutate(
+    dplyr::across(
+      tidyselect:::where(is.character),
+      function(x) dplyr::if_else(x == "-", "0", x)
+    )
+  )
 
-# transform "-" values to "0" as explained in the table notes
-raw_agCensus2006CattleSlaughter <-
-  raw_agCensus2006CattleSlaughter %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), function(x) dplyr::if_else(x == "-", "0", x)))
+# Transform "X" values to "NA"
+# (NA's identify values that were omitted to avoid informant identification)
+cattle_slaughter_2006 <-
+  cattle_slaughter_2006 %>%
+  dplyr::mutate(
+    dplyr::across(
+      tidyselect:::where(is.character),
+      function(x) dplyr::if_else(x == "X", NA_character_, x)
+    )
+  )
 
-# transform "X" values to "NA" (here NA identify which values had to be omitted to avoid informant identification as explained in the table notes)
-raw_agCensus2006CattleSlaughter <-
-  raw_agCensus2006CattleSlaughter %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), function(x) dplyr::if_else(x == "X", NA_character_, x)))
+# Transform column class
+cattle_slaughter_2006 <-
+  cattle_slaughter_2006 %>%
+  dplyr::mutate(
+    dplyr::across(
+      c("cattleSlaughter_value", "cattleSlaughter_head"),
+      function(x) as.numeric(x)
+    )
+  )
 
-# transform column class
-raw_agCensus2006CattleSlaughter <-
-  raw_agCensus2006CattleSlaughter %>%
-  dplyr::mutate(dplyr::across(c("cattleSlaughter_value", "cattleSlaughter_head"), function(x) as.numeric(x)))
-
-# sum all cattle sold for slaughter valus
-raw_agCensus2006CattleSlaughter <-
-  raw_agCensus2006CattleSlaughter %>%
+# Sum all cattle sold for slaughter valus
+cattle_slaughter_2006 <-
+  cattle_slaughter_2006 %>%
   dplyr::group_by(muni_code) %>%
   dplyr::summarise(
-    cattleSlaughter2006_value = sum(cattleSlaughter_value, na.rm = T),
-    cattleSlaughter2006_head = sum(cattleSlaughter_head, na.rm = T)
+    cattleSlaughter2006_value = sum(cattleSlaughter_value, na.rm = TRUE),
+    cattleSlaughter2006_head = sum(cattleSlaughter_head, na.rm = TRUE)
   ) %>%
-  dplyr::select(muni_code, cattleSlaughter2006_value, cattleSlaughter2006_head)
+  dplyr::select(
+    muni_code,
+    cattleSlaughter2006_value,
+    cattleSlaughter2006_head
+  )
 
-# EXPORT PREP
+# Set labels
+sjlabelled::set_label(cattle_slaughter_2006$muni_code) <- "municipality code (7-digit, IBGE)"
+sjlabelled::set_label(cattle_slaughter_2006$cattleSlaughter2006_value) <- "value of cattle sold for slaughter in 2006 (thousand BRL)"
 
-# sjlabelled::set_labelS
-sjlabelled::set_label(raw_agCensus2006CattleSlaughter$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(raw_agCensus2006CattleSlaughter$cattleSlaughter2006_value) <- "value of cattle sold for slaughter in 2006 (thousand BRL)"
-
-# change object name for exportation
-clean_agCensus2006CattleSlaughter <- raw_agCensus2006CattleSlaughter
-
-# EXPORT
-
-save(clean_agCensus2006CattleSlaughter,
-  file = 
-    "data/clean/agcensus2006_cattlesold.Rdata"
-)
+# Save data set
+save(cattle_slaughter_2006, file = "data/clean/cattle_slaughter_2006.Rdata")
 
 # END TIMER
 tictoc::toc(log = TRUE)
-
-

@@ -17,7 +17,7 @@ tictoc::tic(msg = "landUseCover_raw2clean.R script", log = TRUE)
 # RASTER OPTIONS
 terra::terraOptions(
   tmpdir = "data/_temp",
-  timer = T
+  timer = TRUE
 )
 
 # Read only year 2000 - used as the base for random sample extraction

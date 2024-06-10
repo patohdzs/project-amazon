@@ -42,14 +42,11 @@ sjlabelled::set_label(raw_carbon_price$price2_2020) <- "Nominal carbon prices ra
 sjlabelled::set_label(raw_carbon_price$price1_2021) <- "Nominal carbon prices on April, 01 2021 (USD/tCO2e)"
 sjlabelled::set_label(raw_carbon_price$price2_2021) <- "Nominal carbon prices rate 2 on April, 01 2021 (USD/tCO2e)"
 
-# change object name for exportation
-clean_carbon_price <- raw_carbon_price
-
+# Change object name before saving
+carbon_price <- raw_carbon_price
 
 # Save data set
-save(clean_carbon_price,
-  file = "data/clean/carbon_price.Rdata"
-)
+save(carbon_price, file = "data/clean/carbon_price.Rdata")
 
 # END TIMER
 tictoc::toc(log = TRUE)

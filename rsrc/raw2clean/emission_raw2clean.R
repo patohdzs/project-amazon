@@ -14,7 +14,7 @@
 tictoc::tic(msg = "emission_raw2clean.R script", log = TRUE)
 
 # Read Excel file
-raw_emission <- readxl::read_xlsx(
+emission <- readxl::read_xlsx(
   path = "data/raw/seeg/emission/emission_agriculture_states.xlsx",
   sheet = 1, col_names = c("state_uf", 1990:2019), skip = 1
 )
@@ -25,22 +25,30 @@ raw_removal <- readxl::read_xlsx(
 )
 
 # RESHAPE
-raw_emission <-
-  raw_emission %>%
-  tidyr::pivot_longer(-state_uf, names_to = "year", values_to = "emission_co2e")
+emission <-
+  emission %>%
+  tidyr::pivot_longer(
+    -state_uf,
+    names_to = "year",
+    values_to = "emission_co2e"
+  )
 
 raw_removal <-
   raw_removal %>%
-  tidyr::pivot_longer(-state_uf, names_to = "year", values_to = "removal_co2e")
+  tidyr::pivot_longer(
+    -state_uf,
+    names_to = "year",
+    values_to = "removal_co2e"
+  )
 
 # MERGE
-raw_emission <-
-  raw_emission %>%
+emission <-
+  emission %>%
   dplyr::left_join(raw_removal)
 
 # ADD NET EMISSION VARIABLE
-raw_emission <-
-  raw_emission %>%
+emission <-
+  emission %>%
   dplyr::mutate(netEmission_co2e = emission_co2e + removal_co2e) %>%
   dplyr::mutate(year = as.numeric(year))
 
@@ -48,18 +56,14 @@ raw_emission <-
 rm(raw_removal)
 
 # sjlabelled::set_labelS
-sjlabelled::set_label(raw_emission$state_uf) <- "state name abbreviation"
-sjlabelled::set_label(raw_emission$year) <- "year of reference (calendar or PRODES year)"
-sjlabelled::set_label(raw_emission$emission_co2e) <- "total emissions from agricultural land (CO2e-GWP-AR5)"
-sjlabelled::set_label(raw_emission$removal_co2e) <- "total removals from agricultural land (CO2e-GWP-AR5)"
-sjlabelled::set_label(raw_emission$netEmission_co2e) <- "total net emissions from agricultural land (CO2e-GWP-AR5)"
+sjlabelled::set_label(emission$state_uf) <- "state name abbreviation"
+sjlabelled::set_label(emission$year) <- "year of reference (calendar or PRODES year)"
+sjlabelled::set_label(emission$emission_co2e) <- "total emissions from agricultural land (CO2e-GWP-AR5)"
+sjlabelled::set_label(emission$removal_co2e) <- "total removals from agricultural land (CO2e-GWP-AR5)"
+sjlabelled::set_label(emission$netEmission_co2e) <- "total net emissions from agricultural land (CO2e-GWP-AR5)"
 
-# Change object name before saving
-clean_emission <- raw_emission
-
-save(clean_emission,
-  file = "data/clean/emission.Rdata"
-)
+# Save data set
+save(emission, file = "data/clean/emission.Rdata")
 
 # END TIMER
 tictoc::toc(log = TRUE)

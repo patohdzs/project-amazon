@@ -68,13 +68,11 @@ raw_biome <- sf::st_make_valid(raw_biome)
 sjlabelled::set_label(raw_biome$biome_code) <- "biome code"
 sjlabelled::set_label(raw_biome$biome_name) <- "biome name"
 
-# change object name for exportation
-clean_amazon_biome <- raw_biome
+# Change object name before saving
+amazon_biome <- raw_biome
 
 # Save data set
-save(clean_amazon_biome,
-  file = "data/clean/amazon_biome.Rdata"
-)
+save(amazon_biome, file = "data/clean/amazon_biome.Rdata")
 
 # END TIMER
 tictoc::toc(log = TRUE)

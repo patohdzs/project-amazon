@@ -101,7 +101,7 @@ raw_muni <- raw_muni %>% filter(!muni_code %in% c(4300001, 4300002))
 raw_muni <- sf::st_make_valid(raw_muni)
 
 
-# LABELS
+# Set labels
 sjlabelled::set_label(raw_muni$muni_code) <- "municipality code (7-digit, IBGE)"
 sjlabelled::set_label(raw_muni$muni_name) <- "municipality name"
 sjlabelled::set_label(raw_muni$state_uf) <- "state name (abbreviation)"
@@ -109,7 +109,7 @@ sjlabelled::set_label(raw_muni$state_uf) <- "state name (abbreviation)"
 # Change object name before saving
 muni_division_2015 <- raw_muni
 
-# POST-TREATMENT OVERVIEW
+# Save data set
 out_path <- "data/clean/muni_division_2015.Rdata"
 save(muni_division_2015, file = out_path)
 

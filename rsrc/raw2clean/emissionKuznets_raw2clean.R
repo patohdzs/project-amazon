@@ -18,12 +18,12 @@ tictoc::tic(msg = "emissionKuznets_raw2clean.R script", log = TRUE)
 emission_in_path <- "data/raw/worldbank/emission_kuznets/API_EN.ATM.CO2E.PC_DS2_en_csv_v2_3731558.csv"
 gdp_in_path <- "data/raw/worldbank/emission_kuznets/API_NY.GDP.PCAP.PP.CD_DS2_en_csv_v2_3731320.csv"
 
-raw_emission_kuznets <- readr::read_csv(file = emission_in_path, skip = 4)
+emission_kuznets <- readr::read_csv(file = emission_in_path, skip = 4)
 raw_gdp_kuznets <- readr::read_csv(file = gdp_in_path, skip = 4)
 
 # DATASET CLEANUP AND PREP
-raw_emission_kuznets <-
-  raw_emission_kuznets %>%
+emission_kuznets <-
+  emission_kuznets %>%
   dplyr::select(`Country Name`, emissionPerCapita_2018 = `2018`) %>%
   dplyr::left_join(raw_gdp_kuznets) %>%
   dplyr::select(
@@ -34,17 +34,12 @@ raw_emission_kuznets <-
 
 
 # LABELS
-sjlabelled::set_label(raw_emission_kuznets$country_name) <- "name of the country"
-sjlabelled::set_label(raw_emission_kuznets$gdpPerCapita_2018) <- "GDP per capita PPP in 2018 (current international $)"
-sjlabelled::set_label(raw_emission_kuznets$emissionPerCapita_2018) <- "Emission per capita in 2018 (metric tons)"
+sjlabelled::set_label(emission_kuznets$country_name) <- "name of the country"
+sjlabelled::set_label(emission_kuznets$gdpPerCapita_2018) <- "GDP per capita PPP in 2018 (current international $)"
+sjlabelled::set_label(emission_kuznets$emissionPerCapita_2018) <- "Emission per capita in 2018 (metric tons)"
 
-# Change object name before saving
-clean_emission_kuznets <- raw_emission_kuznets
-
-# Save object
-save(clean_emission_kuznets,
-  file = "data/clean/emission_kuznets.Rdata"
-)
+# Save data set
+save(emission_kuznets, file = "data/clean/emission_kuznets.Rdata")
 
 # END TIMER
 tictoc::toc(log = TRUE)

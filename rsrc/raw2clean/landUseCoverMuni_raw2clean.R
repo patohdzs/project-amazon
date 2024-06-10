@@ -95,10 +95,10 @@ sjlabelled::set_label(raw_mapbiomas$mapbiomasLandCoverId_29) <- "(calendar year)
 sjlabelled::set_label(raw_mapbiomas$mapbiomasLandCoverId_31) <- "(calendar year) area (ha) mapbiomas category  = anthropic_water_aquaculture"
 sjlabelled::set_label(raw_mapbiomas$mapbiomasLandCoverId_13) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_otherNonForestFormations"
 
-# change object name for exportation
+# Change object name before saving
 land_use_cover_muni <- raw_mapbiomas
 
-# EXPORT
+# Save data set
 out_path <- "data/clean/land_use_cover_muni.Rdata"
 save(land_use_cover_muni, file = out_path)
 
