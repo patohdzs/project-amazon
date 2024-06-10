@@ -1,21 +1,20 @@
-library(tidyverse)
-library(sf)
-library(readxl)
+
+tictoc::tic(msg = "theta.R script", log = TRUE)
 
 # DATA INPUT
 # load variables at the muni level to calibrate theta
-load("data/calibration/prepData/muniTheta_prepData.Rdata")
+load("data/prepData/muniTheta_prepData.Rdata")
 
 # load cattle price series
-load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
+load("data/prepData/seriesPriceCattle_prepData.Rdata")
 
 # load farm gate price data
 fgp_data <-
-  read_excel("data/raw2clean/farm_gate_price/farm_gate_price.xlsx")
+  read_excel("data/raw/ipea/farm_gate_price/farm_gate_price.xlsx")
 
 # load distance data
 distance_data <-
-  read_excel("data/raw2clean/distance_to_capital/ipeadata[21-08-2023-01-28].xls") %>%
+  read_excel("data/raw/ipea/distance_to_capital/ipeadata[21-08-2023-01-28].xls") %>%
   mutate(muni_code = as.numeric(muni_code))
 
 
@@ -23,9 +22,9 @@ distance_data <-
 
 # Drop outliers and separate geometry from df
 muni_theta_prep_data <-
-  as.data.frame(muniTheta.prepData)[-c(142, 106, 112), ]
+  as.data.frame(muniTheta_prepData)[-c(142, 106, 112), ]
 
-geo <- st_geometry(muniTheta.prepData)[-c(142, 106, 112)]
+geo <- st_geometry(muniTheta_prepData)[-c(142, 106, 112)]
 
 # Merge with distance data and farm price data
 muni_theta_prep_data <- muni_theta_prep_data %>%
@@ -39,7 +38,7 @@ muni_theta_prep_data <- muni_theta_prep_data %>%
       cattleSlaughter_farmGatePrice_2017
     )
   ) %>%
-  filter(!is.na(distance))
+  dplyr::filter(!is.na(distance))
 
 # Add vector of ones, add polynomial terms, and scale
 df <- muni_theta_prep_data %>%
@@ -78,14 +77,14 @@ df <- muni_theta_prep_data %>%
 
 # Output municipality-level regression data
 st_write(df,
-  "data/hmc/muni_data_theta.geojson",
+  "data/calibration/hmc/muni_data_theta.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
 
 # Output site-level regression data
 for (n in list(10, 24, 40, 78,1043)) {
-  id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
+  id_df <- st_read(sprintf("data/calibration/hmc/id_%d.geojson", n))
 
   # Project data to site level
   site_theta2017 <- df %>%
@@ -100,8 +99,11 @@ for (n in list(10, 24, 40, 78,1043)) {
   # Write to file
   st_write(
     site_theta2017,
-    sprintf("data/hmc/site_%d_data_theta.geojson", n),
+    sprintf("data/calibration/hmc/site_%d_data_theta.geojson", n),
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
 }
+
+# END TIMER
+tictoc::toc(log = TRUE)

@@ -1,11 +1,11 @@
-library(tidyverse)
-library(sf)
+
+tictoc::tic(msg = "gamma.R script", log = TRUE)
 
 # DATA INPUT
-load("data/calibration/prepData/muniTheta_prepData.Rdata")
+load("data/prepData/muniTheta_prepData.Rdata")
 
 # Convert biomass into CO2e, add column of ones, take logs, and scale
-df <- muniTheta.prepData %>%
+df <- muniTheta_prepData %>%
   mutate(co2e_ha_2017 = (agb_2017 / 2) * (44 / 12)) %>%
   mutate(
     X1 = 1,
@@ -33,7 +33,7 @@ df <- muniTheta.prepData %>%
 
 # Output municipality-level regression data
 st_write(df,
-  "data/hmc/muni_data_gamma.geojson",
+  "data/calibration/hmc/muni_data_gamma.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
@@ -42,7 +42,7 @@ st_write(df,
 # Output site-level regression data
 for (n in list(10, 24, 40, 78,1043)) {
   # Get site boundaries
-  id_df <- st_read(sprintf("data/hmc/id_%d.geojson", n))
+  id_df <- st_read(sprintf("data/calibration/hmc/id_%d.geojson", n))
 
   # Project data to site level
   site_gamma2017 <- df %>%
@@ -57,8 +57,11 @@ for (n in list(10, 24, 40, 78,1043)) {
   # Write to file
   st_write(
     site_gamma2017,
-    sprintf("data/hmc/site_%d_data_gamma.geojson", n),
+    sprintf("data/calibration/hmc/site_%d_data_gamma.geojson", n),
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
 }
+
+# END TIMER
+tictoc::toc(log = TRUE)
