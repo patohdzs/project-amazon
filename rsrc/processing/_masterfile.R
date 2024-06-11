@@ -1,4 +1,3 @@
-
 # > PROJECT INFO
 # NAME: CARBON PRICES AND FOREST PRESERVATION OVER SPACE AND TIME IN THE BRAZILIAN AMAZON
 # LEAD: JULIANO ASSUNÇÃO, LARS PETER HANSEN, TODD MUNSON, JOSÉ A. SCHEINKMAN
@@ -15,20 +14,15 @@
 tictoc::tic(msg = "_masterfile_prep.R script", log = TRUE)
 
 
-if (!dir.exists("data/prepData")) {
-    dir.create("data/prepData", recursive = TRUE)
+if (!dir.exists("data/processed")) {
+  dir.create("data/processed", recursive = TRUE)
 }
 
 
-
-# PREP DATA ------------------------------------------------------------------------------------------------------------------------------------------
-
-# SERIES
-
 # CONSTRUCT MONTHLY COMMODITY REAL PRICES INDICES
-source(here::here("rsrc/prepData/seriesPriceCattle_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_cattle_price_index.R"), encoding = "UTF-8", echo = TRUE)
 
-# clear environment
+# Clear environment
 rm(list = ls())
 
 
