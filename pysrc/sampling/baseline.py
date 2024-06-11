@@ -3,10 +3,10 @@ from cmdstanpy import CmdStanModel
 
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..services.data_service import load_site_data
-from ..services.file_service import stan_model_path
+from ..services.file_service import get_path
 
 
-def sample(model_name: str, num_sites: int, **stan_kwargs):
+def sample(num_sites: int, **stan_kwargs):
     # Load sites data
     (
         _,
@@ -19,7 +19,7 @@ def sample(model_name: str, num_sites: int, **stan_kwargs):
     ) = load_site_data(num_sites)
 
     # Read model code
-    stan_file = stan_model_path(model_name) / "baseline.stan"
+    stan_file = get_path("stan_model") / "baseline.stan"
     sampler = CmdStanModel(stan_file=stan_file, force_compile=True)
 
     # Pack into model data

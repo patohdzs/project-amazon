@@ -9,94 +9,98 @@
 # > NOTES
 # 1: -
 
-# SETUP
+library(sf)
+library(tidyverse)
+library(tictoc)
+library(sjlabelled)
+library(conflicted)
 
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
+# Resolve conflicts
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::lag)
 
 # START TIMER
-tictoc::tic(msg = "agCensus2017AgUseArea_raw2clean.R script", log = T)
+tic(msg = "agCensus2017AgUseArea_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read csv file
-raw.agCensus2017AgUseArea <- readr::read_csv(
-  file = here::here("data/raw2clean/agCensus2017AgUseArea_ibge/input/agCensus2017_agUseArea.csv"),
+# Read csv file
+use_area_2017 <- read_csv(
+  file = "data/raw/ibge/ag_census_2017_ag_use_area/agCensus2017_agUseArea.csv",
   skip = 7,
   na = c("..."),
   col_names = c(
     "muni_code",
-    "cropPerm_area_2017", "cropTemp_area_2017", "cropFlower_area_2017",
-    "pastureNatural_area_2017", "pasturePlantedGood_area_2017", "pasturePlantedBad_area_2017"
+    "cropPerm_area_2017",
+    "cropTemp_area_2017",
+    "cropFlower_area_2017",
+    "pastureNatural_area_2017",
+    "pasturePlantedGood_area_2017",
+    "pasturePlantedBad_area_2017"
   ),
   col_types = "n--cccccc"
 )
 
-# DATA EXPLORATION [disabled for speed]
-# summary(raw.agCensus2017AgUseArea)
-# View(raw.agCensus2017AgUseArea)
 
-# DATASET CLEANUP AND PREP
+# Remove last rows of the table with notes information
+use_area_2017 <- use_area_2017[-(5564:5577), ]
 
-# ROW CLEANUP
-# remove last rows of the table with notes information
-raw.agCensus2017AgUseArea <- raw.agCensus2017AgUseArea[-(5564:5577), ]
+# Transform "-" values to "0" as explained in the table notes
+use_area_2017 <-
+  use_area_2017 %>%
+  mutate(
+    across(
+      where(is.character),
+      function(x) if_else(x == "-", "0", x)
+    )
+  )
 
-# transform "-" values to "0" as explained in the table notes
-raw.agCensus2017AgUseArea <-
-  raw.agCensus2017AgUseArea %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), function(x) dplyr::if_else(x == "-", "0", x)))
+# Transform "X" values to "NA"
+# (NA's identify values that had to be omitted to avoid informant identification)
+use_area_2017 <-
+  use_area_2017 %>%
+  mutate(
+    across(
+      where(is.character),
+      function(x) if_else(x == "X", NA_character_, x)
+    )
+  )
 
-# transform "X" values to "NA" (here NA identify which values had to be omitted to avoid informant identification as explained in the table notes)
-raw.agCensus2017AgUseArea <-
-  raw.agCensus2017AgUseArea %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), function(x) dplyr::if_else(x == "X", NA_character_, x)))
+# Latin character treatment
+use_area_2017 <-
+  use_area_2017 %>%
+  mutate(
+    across(
+      where(is.character),
+      \(x) iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")
+    )
+  )
 
-# latin character treatment
-raw.agCensus2017AgUseArea <-
-  raw.agCensus2017AgUseArea %>%
-  dplyr::mutate(dplyr::across(tidyselect:::where(is.character), \(x) iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")))
+# Transform column class
+use_area_2017 <-
+  use_area_2017 %>%
+  mutate(
+    across(
+      ends_with("_area_2017"),
+      function(x) as.numeric(x)
+    )
+  )
 
-# transform column class
-raw.agCensus2017AgUseArea <-
-  raw.agCensus2017AgUseArea %>%
-  dplyr::mutate(dplyr::across(tidyselect:::ends_with("_area_2017"), function(x) as.numeric(x)))
-
-# sum pasture, crop, and agricultural use area
-raw.agCensus2017AgUseArea <-
-  raw.agCensus2017AgUseArea %>%
-  dplyr::mutate(
+# Sum pasture, crop, and agricultural use area
+use_area_2017 <-
+  use_area_2017 %>%
+  mutate(
     pasture_area_2017 = rowSums(across(c("pastureNatural_area_2017", "pasturePlantedGood_area_2017", "pasturePlantedBad_area_2017")), na.rm = TRUE),
     crop_area_2017 = rowSums(across(c("cropPerm_area_2017", "cropTemp_area_2017", "cropFlower_area_2017")), na.rm = TRUE),
     agUse_area_2017 = rowSums(across(c("pasture_area_2017", "crop_area_2017")), na.rm = TRUE)
   )
 
-# EXPORT PREP
+# Set labels
+set_label(use_area_2017$muni_code) <- "municipality code (7-digit, IBGE)"
+set_label(use_area_2017$pasture_area_2017) <- "pasture area (ha, 2017 Ag Census)"
+set_label(use_area_2017$crop_area_2017) <- "crop area (ha, 2017 Ag Census)"
+set_label(use_area_2017$agUse_area_2017) <- "agricultural use area (ha, 2017 Ag Census)"
 
-# sjlabelled::set_labelS
-sjlabelled::set_label(raw.agCensus2017AgUseArea$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(raw.agCensus2017AgUseArea$pasture_area_2017) <- "pasture area (ha, 2017 Ag Census)"
-sjlabelled::set_label(raw.agCensus2017AgUseArea$crop_area_2017) <- "crop area (ha, 2017 Ag Census)"
-sjlabelled::set_label(raw.agCensus2017AgUseArea$agUse_area_2017) <- "agricultural use area (ha, 2017 Ag Census)"
-
-# change object name for exportation
-clean.agCensus2017AgUseArea <- raw.agCensus2017AgUseArea
-
-# POST-TREATMENT OVERVIEW
-# summary(clean.agCensus2017AgUseArea)
-# View(clean.agCensus2017AgUseArea)
-
-# EXPORT
-
-save(clean.agCensus2017AgUseArea,
-  file = here::here(
-    "data/raw2clean/agCensus2017AgUseArea_ibge/output",
-    "clean_agCensus2017AgUseArea.Rdata"
-  )
-)
+# Save data set
+save(use_area_2017, file = "data/clean/use_area_2017.Rdata")
 
 # END TIMER
-tictoc::toc(log = T)
-
-# export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+toc(log = TRUE)

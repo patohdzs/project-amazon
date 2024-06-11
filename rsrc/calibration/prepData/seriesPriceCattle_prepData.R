@@ -82,13 +82,16 @@ save(seriesPriceCattle.prepData,
      file = here::here("data/calibration/prepData",
                       paste0("seriesPriceCattle_prepData", ".Rdata")))
 
-
+readr::write_csv(seriesPriceCattle.prepData,
+  file = here::here("data/hmc", "seriesPriceCattle_prepared.csv")
+)
 
 # # END TIMER
 # tictoc::toc(log = T)
 
 # # export time to csv table
 # ExportTimeProcessing("code/calibration")
+
 
 
 

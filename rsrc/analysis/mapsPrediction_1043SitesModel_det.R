@@ -42,8 +42,8 @@ prediction.1043SitesModel <- purrr::map_df(
   .x = aux.prices,
   .f = ~ readr::read_delim(
     here::here(
-      "data/prediction/1043-det",
-      glue::glue("p_e_{.x}/amazon_data_z.dat")
+      "output/optimization/gams/1043sites",
+      glue::glue("pe_{.x}/amazon_data_z.dat")
     ),
     col_types = cols(.default = "n")
   ) %>%

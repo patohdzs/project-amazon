@@ -8,47 +8,40 @@
 #
 # > NOTES
 # -
+library(tidyverse)
+library(tictoc)
+library(sjlabelled)
+library(conflicted)
+library(readxl)
 
-# SETUP
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
+# Resolve conflicts
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::lag)
 
 # START TIMER
-tictoc::tic(msg = "landUseCoverMuni_raw2clean.R script", log = T)
+tic(msg = "landUseCoverMuni_raw2clean.R script", log = TRUE)
 
-# DATA INPUT
-
-# read csv file
-# raw.mapbiomas <- readxl::read_xlsx(path = here::here("data/raw2clean/landUseCoverMuni_mapbiomas/input/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx"),
-# sheet = 3)
-raw.mapbiomas <- readxl::read_xlsx(
-  path = here::here("data/raw2clean/landUseCoverMuni_mapbiomas/input/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx"),
+# Read in data
+raw_mapbiomas <- read_xlsx(
+  path = "data/raw/mapbiomas/landuse_cover_muni/Dados_Cobertura_MapBiomas_5.0_UF-MUN_SITE_v2.xlsx",
   sheet = 3
 )
 
-# DATA EXPLORATION
-# summary(raw.mapbiomas)    # object is a list of data frames
-# class(raw.mapbiomas)
-# View(raw.mapbiomas)      # column names indicate file of origin
-
-# DATASET CLEANUP AND PREP
-
-# COLUMN NAME TREATMENT
-raw.mapbiomas <-
-  raw.mapbiomas %>%
-  dplyr::rename(
+# Clean column names
+raw_mapbiomas <-
+  raw_mapbiomas %>%
+  rename(
     state_uf = state,
     muni_code = territory_id,
     muni_name = municipality
   )
 
-# RESHAPE
-raw.mapbiomas <-
-  raw.mapbiomas %>%
-  dplyr::select(-muni_name, -state_uf) %>% # remove unnecessary columns
-  tidyr::unite("mapbiomas_class", level_0, level_1, level_2, level_3, level_4, sep = "_") %>% # transform multiple level columns into a single one
-  dplyr::mutate(mapbiomas_id = case_when(
+# Reshape
+raw_mapbiomas <-
+  raw_mapbiomas %>%
+  select(-muni_name, -state_uf) %>% # remove unnecessary columns
+  unite("mapbiomas_class", level_0, level_1, level_2, level_3, level_4, sep = "_") %>%
+  mutate(mapbiomas_id = case_when(
     mapbiomas_class == "Anthropic_3 - Farming_Agriculture_Temporary Crops_Mosaic of Crops" ~ "mapbiomasLandCoverId_41",
     mapbiomas_class == "Anthropic_3 - Farming_Agriculture_Temporary Crops_Soy Beans" ~ "mapbiomasLandCoverId_39",
     mapbiomas_class == "Anthropic_3 - Farming_Pasture_Pasture_Pasture" ~ "mapbiomasLandCoverId_15",
@@ -72,59 +65,54 @@ raw.mapbiomas <-
     mapbiomas_class == "Anthropic_5 - Water_Aquaculture_Aquaculture_Aquaculture" ~ "mapbiomasLandCoverId_31",
     mapbiomas_class == "Natural_2 - Non Forest Natural Formation_Other Non Forest Natural Formation_Other Non Forest Natural Formation_Other Non Forest Natural Formation" ~ "mapbiomasLandCoverId_13"
   )) %>% # add mapbiomas id to simplify future column names - see "_PT-BR__Códigos_da_legenda_Coleção_5" on documentation folder
-  dplyr::select(-mapbiomas_class) %>% # remove mapbiomas_class column
-  tidyr::pivot_longer(cols = "1985":"2019", names_to = "year", values_to = "mapbiomas_id_area") %>% # transform year columns to long format
-  tidyr::pivot_wider(
-    id_cols = c("muni_code", "year"), names_from = "mapbiomas_id",
-    values_from = "mapbiomas_id_area", values_fill = list(mapbiomas_id_area = 0)
+  select(-mapbiomas_class) %>% # remove mapbiomas_class column
+  pivot_longer(
+    cols = "1985":"2019",
+    names_to = "year",
+    values_to = "mapbiomas_id_area"
+  ) %>% # transform year columns to long format
+  pivot_wider(
+    id_cols = c("muni_code", "year"),
+    names_from = "mapbiomas_id",
+    values_from = "mapbiomas_id_area",
+    values_fill = list(mapbiomas_id_area = 0)
   ) %>% # transform mapbiomas_id rows to wide format filling NA values with 0
-  dplyr::mutate(year = as.numeric(year)) # change year class from character to numeric
+  mutate(year = as.numeric(year)) # change year class from character to numeric
+
 
 # EXPORT PREP
-# sjlabelled::set_labelS
-sjlabelled::set_label(raw.mapbiomas$muni_code) <- "municipality code (7-digit, IBGE)"
-sjlabelled::set_label(raw.mapbiomas$year) <- "year of reference (calendar or PRODES year)"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_41) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_otherTemporaryCrops"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_39) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_soybeans"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_15) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_pasture"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_24) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonvevegetatedArea_UrbanInfrastructure"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_3) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_forestFormation"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_12) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_grassland"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_33) <- "(calendar year) area (ha) mapbiomas category  = natural_water_riverLakeOcean"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_27) <- "(calendar year) area (ha) mapbiomas category  = notApplied_nonObserved"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_4) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_savannaFormatio"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_25) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonVegetatedArea_otherNonVegetatedAreas"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_9) <- "(calendar year) area (ha) mapbiomas category  = anthropic_forest_forestPlantation"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_30) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonVegetatedArea_mining"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_20) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_sugarcane"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_5) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_mangrove"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_32) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_saltFlat"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_23) <- "(calendar year) area (ha) mapbiomas category  = natural_nonVegetatedArea_beachAndDune"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_11) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_wetland"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_36) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_perennialCrops"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_21) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_mosaicOfAgriculturaAndPasture"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_29) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_rockyOutcrop"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_31) <- "(calendar year) area (ha) mapbiomas category  = anthropic_water_aquaculture"
-sjlabelled::set_label(raw.mapbiomas$mapbiomasLandCoverId_13) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_otherNonForestFormations"
+# set_labelS
+set_label(raw_mapbiomas$muni_code) <- "municipality code (7-digit, IBGE)"
+set_label(raw_mapbiomas$year) <- "year of reference (calendar or PRODES year)"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_41) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_otherTemporaryCrops"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_39) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_soybeans"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_15) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_pasture"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_24) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonvevegetatedArea_UrbanInfrastructure"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_3) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_forestFormation"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_12) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_grassland"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_33) <- "(calendar year) area (ha) mapbiomas category  = natural_water_riverLakeOcean"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_27) <- "(calendar year) area (ha) mapbiomas category  = notApplied_nonObserved"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_4) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_savannaFormatio"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_25) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonVegetatedArea_otherNonVegetatedAreas"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_9) <- "(calendar year) area (ha) mapbiomas category  = anthropic_forest_forestPlantation"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_30) <- "(calendar year) area (ha) mapbiomas category  = anthropic_nonVegetatedArea_mining"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_20) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_temporaryCrops_sugarcane"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_5) <- "(calendar year) area (ha) mapbiomas category  = natural_forest_naturalForest_mangrove"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_32) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_saltFlat"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_23) <- "(calendar year) area (ha) mapbiomas category  = natural_nonVegetatedArea_beachAndDune"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_11) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_wetland"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_36) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_agriculture_perennialCrops"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_21) <- "(calendar year) area (ha) mapbiomas category  = anthropic_farming_mosaicOfAgriculturaAndPasture"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_29) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_rockyOutcrop"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_31) <- "(calendar year) area (ha) mapbiomas category  = anthropic_water_aquaculture"
+set_label(raw_mapbiomas$mapbiomasLandCoverId_13) <- "(calendar year) area (ha) mapbiomas category  = natural_nonForestNaturalFormation_otherNonForestFormations"
 
-# change object name for exportation
-clean.landUseCoverMuni <- raw.mapbiomas
+# Change object name before saving
+land_use_cover_muni <- raw_mapbiomas
 
-# POST-TREATMENT OVERVIEW
-# summary(clean.landUseCoverMuni)
-# View(clean.landUseCoverMuni)
-
-# EXPORT
-
-save(clean.landUseCoverMuni,
-  file = here::here(
-    "data/raw2clean/landUseCoverMuni_mapbiomas/output",
-    "clean_landUseCoverMuni.Rdata"
-  )
-)
+# Save data set
+out_path <- "data/clean/land_use_cover_muni.Rdata"
+save(land_use_cover_muni, file = out_path)
 
 # END TIMER
-tictoc::toc(log = T)
-
-# export time to csv table
-# ExportTimeProcessing("code/raw2clean")
+toc(log = TRUE)

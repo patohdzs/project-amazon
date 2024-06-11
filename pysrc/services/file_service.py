@@ -32,10 +32,6 @@ def plots_dir_path(**kwargs) -> Path:
     return _nested_dir_path(path, **kwargs)
 
 
-def stan_model_path(model_name: str) -> Path:
-    return get_path("stan_models", model_name)
-
-
 def get_path(*args: str) -> Path:
     return _project_root().joinpath(*args)
 
