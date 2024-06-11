@@ -29,7 +29,8 @@ def solve_planner_problem(
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v=1.66e-4 * 1e9,
 ):
     model = ConcreteModel()
 
@@ -48,11 +49,14 @@ def solve_planner_problem(
     model.pa = Param(initialize=pa)
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
-    model.zeta = Param(initialize=zeta)
+
+    # Asymmetric adj. costs
+    model.zeta_u = Param(initialize=zeta_u)
+    model.zeta_v = Param(initialize=zeta_v)
+
     model.dt = Param(initialize=dt)
 
     # Variables
-    model.w = Var(model.T)
     model.x = Var(model.T, model.S)
     model.z = Var(model.T, model.S, within=NonNegativeReals)
     model.u = Var(model.T, model.S, within=NonNegativeReals)
@@ -61,7 +65,6 @@ def solve_planner_problem(
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
-    model.w_def = Constraint(model.T, rule=_w_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -73,7 +76,6 @@ def solve_planner_problem(
         model.z[min(model.T), s].fix(model.z0[s])
         model.u[max(model.T), s].fix(0)
         model.v[max(model.T), s].fix(0)
-        model.w[max(model.T)].fix(0)
 
     # Solve the model
     solver = SolverFactory("gurobi")
@@ -87,14 +89,12 @@ def solve_planner_problem(
     X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
     U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
-    w = np.array([model.w[t].value for t in model.T])
 
     return {
         "Z": Z,
         "X": X,
         "U": U,
         "V": V,
-        "w": w,
     }
 
 
@@ -126,8 +126,10 @@ def _planner_obj(model):
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
-            - model.zeta / 2 * (model.w[t] ** 2)
+            + model.pa
+            * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
+            - (model.zeta_u / 2) * (pyo.quicksum(model.u[t, s] for s in model.S) ** 2)
+            - (model.zeta_v / 2) * (pyo.quicksum(model.v[t, s] for s in model.S) ** 2)
         )
         * model.dt
         for t in model.T
