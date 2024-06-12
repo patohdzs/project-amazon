@@ -13,7 +13,8 @@ def value_decomposition(
     theta,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v=1.66e-4 * 1e9,
 ):
     # Compute change in X
     X_dot = np.diff(X, axis=0)
@@ -38,7 +39,8 @@ def value_decomposition(
 
     # Compute adjustment costs
     results_AC = [
-        (zeta / 2) * (np.sum(U[t]) + np.sum(V[t])) ** 2 / ((1 + delta) ** t)
+        ((zeta_u / 2) * (np.sum(U[t]) ** 2) + (zeta_v / 2) * (np.sum(V[t]) ** 2))
+        / ((1 + delta) ** t)
         for t in range(T)
     ]
     total_AC = np.sum(results_AC)
