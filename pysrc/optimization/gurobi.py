@@ -50,6 +50,8 @@ def solve_planner_problem(
     # Set price of agriculture as series
     if isinstance(pa, float):
         pa = {t + 1: pa for t in range(T)}
+    else:
+        pa = {t + 1: pa[t] for t in range(T)}
 
     model.pa = Param(model.T, initialize=pa)
 
