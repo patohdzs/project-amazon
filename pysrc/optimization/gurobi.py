@@ -127,7 +127,7 @@ def vectorize_trajectories(Z, X, U, V, w):
 
 
 def _planner_obj(model):
-    return sum(
+    return pyo.quicksum(
         math.exp(-model.delta * (t * model.dt - model.dt))
         * (
             -model.pe
@@ -136,7 +136,8 @@ def _planner_obj(model):
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa[t] * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
+            + model.pa[t]
+            * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt
