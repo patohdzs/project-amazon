@@ -46,7 +46,13 @@ def solve_planner_problem(
     model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
     model.pe = Param(initialize=pe)
-    model.pa = Param(initialize=pa)
+
+    # Set price of agriculture as series
+    if isinstance(pa, float):
+        pa = {t + 1: pa for t in range(T)}
+
+    model.pa = Param(model.T, initialize=pa)
+
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
     model.zeta = Param(initialize=zeta)
@@ -130,7 +136,7 @@ def _planner_obj(model):
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
+            + model.pa[t] * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt
