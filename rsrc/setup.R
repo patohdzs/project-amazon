@@ -98,7 +98,7 @@ groundhog::groundhog.library("marginaleffects", groundhog.date)
 # ggpubr - to combine multiple ggplots
 groundhog::groundhog.library("ggpubr", groundhog.date)
 
-# conflicts_prefer("filter", "dplyr")
+
 # equatiomatic - to convert lm models to latex
 #groundhog::groundhog.library("equatiomatic", groundhog.date)
 

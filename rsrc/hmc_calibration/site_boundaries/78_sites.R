@@ -10,37 +10,24 @@
 # 1: -
 
 
-library(MASS)
-library(dplyr)
-library(boot)
-library(conflicted)
-library(tictoc)
-library(sf)
-library(terra)
-
-conflicts_prefer(dplyr::select)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(dplyr::summarize)
 
 # START TIMER
-tictoc::tic(msg = "calibration_78SitesModel.R script", log = TRUE)
+tictoc::tic(msg = "78_sites.R script", log = TRUE)
 
 
 # TERRA OPTIONS (specify temporary file location)
-terra::terraOptions(tempdir = here::here("data", "_temp"))
+terra::terraOptions(tmpdir = "data/_temp",
+                      timer  = T)
 
 
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster_78_sites <-
-  terra::rast(list.files(
-    here::here("data/calibration/1043SitesModel/aux_tifs"),
-    pattern = "raster_",
-    full.names = TRUE
-  ))
+raster_78_sites <- terra::rast(list.files("data/calibration/1043SitesModel/aux_tifs",
+                                           pattern = "raster_",
+                                           full.names = T))
 
 # MUNI LEVEL SPATIAL SAMPLE
 load(here::here(
-  "data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"
+  "data/prepData/sampleMuniSpatial_prepData.Rdata"
 ))
 
 
@@ -135,7 +122,7 @@ id <- calibration_78_sites_model %>%
   select(id)
 
 st_write(id,
-  "data/hmc/id_78.geojson",
+  "data/calibration/hmc/id_78.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )

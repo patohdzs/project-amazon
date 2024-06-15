@@ -13,15 +13,8 @@
 
 
 
-
-# SETUP ----------------------------------------------------------------------------------------------------------------------------------------------
-
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
-
-
 # START TIMER
-tictoc::tic(msg = "_masterfile_calibration.R script", log = T)
+tictoc::tic(msg = "_masterfile_calibration.R script", log = TRUE)
 
 
 
@@ -144,14 +137,7 @@ rm(list = ls())
 # EXPORT TIME PROCESSING -----------------------------------------------------------------------------------------------------------------------------
 
 # END TIMER
-tictoc::toc(log = T)
-
-
-# # SOURCE FUNCTIONS - after scripts to avoid rm(list = ls())
-# source(here::here("rsrc/_functions/ExportTimeProcessing.R"))
-
-# # export time to csv table
-# ExportTimeProcessing("rsrc/calibration")
+tictoc::toc(log = TRUE)
 
 
 

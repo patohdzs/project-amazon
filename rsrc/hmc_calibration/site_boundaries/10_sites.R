@@ -10,39 +10,25 @@
 # 1: -
 
 
-library(MASS)
-library(dplyr)
-library(boot)
-library(conflicted)
-library(tictoc)
-library(here)
-library(sf)
-library(terra)
-
-conflicts_prefer(dplyr::select)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(dplyr::summarize)
 
 # START TIMER
-tictoc::tic(msg = "calibration_10SitesModel.R script", log = TRUE)
+tictoc::tic(msg = "10_sites.R script", log = TRUE)
 
 # TERRA OPTIONS (specify temporary file location)
-terra::terraOptions(tempdir = here::here("data", "_temp"))
+terra::terraOptions(tmpdir = "data/_temp",
+                      timer  = T)
 
 # DATA INPUT
 # RASTER DATA (AMAZON BIOME SHARE, PIXEL AREA, AND MAPBIOMAS CATEGORIES)
-raster_10_sites <-
-  terra::rast(list.files(
-    paste(getwd(), "data/calibration/1043SitesModel/aux_tifs", sep = "/"),
-    pattern = "raster_",
-    full.names = TRUE
-  ))
+raster_10_sites <- terra::rast(list.files("data/calibration/1043SitesModel/aux_tifs",
+                                           pattern = "raster_",
+                                           full.names = T))
 
 
 # MUNI LEVEL SPATIAL SAMPLE
-load(here::here(
-  "data/calibration/prepData/sampleMuniSpatial_prepData.Rdata"
-))
+load(
+  "data/prepData/sampleMuniSpatial_prepData.Rdata"
+)
 
 # INITIAL CONDITIONS Z
 # AGGREGATE FROM 1000 Sites TO 10 Sites
@@ -156,7 +142,7 @@ id <- calibration_10_sites_model %>%
   select(id)
 
 st_write(id,
-  "data/hmc/id_10.geojson",
+  "data/calibration/hmc/id_10.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )

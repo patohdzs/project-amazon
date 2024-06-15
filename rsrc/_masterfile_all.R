@@ -1,39 +1,26 @@
+# Start timer
+tictoc::tic(msg = "_masterfile.R script", log = TRUE)
 
-# > THIS SCRIPT
-# AIM: MASTERFILE SCRIPT TO ALL R data scripts
+source("rsrc/raw2clean/_masterfile_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
-source("rsrc/setup.R")
-
-# START TIMER
-tictoc::tic(msg = "_masterfile.R script", log = T)
-
-source(here::here("rsrc/raw2clean/_masterfile_raw2clean.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-print("raw2clean part is done")
+print("Data cleaning is done")
 
+source("rsrc/processing/_masterfile_prep.R", encoding = "UTF-8", echo = TRUE)
 
-
-source(here::here("rsrc/calibration/_masterfile_prep.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-print("prepdata part is done")
+print("Data processing is done")
 
+source("rsrc/calibration/_masterfile_calibration.R", encoding = "UTF-8", echo = TRUE)
 
-source(here::here("rsrc/calibration/_masterfile_calibration.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-print("calibration part is done")
+print("Calibration is done")
 
-# END TIMER
-tictoc::toc(log = T)
-
-
-
-# END OF SCRIPT --------------------------------------------------------------------------------------------------------------------------------------
+# End timer
+tictoc::toc(log = TRUE)

@@ -2,14 +2,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-
-
 from ..services.file_service import get_path
 
 
 def load_site_data(num_sites: int, norm_fac: float = 1e9):
     # Set data directory
-    data_dir = get_path("data", "hmc")
+    data_dir = get_path("data", "calibration", "hmc")
 
     # Read data file
     file_path = data_dir / f"hmc_{num_sites}SitesModel.csv"
@@ -60,6 +58,7 @@ def load_price_data():
 
 def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     from pysrc.sampling import baseline
+
     # Set data directory
     data_dir = get_path("data", "hmc")
 
