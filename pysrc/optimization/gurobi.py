@@ -30,6 +30,7 @@ def solve_planner_problem(
     delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,
+    solver="gurobi",
 ):
     model = ConcreteModel()
 
@@ -76,11 +77,13 @@ def solve_planner_problem(
         model.w[max(model.T)].fix(0)
 
     # Solve the model
-    # solver = SolverFactory("gurobi")
-    solver = SolverFactory("gams")
+    opt = SolverFactory(solver)
     print("Solving the optimization problem...")
     start_time = time.time()
-    solver.solve(model, tee=True, solver="cplex", mtype="qcp")
+    if solver == "gams":
+        opt.solve(model, tee=True, solver="cplex", mtype="qcp")
+    else:
+        opt.solve(model, tee=True)
 
     print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
