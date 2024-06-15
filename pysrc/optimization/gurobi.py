@@ -76,11 +76,12 @@ def solve_planner_problem(
         model.w[max(model.T)].fix(0)
 
     # Solve the model
-    solver = SolverFactory("gurobi")
-
+    # solver = SolverFactory("gurobi")
+    solver = SolverFactory("gams")
     print("Solving the optimization problem...")
     start_time = time.time()
-    solver.solve(model, tee=True)
+    solver.solve(model, tee=True, solver="cplex", mtype="qcp")
+
     print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
     Z = np.array([[model.z[t, r].value for r in model.S] for t in model.T])
