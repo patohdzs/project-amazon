@@ -1,30 +1,26 @@
+library(sf)
+library(tictoc)
+library(tidyverse)
+library(conflicted)
 
+conflicts_prefer(dplyr::filter())
 
-# START TIMER
-tictoc::tic(msg = "merge_muni_gamma.R script", log = TRUE)
+# Start timer
+tic(msg = "prep_muni_biomass_2017.R script", log = TRUE)
 
-# DATA INPUT -----------------------------------------------------------------------------------------------------------------------------------------
-
-# Municipalitalities coordinates
+# Load municipalitality coordinates
 load("data/clean/raw_muni.Rdata")
 
-# Pixel gammas
-load("data/prepData/pixelBiomass2017_prepData.Rdata")
+# Load pixel-level biomass data for 2017
+load("data/processed/pixel_biomass_2017.Rdata")
 
+# Transform to SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880),
+# Join to municipalities data
+muni_biomass_2017 <- pixel_biomass_2017 %>%
+     st_transform(, crs = 5880) %>%
+     st_join(raw_muni, join = st_within)
 
-# transform to Brazil Polyconic
-sfdata_2017 <- sf::st_transform(x = pixelBiomass2017_prepData, crs = 5880) # SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880)
-gamma_muni_2017 <- st_join(sfdata_2017, raw_muni, join = st_within)
+save(muni_biomass_2017, file = "data/processed/muni_biomass_2017.Rdata")
 
-
-save(gamma_muni_2017,
-     file = "data/prepData/muni_Biomass2017_prepData.Rdata")
-
-
-
-# END TIMER
-tictoc::toc(log = TRUE)
-
-
-
-# END OF SCRIPT --------------------------------------------------------------------------------------------------------------------------------------
+# End timer
+toc(log = TRUE)
