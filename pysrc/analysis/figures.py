@@ -321,3 +321,30 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
     plt.show()
 
     return
+
+
+def plot_transfer_payments(results_15, results_25, kappa=2.094215255):
+    for b, results in zip([15, 25], [results_15, results_25]):
+        kappa = 2.094215255
+        X = results["X"]
+        Z = results["Z"]
+
+        # Compute X_dot
+        X_dot = np.diff(X, axis=0)
+        print(X_dot[0].sum())
+
+        # Compute transfers
+        transfers = -b * (kappa * Z[1:] - X_dot).sum(axis=1)
+
+        # Plotting transfers
+        plt.plot(transfers[:50], label=f"b=${b}")
+
+    # Adding legend
+    plt.legend()
+
+    # Adding labels and title
+    plt.xlabel("Time (years)")
+    plt.ylabel("Net Transfers ($ billion)")
+
+    # Save figure
+    plt.savefig(get_path("output") / "figures/net_transfers.png")
