@@ -71,7 +71,7 @@ for (class in mapbiomas_class) {
   #terra::writeRaster(raw_raster, paste0("C:/Users/pengyu/Desktop/code_data_20230628/data/calibration/1055SitesModel/aux_tifs/raster_mapbiomas_", class, "_", year, "_1055SitesModel.tif"), overwrite = T)
   terra::writeRaster(raw_raster, glue::glue("data/calibration/1043SitesModel/aux_tifs/raster_mapbiomas_{class}_{year}_1043SitesModel.tif"),
                      overwrite = T)
-  
+
   # clean environment
   rm(raw_raster)
 
