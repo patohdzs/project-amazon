@@ -109,7 +109,7 @@ muniTheta_prepData  <-   muniTheta_prepData %>%
 # match minicells with Sites
 site_gamma2017 <-
   sf::st_intersection(calibration_1043SitesModel %>% dplyr::select(id),
-              muniTheta_prepData %>% dplyr::select(muni_code, muni_area, co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon)) 
+              muniTheta_prepData %>% dplyr::select(muni_code, muni_area, co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon))
 # sf::st_drop_geometry()
 
 site_gamma2017$muni_site_area <-
@@ -458,7 +458,7 @@ calibration_1043SitesModel <-
 calibration_1043SitesModel <-
   calibration_1043SitesModel %>%
   dplyr::mutate(id=1:nrow(calibration_1043SitesModel))
-                
+
 
 
 

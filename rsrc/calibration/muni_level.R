@@ -177,8 +177,8 @@ muniTheta.prepData <-
   muniTheta.prepData %>%
     dplyr::filter(zbar_1995_muni >0) %>%
     dplyr::filter(z_1995_muni >0) %>%
-    dplyr::filter(!is.na(zbar_1995_muni)) %>% 
-    dplyr::filter(!is.na(z_1995_muni))  
+    dplyr::filter(!is.na(zbar_1995_muni)) %>%
+    dplyr::filter(!is.na(z_1995_muni))
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------

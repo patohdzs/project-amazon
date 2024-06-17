@@ -521,7 +521,7 @@ calibration_78_sites_model <-
 
 # EXPORT
 save(calibration_78_sites_model,
-  file = 
+  file =
     "data/calibration/hmc/hmc_78SitesModel.Rdata"
 )
 
