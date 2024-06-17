@@ -74,14 +74,17 @@ deflator <-
 rm(aux_deflator_2017)
 
 
+
+# Commercial exchange rate - selling - average - annual - 2017 - ipeadata
+brl_to_usd <- 3.192
+
 # DEFLATE CATTLE SLAUGHTER 2006 AND CONVERT TO USD
 # Change from thousand BRL to BRL to USD,
-# commercial exchange rate - selling - average - annual - 2017 - ipeadata
 cattle_slaughter_2006 <-
   cattle_slaughter_2006 %>%
   mutate(
     cattleSlaughter_value_2006 = cattleSlaughter2006_value / deflator[deflator$year == 2006, ]$deflator_ipa,
-    cattleSlaughter_value_2006 = 1000 * cattleSlaughter_value_2006 / 3.192
+    cattleSlaughter_value_2006 = 1000 * cattleSlaughter_value_2006 / brl_to_usd
   ) %>%
   rename(cattleSlaughter_head_2006 = cattleSlaughter2006_head) %>%
   select(muni_code, cattleSlaughter_value_2006, cattleSlaughter_head_2006)
@@ -91,10 +94,9 @@ rm(deflator)
 
 # CONVERT CATTLE SOLD VALUE TO USD
 # Change from thousand BRL to BRL to USD
-# commercial exchange rate - selling - average - annual - 2017 - ipeadata
 cattle_sold_2017 <-
   cattle_sold_2017 %>%
-  mutate(cattleSlaughter_value_2017 = 1000 * cattleSoldSlaughterLargeProp_value_2017 / 3.192) %>%
+  mutate(cattleSlaughter_value_2017 = 1000 * cattleSoldSlaughterLargeProp_value_2017 / brl_to_usd) %>%
   rename(cattleSlaughter_head_2017 = cattleSoldSlaughterLargeProp_head_2017) %>%
   select(muni_code, cattleSlaughter_value_2017, cattleSlaughter_head_2017)
 
@@ -126,7 +128,7 @@ spatial_muni_sample <- st_transform(spatial_muni_sample, st_crs(raster_precip))
 raster_precip <- crop(raster_precip, spatial_muni_sample)
 raster_temp <- crop(raster_temp, spatial_muni_sample)
 
-# Calculate total yearly precipitation
+# Calculate average yearly precipitation
 raster_precip <- mean(raster_precip)
 
 # Calculate average yearly temperature
