@@ -8,10 +8,6 @@ load("data/prepData/muniTheta_prepData.Rdata")
 # load cattle price series
 load("data/prepData/seriesPriceCattle_prepData.Rdata")
 
-# load farm gate price data
-fgp_data <-
-  read_excel("data/raw/ipea/farm_gate_price/farm_gate_price.xlsx")
-
 # load distance data
 distance_data <-
   read_excel("data/raw/ipea/distance_to_capital/ipeadata[21-08-2023-01-28].xls") %>%
@@ -29,14 +25,9 @@ geo <- st_geometry(muniTheta_prepData)[-c(142, 106, 112)]
 # Merge with distance data and farm price data
 muni_theta_prep_data <- muni_theta_prep_data %>%
   left_join(distance_data, by = "muni_code") %>%
-  left_join(fgp_data, by = "muni_code") %>%
   st_sf(geometry = geo) %>%
   mutate(
-    cattle_price_2017 = ifelse(
-      is.na(cattleSlaughter_farmGatePrice_2017),
-      average_weighted_price,
-      cattleSlaughter_farmGatePrice_2017
-    )
+    cattle_price_2017 = cattleSlaughter_farmGatePrice_2017
   ) %>%
   dplyr::filter(!is.na(distance))
 

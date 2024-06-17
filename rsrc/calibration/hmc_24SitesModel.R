@@ -293,9 +293,6 @@ muniTheta_prepData_data <- muniTheta_prepData_data[-c(142, 106, 112), ]
 geo_backup <- st_geometry(muniTheta_prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
-predicted_values <-
-  read_excel("data/raw/ipea/farm_gate_price/farm_gate_price.xlsx")
-
 
 
 # Combine back into an sf object
@@ -310,20 +307,7 @@ muniTheta_no_geo <- as.data.frame(muniTheta_prepData)
 merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
-merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
-
-muniTheta_prepData<-merged_data_sf
-
-merged_data <- muniTheta_prepData %>%
-  left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
-                                                     average_weighted_price,
-                                                     cattleSlaughter_farmGatePrice_2017))
-
-
-muniTheta_prepData<-merged_data
-
-
+muniTheta_prepData <- st_sf(merged_data, geometry = geo_backup)
 
 
 muniTheta_prepData<- muniTheta_prepData %>%
