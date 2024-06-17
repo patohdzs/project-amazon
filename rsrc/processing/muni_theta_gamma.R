@@ -228,6 +228,30 @@ set_label(productivity_data$cattleSlaughter_valuePerHa_2006) <- "value of cattle
 set_label(productivity_data$cattleSlaughter_farmGatePrice_2006) <- "farm gate price cattle sold for slaughter (2017 constant USD/@, 2017 Ag Census)"
 
 
+
+# Interpolate for missing values of farm gate price
+
+missing_farm_gate_price_indices <- which(is.na(productivity_data$cattleSlaughter_farmGatePrice_2017))
+non_missing_indices <- which(!is.na(municipalities$cattleSlaughter_farmGatePrice_2017))
+distances <- st_distance(productivity_data)
+
+impute_farm_gate_price <- function(index, distances, municipalities) {
+  muni_distances <- distances[index, ]
+  sorted_indices <- order(muni_distances[non_missing_indices])
+  closest_indices <- non_missing_indices[sorted_indices][1:4]
+  
+  weights <- municipalities$cattleSlaughter_valuePerHa_2017[closest_indices]
+  prices <- municipalities$cattleSlaughter_farmGatePrice_2017[closest_indices]
+  weighted_mean_price <- sum(weights * prices, na.rm = TRUE) / sum(weights, na.rm = TRUE)
+  
+  return(weighted_mean_price)
+}
+
+productivity_data$cattleSlaughter_farmGatePrice_2017[missing_farm_gate_price_indices] <- sapply(missing_farm_gate_price_indices, function(index) {
+  impute_farm_gate_price(index, distances, productivity_data)
+})
+
+
 # Save data set
 save(productivity_data, zfile = "data/prepData/productivity_data.Rdata")
 
