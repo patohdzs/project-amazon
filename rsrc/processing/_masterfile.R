@@ -30,65 +30,53 @@ rm(list = ls())
 # PIXEL LEVEL
 
 # EXTRACT RANDOM SAMPLE OF MAPBIOMAS 30M-PIXELS AND RECOVER FULL PANEL (1985-2019)
-source(here::here("rsrc/prepData/sampleConstructionPixel_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_pixel_sample.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
 
 # CALCULATE AREA OF MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/prepData/pixelArea_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_pixel_area.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
 
 # CREATE AGGREGATED CATEGORIES OF INTEREST BASED ON MAPBIOMAS 30M-PIXELS VALUES
-source(here::here("rsrc/prepData/pixelCategories_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_pixel_categories.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
-
-# ADD 2010 ABOVEGROUND BIOMASS DATA (ESA) TO MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/prepData/pixelBiomass2010_prepData.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
-rm(list = ls())
 
 
 # ADD 2017 ABOVEGROUND BIOMASS DATA (ESA) TO MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/prepData/pixelBiomass2017_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/pixelBiomass2017_prepData.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
-
-# ADD 2018 ABOVEGROUND BIOMASS DATA (ESA) TO MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/prepData/pixelBiomass2018_prepData.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
-rm(list = ls())
 
 
 
 # MUNI LEVEL
 
 # DEFINE MUNI-LEVEL SAMPLE AND SAVE IT IN SPATIAL, CROSS-SECTION AND PANEL FORMATS
-source(here::here("rsrc/prepData/sampleConstructionMuni_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_muni_sample.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
 # Prepare gamma muni
-source(here::here("rsrc/prepData/merge_muni_gamma.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_muni_biomass_2017.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
 
 # COMBINE VARIABLES RELEVANT FOR THETA CALIBRATION AT THE MUNI LEVEL
-source(here::here("rsrc/prepData/muniTheta_prepData_gamma.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_muni_data.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
@@ -96,12 +84,22 @@ rm(list = ls())
 # STATE LEVEL
 
 # PREPATE DATA TO ESTIMATE PARAMETER K (EMISSION FACTOR OF AGRICULTURAL SECTOR)
-source("rsrc/prepData/stateEmission_prepData.R", encoding = "UTF-8", echo = T)
+source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
+# PREPATE GENERATE AGGREGATED MAPBIOMAS VARIABLES (FOREST, AGRICULTURAL USE, OTHER) - 1055 SITES
+source("rsrc/processing/prep_biome_class_grids.R", encoding = "UTF-8", echo = T)
 
+# clear environment
+rm(list = ls())
+
+# PREPATE GENERATE AGGREGATED SAMPLE OF INTEREST (DIVIDE AMAZON BIOME INTO 1055 CELLS)
+source("rsrc/processing/prep_biome_grid.R", encoding = "UTF-8", echo = T)
+
+# clear environment
+rm(list = ls())
 
 
 
