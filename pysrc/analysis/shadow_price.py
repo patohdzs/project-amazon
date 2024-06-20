@@ -17,7 +17,7 @@ def shadow_price_opt(
     timehzn=200,
     pa=41.11,
     pe=7.1,
-    model = 'det',
+    model="det",
 ):
     # Computing carbon absorbed in start period
     x0_vals_1995 = gamma * forest_area_1995
@@ -31,11 +31,10 @@ def shadow_price_opt(
 
     else:
         raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
-    
-    
+
     if model == "mpc":
         solve_planner_problem = gams.mpc_shadow_price
-        
+
     results = solve_planner_problem(
         T=timehzn,
         theta=theta,
@@ -114,7 +113,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
                 weight=0.25,
                 num_sites=sitenum,
                 T=200,
-                optimizer=opt,
+                solver=opt,
                 max_iter=100,
                 final_sample_size=5_000,
                 iter_sampling=1000,
@@ -140,9 +139,9 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
                 pe=pe,
             )
             results.append(result)
-        results=np.array(results)
-    
-    if model=='mpc':
+        results = np.array(results)
+
+    if model == "mpc":
         (
             zbar_1995,
             z_1995,
@@ -153,26 +152,27 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
             _,
             z_2008,
             theta,
-            gamma
+            gamma,
         ) = load_site_data_1995(sitenum)
-        
-        
+
         pe_values = np.arange(6.5, 7.1, 0.05)
-        
+
         results = []
         for pe in pe_values:
-            result = shadow_price_opt(zbar_1995,
-                                    z_1995,
-                                    forest_area_1995,
-                                    z_2008,
-                                    theta,
-                                    gamma,
-                                    sitenum=sitenum,
-                                    opt=opt,
-                                    timehzn=200,
-                                    pa=pa,
-                                    pe=pe,
-                                    model='mpc')
+            result = shadow_price_opt(
+                zbar_1995,
+                z_1995,
+                forest_area_1995,
+                z_2008,
+                theta,
+                gamma,
+                sitenum=sitenum,
+                opt=opt,
+                timehzn=200,
+                pa=pa,
+                pe=pe,
+                model="mpc",
+            )
             results.append(result)
             print(f"pe: {pe}, result: {result}")
 
@@ -185,18 +185,17 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
     return min_result, min_pe
 
 
-
 ## det 1043 sites
-min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
-print("min_result",min_result,"min_pe",det_1043_pe)    
-min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
-print("min_result",min_result,"min_pe",det_78_pe)    
+min_result, det_1043_pe = shadow_price_cal(sitenum=1043, model="det")
+print("min_result", min_result, "min_pe", det_1043_pe)
+min_result, det_78_pe = shadow_price_cal(sitenum=78, model="det")
+print("min_result", min_result, "min_pe", det_78_pe)
 
 
 ## hmc 78 sites
-min_result,hmc_78_pe=shadow_price_cal(sitenum=78,model='hmc',xi=1)
-print("min_result",min_result,"min_pe",hmc_78_pe)  
-    
-## mpc 78 sites    
-min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
-print("min_result",min_result,"min_pe",mpc_78_pe)
+min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=1)
+print("min_result", min_result, "min_pe", hmc_78_pe)
+
+## mpc 78 sites
+min_result, mpc_78_pe = shadow_price_cal(sitenum=78, model="mpc")
+print("min_result", min_result, "min_pe", mpc_78_pe)
