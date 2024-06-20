@@ -17,8 +17,8 @@ load("data/processed/pixel_biomass_2017.Rdata")
 # Transform to SIRGAS 2000 / Brazil Polyconic (https://epsg.io/5880),
 # Join to municipalities data
 muni_biomass_2017 <- pixel_biomass_2017 %>%
-     st_transform(, crs = 5880) %>%
-     st_join(raw_muni, join = st_within)
+  st_transform(, crs = 5880) %>%
+  st_join(raw_muni, join = st_within)
 
 save(muni_biomass_2017, file = "data/processed/muni_biomass_2017.Rdata")
 
