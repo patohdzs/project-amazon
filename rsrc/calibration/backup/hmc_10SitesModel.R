@@ -137,7 +137,7 @@ muniTheta.prepData  <-   muniTheta.prepData %>%
 # match minicells with Sites
 site.gamma2017 <-
   sf::st_intersection(calibration.10SitesModel %>% dplyr::select(id),
-              muniTheta.prepData %>% dplyr::select(muni_code, muni_area,co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon)) 
+              muniTheta.prepData %>% dplyr::select(muni_code, muni_area,co2e_ha_2017,co2e_ha_2017_fitted,historical_precip,historical_temp,lat,lon))
 # sf::st_drop_geometry()
 
 site.gamma2017$muni_site_area <-

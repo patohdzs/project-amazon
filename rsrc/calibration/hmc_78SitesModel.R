@@ -303,13 +303,13 @@ aux_price_2017 <-
   seriesPriceCattle_prepData %>%
   dplyr::filter(year == 2017) %>%
   dplyr::group_by(year) %>%
-  dplyr::summarise(mean_price_2017 = mean(price_real_mon_cattle) / 3.192) %>% # BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
+  dplyr::summarise(mean_price_2017 = mean(price_real_mon_cattle)/3.192) %>% # BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
   dplyr::pull(mean_price_2017)
 
 
 
 # Remove rows from attribute data
-muniTheta_prepData_data <- as.data.frame(muniTheta_prepData) # Convert to regular dataframe
+muniTheta_prepData_data <- as.data.frame(muniTheta_prepData)  # Convert to regular dataframe
 muniTheta_prepData_data <- muniTheta_prepData_data[-c(142, 106, 112), ]
 
 # Remove geometries
@@ -317,8 +317,6 @@ geo_backup <- st_geometry(muniTheta_prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
 
-predicted_values <-
-  read_excel("data/raw/ipea/farm_gate_price/farm_gate_price.xlsx")
 
 # Combine back into an sf object
 muniTheta_prepData <- st_sf(muniTheta_prepData_data, geometry = geo_backup)
@@ -332,21 +330,7 @@ muniTheta_no_geo <- as.data.frame(muniTheta_prepData)
 merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
-merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
-
-muniTheta_prepData <- merged_data_sf
-
-merged_data <- muniTheta_prepData %>%
-  left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
-    average_weighted_price,
-    cattleSlaughter_farmGatePrice_2017
-  ))
-
-
-
-muniTheta_prepData <- merged_data
-
+muniTheta_prepData <- st_sf(merged_data, geometry = geo_backup)
 
 
 
@@ -521,7 +505,7 @@ calibration_78_sites_model <-
 
 # EXPORT
 save(calibration_78_sites_model,
-  file = 
+  file =
     "data/calibration/hmc/hmc_78SitesModel.Rdata"
 )
 

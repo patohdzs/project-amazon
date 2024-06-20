@@ -20,7 +20,7 @@ conflicts_prefer(dplyr::filter)
 tic(msg = "state_emissions.R script", log = TRUE)
 
 # Emissions data
-load("data/clean/emission.Rdata")
+load("data/clean/emissions.Rdata")
 
 # Land cover and use
 load("data/clean/land_use_cover_muni.Rdata")
@@ -47,28 +47,28 @@ land_use_cover_muni <-
 state_emissions <-
   land_use_cover_muni %>%
   left_join(cross_section_muni_sample, by = c("muni_code")) %>%
-  left_join(emission, by = c("state_uf", "year")) %>%
+  left_join(emissions, by = c("state_uf", "year")) %>%
   filter(year >= 1990) %>%
   filter(!is.na(biomeAmazon_share)) %>%
-  group_by(state_uf, year, emission_co2e, netEmission_co2e) %>%
+  group_by(state_uf, year, emissions_co2e, net_emissions_co2e) %>%
   summarise(
     agriculturalUse_area = sum(agriculturalUse_area),
     biomeAmazon_share = sum(biomeAmazon_share * muni_area) / sum(muni_area)
   ) %>%
   mutate(
-    emission_co2e = emission_co2e * biomeAmazon_share,
-    netEmission_co2e = netEmission_co2e * biomeAmazon_share,
+    emissions_co2e = emissions_co2e * biomeAmazon_share,
+    net_emissions_co2e = net_emissions_co2e * biomeAmazon_share,
     agriculturalUse_area = agriculturalUse_area * biomeAmazon_share
   ) %>%
-  select(state_uf, year, emission_co2e, netEmission_co2e, agriculturalUse_area)
+  select(state_uf, year, emissions_co2e, net_emissions_co2e, agriculturalUse_area)
 
 
 # Clear environment
-rm(emission, land_use_cover_muni, cross_section_muni_sample)
+rm(emissions, land_use_cover_muni, cross_section_muni_sample)
 
 # Set labels
-set_label(state_emissions$emission_co2e) <- "agricultural use emission factor adjusted by fraction of state area inside amazon biome (CO2e)"
-set_label(state_emissions$netEmission_co2e) <- "agricultural use net emission factor adjusted by fraction of state area inside amazon biome (CO2e"
+set_label(state_emissions$emissions_co2e) <- "agricultural use emission factor adjusted by fraction of state area inside amazon biome (CO2e)"
+set_label(state_emissions$net_emissions_co2e) <- "agricultural use net emission factor adjusted by fraction of state area inside amazon biome (CO2e"
 set_label(state_emissions$agriculturalUse_area) <- "agricultural area adjusted by fraction of state area inside amazon biome (ha)"
 
 # Save data set

@@ -96,8 +96,8 @@ load("data/calibration/prepData/seriesPriceCattle_prepData.Rdata")
 # DATA MANIPULATION
 
 # EXTRACT AVERAGE 2017 PRICE (use real prices because it is normalized to 2017 )
-aux.price.2017 <-
-  seriesPriceCattle.prepData %>%
+aux_price_2017 <-
+  seriesPriceCattle_prepData %>%
   dplyr::filter(year == 2017) %>%
   dplyr::group_by(year) %>%
   dplyr::summarise(mean_price_2017 = mean(price_real_mon_cattle)/3.192) %>% # BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
@@ -106,42 +106,29 @@ aux.price.2017 <-
 
 
 # Remove rows from attribute data
-muniTheta.prepData_data <- as.data.frame(muniTheta.prepData)  # Convert to regular dataframe
-muniTheta.prepData_data <- muniTheta.prepData_data[-c(142, 106, 112), ]
+muniTheta_prepData_data <- as.data.frame(muniTheta_prepData)  # Convert to regular dataframe
+muniTheta_prepData_data <- muniTheta_prepData_data[-c(142, 106, 112), ]
 
 # Remove geometries
-geo_backup <- st_geometry(muniTheta.prepData)
+geo_backup <- st_geometry(muniTheta_prepData)
 geo_backup <- geo_backup[-c(142, 106, 112)]
 
 
-predicted_values <-
-  read_excel("data/calibration/farm_gate_price.xlsx")
 
 # Combine back into an sf object
-muniTheta.prepData <- st_sf(muniTheta.prepData_data, geometry = geo_backup)
+muniTheta_prepData <- st_sf(muniTheta_prepData_data, geometry = geo_backup)
 
-# 2. Merging the cleaned muniTheta.prepData with my_data
+# 2. Merging the cleaned muniTheta_prepData with my_data
 
 # Convert to non-spatial dataframe for the merge
-muniTheta_no_geo <- as.data.frame(muniTheta.prepData)
+muniTheta_no_geo <- as.data.frame(muniTheta_prepData)
 
 # Perform the merge
 merged_data <- left_join(muniTheta_no_geo, distance_data, by = "muni_code")
 
 # Reattach the geometry
-merged_data_sf <- st_sf(merged_data, geometry = geo_backup)
+muniTheta_prepData <- st_sf(merged_data, geometry = geo_backup)
 
-muniTheta.prepData<-merged_data_sf
-
-merged_data <- muniTheta.prepData %>%
-  left_join(predicted_values, by = "muni_code") %>%
-  mutate(cattleSlaughter_farmGatePrice_2017 = ifelse(is.na(cattleSlaughter_farmGatePrice_2017),
-                                                     average_weighted_price,
-                                                     cattleSlaughter_farmGatePrice_2017))
-# select(-predicted_value_column_name)  # Remove the additional column from the result
-
-
-muniTheta.prepData<-merged_data
 
 
 
@@ -177,8 +164,8 @@ muniTheta.prepData <-
   muniTheta.prepData %>%
     dplyr::filter(zbar_1995_muni >0) %>%
     dplyr::filter(z_1995_muni >0) %>%
-    dplyr::filter(!is.na(zbar_1995_muni)) %>% 
-    dplyr::filter(!is.na(z_1995_muni))  
+    dplyr::filter(!is.na(zbar_1995_muni)) %>%
+    dplyr::filter(!is.na(z_1995_muni))
 
 
 # EXPORT ---------------------------------------------------------------------------------------------------------------------------------------------
