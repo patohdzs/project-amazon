@@ -27,98 +27,98 @@ if (!dir.exists("data/calibration/hmc")) {
 
 # SOURCE
 # TREAT RAW DATA - AMAZON BIOME BOUNDARY (IBGE - 2019)
-source("rsrc/raw2clean/amazonBiome_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/amazonBiome_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW DATA SHAPEFILE OF MUNI DIVISION (2015)
-source("rsrc/raw2clean/muniDivision2015_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/muniDivision2015_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW AGRICULTURAL COMMODITY PRICES FROM SEAB-PR
-source("rsrc/raw2clean/commodityPrices_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/commodityPrices_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW DEFLATOR IPA-DI - FGV
-source("rsrc/raw2clean/deflatorIPA_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/deflatorIPA_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW CATTLE SOLD - AGRICULTURAL CENSUS 2017 (IBGE)
-source("rsrc/raw2clean/agCensus2017CattleSold_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/agCensus2017CattleSold_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW AGRICULTURAL USE AREA - AGRICULTURAL CENSUS 2017 (IBGE)
-source("rsrc/raw2clean/agCensus2017AgUseArea_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/agCensus2017AgUseArea_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW CATTLE SOLD FOR SLAUGHTER - AGRICULTURAL CENSUS 2006 (IBGE)
-source("rsrc/raw2clean/agCensus2006CattleSlaughter_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/agCensus2006CattleSlaughter_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW AGRICULTURAL USE AREA - AGRICULTURAL CENSUS 2006 (IBGE)
-source("rsrc/raw2clean/agCensus2006AgUseArea_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/agCensus2006AgUseArea_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW SEEG AGRICULTURAL EMISSION DATA - LEGAL AMAZON STATES 1990-2019
-source("rsrc/raw2clean/emission_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/emission_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # TREAT RAW DATA EMISSIONS AND GDP BY COUNTRY (WORLD BANK)
-source("rsrc/raw2clean/emissionKuznets_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/emissionKuznets_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # TREAT RAW DATA CARBON PRICE (WORLD BANK)
-source("rsrc/raw2clean/carbonPrice_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/carbonPrice_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # CLEAN RAW BRAZILIAN AMAZON LAND USE DATA TO PROVIDE MUNICIPALITY-BY-YEAR PANEL (MAPBIOMAS COLLECTION 5)
-source("rsrc/raw2clean/landUseCoverMuni_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/landUseCoverMuni_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # UNIFY MONTHLY TIF FILES - HISTORICAL TEMPERATURE (WORLD CLIM)
-source("rsrc/raw2clean/temperature_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/temperature_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # UNIFY MONTHLY TIF FILES - HISTORICAL PRECIPITATION (WORLD CLIM)
-source("rsrc/raw2clean/precipitation_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/precipitation_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # RECLASSIFY PIXELS OUTSIDE BIOME BOUNDARY - LAND USE AND COVER (MAPBIOMAS - COL5)
-source("rsrc/raw2clean/landUseCover_raw2clean.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/landUseCover_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())
 
 # DOWNLOAD ABOVERGROUND BIOMASS/CARBON DATA (ESA BIOMASS - 2010, 2017, 2018)
 # DOWNLOAD PROCESS IS OPTIONAL GIVEN THAT THE DATA IS PROVIDED
-# source("rsrc/raw2clean/abovegroundBiomassESA_download.R", encoding = "UTF-8", echo = TRUE)
+# source("rsrc/cleaning/abovegroundBiomassESA_download.R", encoding = "UTF-8", echo = TRUE)
 
 # END TIMER
 toc(log = TRUE)
