@@ -52,7 +52,7 @@ rm(list = ls())
 
 
 # ADD 2017 ABOVEGROUND BIOMASS DATA (ESA) TO MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/processing/pixelBiomass2017_prepData.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_pixel_biomass.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
@@ -69,7 +69,7 @@ source(here::here("rsrc/processing/prep_muni_sample.R"), encoding = "UTF-8", ech
 rm(list = ls())
 
 # Prepare gamma muni
-source(here::here("rsrc/processing/prep_muni_biomass_2017.R"), encoding = "UTF-8", echo = T)
+source(here::here("rsrc/processing/prep_muni_biomass.R"), encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
@@ -90,7 +90,7 @@ source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = T)
 rm(list = ls())
 
 # PREPATE GENERATE AGGREGATED MAPBIOMAS VARIABLES (FOREST, AGRICULTURAL USE, OTHER) - 1055 SITES
-source("rsrc/processing/prep_biome_class_rasters.R", encoding = "UTF-8", echo = T)
+source("rsrc/processing/prep_land_use_rasters.R", encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
