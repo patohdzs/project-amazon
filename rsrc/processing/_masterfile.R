@@ -90,13 +90,13 @@ source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = T)
 rm(list = ls())
 
 # PREPATE GENERATE AGGREGATED MAPBIOMAS VARIABLES (FOREST, AGRICULTURAL USE, OTHER) - 1055 SITES
-source("rsrc/processing/prep_biome_class_grids.R", encoding = "UTF-8", echo = T)
+source("rsrc/processing/prep_biome_class_rasters.R", encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
 
 # PREPATE GENERATE AGGREGATED SAMPLE OF INTEREST (DIVIDE AMAZON BIOME INTO 1055 CELLS)
-source("rsrc/processing/prep_biome_grid.R", encoding = "UTF-8", echo = T)
+source("rsrc/processing/prep_biome_rasters.R", encoding = "UTF-8", echo = T)
 
 # clear environment
 rm(list = ls())
