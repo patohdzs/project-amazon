@@ -22,7 +22,7 @@ tic(msg = "prep_biome_grid.R script", log = TRUE)
 # Load MapBiomas land use data (30m minicells)
 biome_raster <- rast("data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL_AMAZONIA_AMAZONIA-2017.tif")
 
-# Load amazon biome data
+# Load Amazon biome data
 load("data/clean/amazon_biome.Rdata")
 
 # Change biome crs to match raster
@@ -43,7 +43,7 @@ biome_raster <- aggregate(
   na.rm = TRUE
 ) / (2250^2)
 
-# Add name
+# Add layer name
 names(biome_raster) <- "share_amazon_biome"
 
 # Save biome shares raster
@@ -51,7 +51,7 @@ out_file <- "data/processed/amazon_biome_shares_1043_sites.tif"
 writeRaster(biome_raster, out_file, overwrite = TRUE)
 
 # Convert cell size to hectares
-biome_raster_ha <- terra::cellSize(biome_raster, unit = "ha")
+biome_raster_ha <- cellSize(biome_raster, unit = "ha")
 
 # Clean environment
 rm(biome_raster)
@@ -61,7 +61,7 @@ names(biome_raster_ha) <- "pixel_area_ha"
 
 # Save areas raster
 out_file <- "data/processed/amazon_biome_areas_1043_sites.tif"
-terra::writeRaster(biome_raster_ha, , overwrite = TRUE)
+writeRaster(biome_raster_ha, out_file, overwrite = TRUE)
 
 # Clean environment
 rm(biome_raster_ha)
