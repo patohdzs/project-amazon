@@ -52,7 +52,7 @@ fig_3 <- grid %>%
   scale_fill_viridis_c(option = "plasma", na.value = "grey") +
   labs(
     title = "Carbon Sequestration Rate",
-    fill = "Mg carbon/ha",
+    fill = "Mg CO2e/ha",
     x = "Longitude",
     y = "Latitude"
   )
@@ -61,6 +61,31 @@ ggsave(filename = "plots/gamma.png", plot = fig_3)
 
 # Compare old and new gammas
 model_1 <- lm(gamma_1043Sites ~ new_gamma, data = grid)
-model_2 <- lm(scale(gamma_1043Sites) ~ scale(new_gamma), data = grid)
-stargazer(model_1, model_2, out = "plots/table_1.tex")
-stargazer(model_1, model_2, out = "plots/table_1.txt")
+model_2 <- lm(log(gamma_1043Sites) ~ new_gamma, data = grid)
+model_3 <- lm(log(gamma_1043Sites) ~ log(new_gamma), data = grid)
+stargazer(model_1, model_2, model_3, out = "plots/table_1.tex")
+stargazer(model_1, model_2, model_3, out = "plots/table_1.txt")
+
+
+# Create a scatter plot with a regression line
+fig_4 <- ggplot(grid, aes(x = new_gamma, y = gamma_1043Sites)) +
+  geom_point() + # Scatter plot
+  geom_smooth(method = "lm") + # Regression line
+  labs(
+    title = "Current gamma v.s new gamma",
+    x = "New gamma (Mg carbon/ha/yr)",
+    y = "Current gamma (Mg CO2/ha)"
+  )
+
+ggsave(filename = "plots/reg_levels.png", plot = fig_4)
+
+fig_5 <- ggplot(grid, aes(x = log(new_gamma), y = log(gamma_1043Sites))) +
+  geom_point() + # Scatter plot
+  geom_smooth(method = "lm") + # Regression line
+  labs(
+    title = "Current gamma v.s new gamma",
+    x = "log(New gamma)",
+    y = "log(Current gamma)"
+  )
+
+ggsave(filename = "plots/reg_logs.png", plot = fig_5)
