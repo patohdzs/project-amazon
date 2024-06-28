@@ -114,3 +114,13 @@ fig_6 <- grid %>%
   )
 
 ggsave(filename = "plots/scatter_levels.png", plot = fig_6)
+
+
+# Find % of underestimates
+pct_under <- grid %>%
+  mutate(new_gamma = new_gamma * 110.1) %>%
+  mutate(under_pred = gamma_1043Sites < new_gamma) %>%
+  summarize(pct_under = mean(under_pred, na.rm = TRUE) * 100)
+
+# Print the result
+print(pct_under)
