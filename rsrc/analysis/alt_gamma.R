@@ -1,7 +1,12 @@
 library(stargazer)
 library(ggplot2)
 library(terra)
+library(tidyverse)
 library(sf)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter())
+conflicts_prefer(terra::extract)
 
 # Load carbon sequestration rate estimates
 ngs_gextent <- rast("data/raw/global_forest_watch/young_forest_sequestration_rate_Griscom_extent.tif")
@@ -89,3 +94,23 @@ fig_5 <- ggplot(grid, aes(x = log(new_gamma), y = log(gamma_1043Sites))) +
   )
 
 ggsave(filename = "plots/reg_logs.png", plot = fig_5)
+
+
+# Scatterplot adjusting to stock
+fig_6 <- grid %>%
+  mutate(new_gamma = new_gamma * 110.1) %>%
+  ggplot(aes(x = new_gamma, y = gamma_1043Sites)) +
+  geom_point() +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    color = "red",
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Current gamma v.s new gamma",
+    x = "New gamma (Mg carbon/ha/yr)",
+    y = "Current gamma (Mg CO2/ha)"
+  )
+
+ggsave(filename = "plots/scatter_levels.png", plot = fig_6)
