@@ -24,7 +24,7 @@ conflicts_prefer(terra::extract())
 tic(msg = "pixel_biomass_2017.R script", log = TRUE)
 
 # Load pixel data for primary forest
-load("data/processed/pixel_primary_forest_2018.Rdata")
+load("data/processed/pixel_primary_forest_2017.Rdata")
 
 # Aboveground biomass rasters
 agb_raster <- map(
@@ -36,16 +36,13 @@ agb_raster <- map(
   rast
 )
 
-
 # Transform to sf
-pixel_primary_forest <- st_as_sf(
-  x = pixel_primary_forest,
+pixel_primary_forest_2017 <- st_as_sf(
+  x = pixel_primary_forest_2017,
   coords = c("lon", "lat"),
   crs = st_crs(4326),
   remove = FALSE
 )
-
-
 
 # Merge AGB data with primary forest sample
 pixel_biomass_2017 <-
@@ -53,7 +50,7 @@ pixel_biomass_2017 <-
     .x = seq_along(agb_raster),
     .f = function(.x) {
       # transform to spatVector
-      aux_polygons <- vect(pixel_primary_forest)
+      aux_polygons <- vect(pixel_primary_forest_2017)
 
       # crop spatial points to raster extent
       aux_polygons <- crop(aux_polygons, agb_raster[[.x]])
@@ -89,7 +86,7 @@ pixel_biomass_2017 <-
   )
 
 # Check if all points were extracted
-if (length(pixel_biomass_2017$lon) != length(pixel_primary_forest$lon)) {
+if (length(pixel_biomass_2017$lon) != length(pixel_primary_forest_2017$lon)) {
   print("Number of spatial points does not match!")
 }
 
