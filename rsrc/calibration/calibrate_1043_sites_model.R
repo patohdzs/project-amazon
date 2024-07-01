@@ -15,6 +15,9 @@ library(terra)
 library(readxl)
 library(tidyverse)
 library(tictoc)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter)
 
 # Start timer
 tic(msg = "calibrate_1043_sites_model.R script", log = TRUE)
@@ -30,10 +33,6 @@ load("data/processed/state_emissions.Rdata")
 
 # Load cattle price index
 load("data/processed/cattle_price_index.Rdata")
-
-# Load distance to capital data
-dist_to_capital <-
-  read_excel("data/raw/ipea/distance_to_capital/ipeadata[21-08-2023-01-28].xls")
 
 # Load raster data (amazon biome share, pixel areas, and land uses)
 raster_variables <- rast(
@@ -83,7 +82,7 @@ muni_data <- muni_data %>%
   mutate(co2e_ha_2017 = (agb_2017 / 2) * (44 / 12))
 
 # Regress log-gamma on geographic covariates
-reg_gamma_2017 <- lm(
+gamma_reg <- lm(
   formula = log(co2e_ha_2017) ~
     log(historical_precip) +
     log(historical_temp) +
@@ -95,35 +94,30 @@ reg_gamma_2017 <- lm(
 
 # Compute fitted values and transform back into levels
 muni_data <- muni_data %>%
-  mutate(co2e_ha_2017_fitted = exp(predict(reg_gamma_2017, .)))
+  mutate(co2e_ha_2017_fitted = exp(predict(gamma_reg, .)))
 
-# Match minicells with sites
-site_gamma_2017 <- calib_df %>%
+# Match municipalities with sites
+site_level_gamma <- calib_df %>%
   st_intersection(muni_data) %>%
   select(
     id,
     muni_code,
     muni_area,
-    co2e_ha_2017,
-    co2e_ha_2017_fitted,
-    historical_precip,
-    historical_temp,
-    lat,
-    lon
+    co2e_ha_2017_fitted
   )
 
 # Set area units
-site_gamma_2017$muni_site_area <-
-  st_area(site_gamma_2017) %>%
+site_level_gamma$muni_site_area <-
+  st_area(site_level_gamma) %>%
   set_units(ha) %>%
   unclass()
 
 # Drop spatial feature
-site_gamma_2017 <- site_gamma_2017 %>%
+site_level_gamma <- site_level_gamma %>%
   st_drop_geometry()
 
 # Average carbon density on primary forest areas by site
-site_gamma_2017 <- site_gamma_2017 %>%
+site_level_gamma <- site_level_gamma %>%
   group_by(id) %>%
   summarise(
     gamma = weighted.mean(
@@ -134,32 +128,18 @@ site_gamma_2017 <- site_gamma_2017 %>%
   )
 
 # Add site gamma to calibration variables
-calib_df <- calib_df %>% left_join(site_gamma_2017)
+calib_df <- calib_df %>% left_join(site_level_gamma)
 
 # Clean environment
-rm(site_gamma_2017)
-
-# Identify adjacent neighbors
-aux_neighbors <- st_is_within_distance(
-  calib_df,
-  calib_df,
-  dist = 100,
-  remove_self = TRUE
-)
-
-# Impute values for missing gammas using the average of adjacent neighbors
-calib_df <- calib_df %>%
-  mutate(gamma = if_else(is.na(gamma),
-    apply(aux_neighbors, 1, function(i) {
-      mean(.$gamma[i], na.rm = TRUE)
-    }),
-    gamma
-  ))
+rm(site_level_gamma)
 
 # Estimate of alpha same as in the global model
 calib_df <- calib_df %>%
   mutate(alpha = 1 - (1 - 0.99)^(1 / 100))
 
+# Set discount rate (delta) of 2%
+calib_df <- calib_df %>%
+  mutate(delta = 0.02)
 
 # Calculate average net emission factor
 #   from agricultural use across years and states
@@ -177,7 +157,6 @@ calib_df <- calib_df %>%
 # Clean environment
 rm(avg_net_emission_factor)
 
-
 # Zeta is calibrated such that the marginal cost of changing land use
 #   (zeta*forest_to_pasture_transition_area) matches the forest to
 #   pasture transition cost estimated by Araujo, Costa and Sant'Anna (2022),
@@ -193,7 +172,7 @@ aux_transition_cost <- 1614.54 / 4.14
 aux_transition_area <- (0.065 * 0.72 * 501506775) / (2017 - 2008 + 1)
 zeta <- aux_transition_cost / aux_transition_area
 
-# Alternative value based on (https://www.otempo.com.br/brasil/investigacoes-revelam-quadrilhas-e-ganho-milionario-por-tras-do-desmate-1.2229571)
+# Alternative value based on https://shorturl.at/jgp9i
 zeta_alt <- 483 / aux_transition_area
 
 # Estimate of zeta same as in the global model
@@ -209,50 +188,16 @@ calib_df <- calib_df %>%
     x_2017 = gamma * (zbar_2017 - z_2017)
   )
 
-
-
-# Extract average cattle price index
-# BRL to USD (commercial exchange rate - selling - average - annual - 2017 - ipeadata))
-brl_to_usd <- 3.192
-
-aux_price_2017 <-
-  cattle_price_index %>%
-  filter(year == 2017) %>%
-  group_by(year) %>%
-  summarise(mean_price_2017 = mean(price_real_mon_cattle) / brl_to_usd) %>%
-  pull(mean_price_2017)
-
-# Remove geometries
-geo_backup <- st_geometry(muni_data)
-geo_backup <- geo_backup[-c(142, 106, 112)]
-
-# Remove rows from attribute data
-muni_data <- as.data.frame(muni_data)
+# Remove outliers from municipal data
 muni_data <- muni_data[-c(142, 106, 112), ]
-
-# Combine back into an sf object
-muni_data <- st_sf(muni_data, geometry = geo_backup)
-
-# Convert to non-spatial dataframe for the merge
-muniTheta_no_geo <- as.data.frame(muni_data)
-
-# Merge municipal data with distance to capital data
-dist_to_capital$muni_code <- as.numeric(dist_to_capital$muni_code)
-merged_data <- left_join(muniTheta_no_geo, dist_to_capital, by = "muni_code")
-
-# Reattach the geometry
-muni_data <- st_sf(merged_data, geometry = geo_backup)
 
 # Filter out observations missing distance to capital
 muni_data <- muni_data %>%
   filter(!is.na(distance))
 
-# Exclude zeros
-muni_data_filtered <- muni_data %>%
-  filter(slaughter_value_per_ha_2017 > 0)
-
 # Theta regression
-reg_theta <- muni_data_filtered %>%
+theta_reg <- muni_data %>%
+  filter(slaughter_value_per_ha_2017 > 0) %>%
   lm(
     formula = log(slaughter_value_per_ha_2017) ~
       lat +
@@ -268,80 +213,65 @@ reg_theta <- muni_data_filtered %>%
 
 # Extract fitted values
 muni_data <- muni_data %>%
-  mutate(slaughter_value_per_ha_fitted = exp(predict(reg_theta, .)))
+  mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .)))
 
-# Extract minimum positive fitted value
-aux_positive_theta_fitted <- muni_data %>%
-  filter(slaughter_value_per_ha_fitted > 0) %>%
-  pull(slaughter_value_per_ha_fitted) %>%
-  min()
-
-# Winsorize cattleSlaughter_valuePerHa_fitted
-muni_data <- muni_data %>%
-  mutate(d_theta_winsorized_2017 = if_else(slaughter_value_per_ha_fitted <= 0,
-    1,
-    0
-  ))
-# clean environment
-rm(reg_theta, aux_positive_theta_fitted)
-
-# Match munis with sites
-site_theta_2017 <- st_intersection(
-  calib_df %>% select(id),
-  muni_data %>% select(
-    muni_code, muni_area, slaughter_value_per_ha_fitted,
-    pasture_area_2017, d_theta_winsorized_2017
+# Match municipalities with sites
+site_level_theta <- calib_df %>%
+  st_intersection(muni_data) %>%
+  select(
+    id,
+    muni_code,
+    muni_area,
+    pasture_area_2017,
+    slaughter_value_per_ha_fitted
   )
-)
 
-
-# Calculate muni areas inside each site
-site_theta_2017$muni_site_area <-
-  st_area(site_theta_2017) %>%
+# Calculate municipality areas inside each site
+site_level_theta$muni_site_area <-
+  st_area(site_level_theta) %>%
   set_units(ha) %>%
   unclass()
 
 # Drop spatial feature
-site_theta_2017 <-
-  site_theta_2017 %>%
+site_level_theta <- site_level_theta %>%
   st_drop_geometry()
 
-# Calculate theta and pasture_area by site
+# Extract average cattle price index for 2017
+# BRL to USD (Commercial ER - selling - average - annual - 2017 - ipeadata))
+brl_to_usd <- 3.192
+
+mean_pa_2017 <-
+  cattle_price_index %>%
+  filter(year == 2017) %>%
+  group_by(year) %>%
+  summarise(mean_price_2017 = mean(price_real_mon_cattle) / brl_to_usd) %>%
+  pull(mean_price_2017)
+
+calib_df <- calib_df %>%
+  mutate(mean_pa_2017 = mean_pa_2017)
+
+# Calculate theta and pasture area by site
 # (for each muni adjust the value by the share of the muni area inside the site)
-aux_theta_2017 <-
-  site_theta_2017 %>%
+site_level_theta <- site_level_theta %>%
   group_by(id) %>%
   summarise(
-    theta2017_1043Sites = weighted.mean(
-      slaughter_value_per_ha_fitted / aux_price_2017,
+    theta = weighted.mean(
+      slaughter_value_per_ha_fitted / mean_pa_2017,
       w = muni_site_area,
       na.rm = TRUE
     ),
     pasture_area_2017 = sum(pasture_area_2017 * (muni_site_area / muni_area), na.rm = TRUE),
-    d_theta_winsorized_2017 = min(d_theta_winsorized_2017, na.rm = T)
   )
 
-# Add cattle_slaughter_value_fitted and pasture_area to spatial variables
-calib_df <- left_join(calib_df, aux_theta_2017)
+# Add thetas and pasture_area to calibration data
+calib_df <- calib_df %>% left_join(site_level_theta)
 
 # Clean environment
-rm(aux_theta_2017)
+rm(site_level_theta)
 
 # Filter out missing vlaues
 calib_df <- calib_df %>%
-  filter(!is.na(theta2017_1043Sites))
-
-# Calculate average theta using the values of 2006 and 2017
-calib_df <-
-  calib_df %>%
-  group_by(id) %>%
-  mutate(theta_1043Sites = rowMeans(across(starts_with("theta20")), na.rm = T)) %>%
-  ungroup()
-
-# Change from BRL to USD (commercial exchange rate - selling - average - monthly - january/2017 - ipeadata)
-cattle_price_index <- cattle_price_index %>%
-  mutate(price_real_mon_cattle = price_real_mon_cattle / 3.1966) %>%
-  filter(year >= 1995, year <= 2017) # select time period
+  filter(!is.na(theta))
 
 # Add site ID's
 calib_df <- calib_df %>%
@@ -359,7 +289,7 @@ calib_df %>%
 # Save calibration data
 save(calib_df, file = "data/calibration/calibration_1043_sites.Rdata")
 
-# Remove spatial feature
+# Save calibration data CSV
 calib_df %>%
   st_drop_geometry() %>%
   write_csv(file = "data/calibration/calibration_1043_sites.csv")

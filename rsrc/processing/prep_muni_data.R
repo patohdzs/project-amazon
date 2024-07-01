@@ -14,10 +14,11 @@ library(tictoc)
 library(tidyverse)
 library(terra)
 library(nngeo)
+library(readxl)
 library(sjlabelled)
 library(conflicted)
 
-conflicts_prefer(dplyr::filter())
+conflicts_prefer(dplyr::filter)
 conflicts_prefer(terra::extract)
 
 # Start timer
