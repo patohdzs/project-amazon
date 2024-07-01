@@ -44,6 +44,10 @@ raster_temp <- rast("data/clean/temperature.tif")
 # HISTORICAL PRECIPITATION
 raster_precip <- rast("data/clean/precipitation.tif")
 
+# Load distance to capital data
+dist_to_capital <-
+  read_excel("data/raw/ipea/distance_to_capital/ipeadata[21-08-2023-01-28].xls")
+
 # Get mean biomass per municipality
 muni_biomass_2017 <- muni_biomass_2017 %>%
   group_by(muni_code) %>%
@@ -53,18 +57,20 @@ muni_biomass_2017 <- muni_biomass_2017 %>%
 # Commercial exchange rate - selling - average - annual - 2017 - ipeadata
 brl_to_usd <- 3.192
 
-# CONVERT CATTLE SOLD VALUE TO USD
-# change from thousand BRL to BRL to USD
+# Convert from thousand BRL to BRL to USD
 cattle_sold_2017 <-
   cattle_sold_2017 %>%
   mutate(slaughter_value_2017 = 1000 * cattleSoldSlaughterLargeProp_value_2017 / brl_to_usd) %>%
   rename(slaughter_head_2017 = cattleSoldSlaughterLargeProp_head_2017) %>%
   select(muni_code, slaughter_value_2017, slaughter_head_2017)
 
+# Select distance to capital column
+dist_to_capital <- dist_to_capital %>%
+  mutate(muni_code = as.numeric(muni_code)) %>%
+  select(muni_code, distance)
 
 # Select land use area columns
-use_area_2017 <-
-  use_area_2017 %>%
+use_area_2017 <- use_area_2017 %>%
   select(
     muni_code,
     agUse_area_2017,
@@ -92,13 +98,11 @@ spatial_muni_sample$historical_precip <- extract(raster_precip, vect(spatial_mun
 spatial_muni_sample$historical_temp <- extract(raster_temp, vect(spatial_muni_sample), fun = mean, na.rm = TRUE)[, 2]
 
 # Reproject spatial sample
-spatial_muni_sample <-
-  spatial_muni_sample %>%
+spatial_muni_sample <- spatial_muni_sample %>%
   st_transform(st_crs(5880))
 
 # Clean environment
 rm(raster_precip, raster_temp)
-
 
 # Add municipality centroid coordinates
 aux_centroids <-
@@ -118,7 +122,8 @@ muni_data <-
   spatial_muni_sample %>%
   left_join(cattle_sold_2017, by = c("muni_code")) %>%
   left_join(use_area_2017, by = c("muni_code")) %>%
-  left_join(muni_biomass_2017, by = c("muni_code"))
+  left_join(muni_biomass_2017, by = c("muni_code")) %>%
+  left_join(dist_to_capital, by = c("muni_code"))
 
 # Remove municipalities outside Amazon biome
 muni_data <- muni_data %>% filter(!is.na(biomeAmazon_share))
