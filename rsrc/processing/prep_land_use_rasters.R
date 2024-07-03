@@ -10,6 +10,7 @@
 # 1: -
 
 library(sf)
+library(glue)
 library(tictoc)
 library(terra)
 library(conflicted)
@@ -17,9 +18,9 @@ library(conflicted)
 conflicts_prefer(terra::extract())
 
 # START TIMER
-tic(msg = "mapbiomas_1043SitesModel.R script", log = TRUE)
+tic(msg = "prep_biome_class_rasters.R script", log = TRUE)
 
-mapbiomas_class <- c("forest", "agriculturalUse", "other")
+mapbiomas_class <- c("forest", "agricultural_use", "other")
 aux_year <- c(1995, 2008, 2017)
 
 for (class in mapbiomas_class) {
@@ -33,7 +34,7 @@ for (class in mapbiomas_class) {
       # Create dummy for forest class
       raw_raster[raw_raster != 3] <- 0
       raw_raster[raw_raster == 3] <- 1
-    } else if (class == "agriculturalUse") {
+    } else if (class == "agricultural_use") {
       # Create dummy for agricultural use classes
       raw_raster[!(raw_raster %in% c(15, 20, 39, 41))] <- 0
       raw_raster[raw_raster %in% c(15, 20, 39, 41)] <- 1
@@ -56,7 +57,7 @@ for (class in mapbiomas_class) {
     names(raw_raster) <- glue("share_{class}_{year}")
 
     # Save raster data set
-    out_file <- glue("data/processed/amazon_biome_{class}_{year}_1043_sites.tif")
+    out_file <- glue("data/processed/amazon_{class}_{year}_shares_1043_sites.tif")
     writeRaster(raw_raster, out_file, overwrite = TRUE)
 
     # Clean environment
