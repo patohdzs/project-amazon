@@ -9,18 +9,17 @@
 ```
 .
 └── data
-    └── calibration
-        └── hmc
-            ├── muni_data_gamma.geojson
-            ├── muni_data_theta.geojson
-            ├── hmc_78SitesModel.csv
-            ├── hmc_1043SitesModel.csv
-            └── id_78.geojson
-            └── id_1043.geojson
-            └── site_78_data_gamma.geojson
-            └── site_78_data_theta.geojson
-            └── site_1043_data_gamma.geojson
-            └── site_1043_data_theta.geojson
+    └── hmc
+        ├── muni_data_gamma.geojson
+        ├── muni_data_theta.geojson
+        ├── hmc_78SitesModel.csv
+        ├── hmc_1043SitesModel.csv
+        └── id_78.geojson
+        └── id_1043.geojson
+        └── site_78_data_gamma.geojson
+        └── site_78_data_theta.geojson
+        └── site_1043_data_gamma.geojson
+        └── site_1043_data_theta.geojson
 ```
 
 ## Installation
