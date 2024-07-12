@@ -1,3 +1,9 @@
+####### Baseline model without uncertainty
+
+# For uncertainty in productivity, please look at scripts/conduction_hmc
+# For uncertainty in price, please look at scripts/conduction_mpc
+
+
 import pandas as pd
 
 from pysrc.analysis import value_decomposition
