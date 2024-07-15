@@ -83,11 +83,12 @@ b = [0, 10, 15, 20, 25]
 pe_values = [pee + bi for bi in b]
 for pe in pe_values:
     with open(result_folder + f"/pe_{pe}/results.pcl", "rb") as f:
-        b = pickle.load(f)
-    theta_vals = b["final_sample"][:16000, :78].mean(axis=0)
-    gamma_vals = b["final_sample"][:16000, 78:].mean(axis=0)
+        para = pickle.load(f)
+    theta_vals = para["final_sample"][:16000, :78].mean(axis=0)
+    gamma_vals = para["final_sample"][:16000, 78:].mean(axis=0)
     x0_vals = gamma_vals * forest_area_2017
 
+    b_val = pe - pee
     results = solve_planner_problem(
         T=T,
         theta=theta_vals,
@@ -109,7 +110,7 @@ for pe in pe_values:
             T=T,
             pee=pee,
             pa=pa,
-            b=b,
+            b=b_val,
             theta=theta_vals,
         ),
     )
