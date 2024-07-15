@@ -9,11 +9,11 @@ conflicts_prefer(terra::extract())
 # START TIMER
 tic(msg = "prep_biome_class_rasters.R script", log = TRUE)
 
-in_file <- "data/raw/mapbiomas/pasture_quality/pasture-quality-amazonia-2017.tif"
+in_files <- list.files("data/raw/mapbiomas/pasture_quality/", full.names = TRUE)
 
 for (level in c(1, 2, 3)) {
   # Read in pasture quality raster
-  pasture_quality_rst <- rast(in_file)
+  pasture_quality_rst <- rast(in_files)
 
   # Create dummy for pasture quality class
   pasture_quality_rst[pasture_quality_rst != level] <- 0
@@ -27,10 +27,13 @@ for (level in c(1, 2, 3)) {
     na.rm = TRUE
   ) / (675^2)
 
-  # Rename raster layer
-  names(pasture_quality_rst) <- glue("share_pasture_quality_{level}_2017")
+  # Rename raster layers
+  names(pasture_quality_rst) <- sapply(
+    1:nlyr(pasture_quality_rst),
+    function(x) glue("share_pasture_quality_{level}_{2007 + x}")
+  )
 
-  # Write raster
-  out_file <- glue("data/processed/amazon_pq_{level}_2017_shares_1043_sites.tif")
+  # Write rasters
+  out_file <- glue("data/processed/share_pq_{level}_1043_sites.tif")
   writeRaster(pasture_quality_rst, out_file, overwrite = TRUE)
 }

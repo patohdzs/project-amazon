@@ -33,5 +33,5 @@ sec_veg_rst <- aggregate(
 names(sec_veg_rst) <- "share_secondary_vegetation_2017"
 
 # Write raster
-out_file <- "data/processed/amazon_sec_veg_2017_shares_1043_sites.tif"
+out_file <- "data/processed/share_sec_veg_2017_1043_sites.tif"
 writeRaster(sec_veg_rst, out_file, overwrite = TRUE)
