@@ -3,7 +3,7 @@
 ## Requirements
 - Python >= 3.9
 - Gurobi >= 10.0.3 or GAMs >= (add version)
-
+(Currently only works with Gurobi solver, please make sure install Gurobi before using the quick_script)
 
 ## Data directory structure
 ```
