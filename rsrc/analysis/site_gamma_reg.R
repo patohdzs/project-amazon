@@ -102,19 +102,7 @@ stargazer(model_1, model_2, model_3, out = "plots/gamma_calib/1043_sites_reg_tab
 
 # Predict gammas
 calib_df <- calib_df %>%
-  mutate(gamma_fitted = exp(predict(model_3, .)))
+  mutate(muni_reg_gamma = gamma) %>%
+  mutate(site_reg_gamma = exp(predict(model_3, .)))
 
-# Transform CRS for better plots
-calib_df <- calib_df %>% st_transform(crs = 4326)
-
-fig_1 <- calib_df %>%
-  ggplot() +
-  geom_sf(aes(fill = gamma_fitted), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey") +
-  labs(
-    fill = "Mg CO2e/ha",
-    x = "Longitude",
-    y = "Latitude"
-  )
-
-ggsave(filename = "plots/gamma_calib/1043_sites_reg_gamma.pdf", plot = fig_1)
+save(calib_df, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
