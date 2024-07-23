@@ -29,10 +29,32 @@ calib_df$alt_gamma <- alt_gamma[, -1]
 # Transform CRS for better plots
 calib_df <- calib_df %>% st_transform(crs = 4326)
 
+# Compute the global min and max for the fill scale
+global_min <- min(
+  calib_df$co2e,
+  calib_df$alt_gamma,
+  calib_df$site_reg_gamma,
+  na.rm = TRUE
+)
+global_max <- max(
+  calib_df$co2e,
+  calib_df$alt_gamma,
+  calib_df$site_reg_gamma,
+  na.rm = TRUE
+)
+
+# Define the fill scale with consistent limits
+fill_scale <- scale_fill_viridis_c(
+  option = "plasma",
+  na.value = "grey",
+  limits = c(global_min, global_max)
+)
+
+
 fig_1 <- calib_df %>%
   ggplot() +
   geom_sf(aes(fill = co2e), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey") +
+  fill_scale +
   labs(
     fill = "Mg CO2e/ha",
     x = "Longitude",
@@ -44,7 +66,7 @@ ggsave(filename = "plots/gamma_calib/true_gamma.pdf", plot = fig_1)
 fig_2 <- calib_df %>%
   ggplot() +
   geom_sf(aes(fill = alt_gamma), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey") +
+  fill_scale +
   labs(
     fill = "Mg CO2e/ha",
     x = "Longitude",
@@ -57,7 +79,7 @@ ggsave(filename = "plots/gamma_calib/alt_gamma.pdf", plot = fig_2)
 fig_3 <- calib_df %>%
   ggplot() +
   geom_sf(aes(fill = site_reg_gamma), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey") +
+  fill_scale +
   labs(
     fill = "Mg CO2e/ha",
     x = "Longitude",
@@ -65,6 +87,18 @@ fig_3 <- calib_df %>%
   )
 
 ggsave(filename = "plots/gamma_calib/1043_sites_reg_gamma.pdf", plot = fig_3)
+
+fig_4 <- calib_df %>%
+  ggplot() +
+  geom_sf(aes(fill = muni_reg_gamma), color = "white") +
+  fill_scale +
+  labs(
+    fill = "Mg CO2e/ha",
+    x = "Longitude",
+    y = "Latitude"
+  )
+
+ggsave(filename = "plots/gamma_calib/muni_reg_gamma.pdf", plot = fig_3)
 
 # Compare our estimates v.s and alt gammas
 model_1 <- lm(co2e ~ 0 + muni_reg_gamma, data = calib_df)
@@ -78,7 +112,7 @@ stargazer(model_1, model_2, model_3, model_4, model_5, model_6, out = "plots/gam
 stargazer(model_1, model_2, model_3, model_4, model_5, model_6, out = "plots/gamma_calib/gamma_comparison.txt")
 
 # Scatterplot adjusting to stock
-fig_4 <- calib_df %>%
+fig_5 <- calib_df %>%
   ggplot(aes(x = alt_gamma, y = site_reg_gamma)) +
   geom_point() +
   geom_abline(
@@ -92,9 +126,9 @@ fig_4 <- calib_df %>%
     y = "1043-sites regression gamma (Mg CO2e/ha)"
   )
 
-ggsave(filename = "plots/scatter_site_reg.pdf", plot = fig_4)
+ggsave(filename = "plots/gamma_calib/scatter_site_reg.pdf", plot = fig_5)
 
-fig_5 <- calib_df %>%
+fig_6 <- calib_df %>%
   ggplot(aes(x = alt_gamma, y = muni_reg_gamma)) +
   geom_point() +
   geom_abline(
@@ -108,7 +142,7 @@ fig_5 <- calib_df %>%
     y = "Municipal regression gamma (Mg CO2e/ha)"
   )
 
-ggsave(filename = "plots/scatter_muni_reg.pdf", plot = fig_5)
+ggsave(filename = "plots/gamma_calib/scatter_muni_reg.pdf", plot = fig_6)
 
 
 # Find % of underestimates
