@@ -270,8 +270,8 @@ calib_df <- calib_df %>% left_join(site_level_theta)
 rm(site_level_theta)
 
 # Filter out missing vlaues
-calib_df <- calib_df %>%
-  filter(!is.na(theta))
+#calib_df <- calib_df %>%
+#  filter(!is.na(theta))
 
 # Add site ID's
 calib_df <- calib_df %>%
