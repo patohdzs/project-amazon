@@ -100,7 +100,7 @@ fig_4 <- calib_df %>%
 
 ggsave(filename = "plots/gamma_calib/muni_reg_gamma.pdf", plot = fig_3)
 
-# Compare our estimates v.s and alt gammas
+# Compare all estimates v.s data on CO2e
 model_1 <- lm(co2e ~ 0 + muni_reg_gamma, data = calib_df)
 model_2 <- lm(co2e ~ muni_reg_gamma, data = calib_df)
 model_3 <- lm(co2e ~ 0 + site_reg_gamma, data = calib_df)
@@ -110,6 +110,22 @@ model_6 <- lm(co2e ~ alt_gamma, data = calib_df)
 
 stargazer(model_1, model_2, model_3, model_4, model_5, model_6, out = "plots/gamma_calib/gamma_comparison.tex")
 stargazer(model_1, model_2, model_3, model_4, model_5, model_6, out = "plots/gamma_calib/gamma_comparison.txt")
+
+# Compare our estimates v.s Cook-patton
+model_1 <- lm(alt_gamma ~ 0 + muni_reg_gamma, data = calib_df)
+model_2 <- lm(alt_gamma ~ muni_reg_gamma, data = calib_df)
+model_3 <- lm(log(alt_gamma) ~ log(muni_reg_gamma), data = calib_df)
+
+stargazer(model_1, model_2, model_3, out = "plots/muni_reg_gamma_vs_cook_patton.tex")
+stargazer(model_1, model_2, model_3, out = "plots/muni_reg_gamma_vs_cook_patton.txt")
+
+# Compare our estimates v.s Cook-patton
+model_1 <- lm(alt_gamma ~ 0 + site_reg_gamma, data = calib_df)
+model_2 <- lm(alt_gamma ~ site_reg_gamma, data = calib_df)
+model_3 <- lm(log(alt_gamma) ~ log(site_reg_gamma), data = calib_df)
+
+stargazer(model_1, model_2, model_3, out = "plots/site_reg_gamma_vs_cook_patton.tex")
+stargazer(model_1, model_2, model_3, out = "plots/site_reg_gamma_vs_cook_patton.txt")
 
 # Scatterplot adjusting to stock
 fig_5 <- calib_df %>%
