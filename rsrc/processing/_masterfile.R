@@ -9,106 +9,81 @@
 # > NOTES
 # 1: -
 
+library(tictoc)
 
-# START TIMER
-tictoc::tic(msg = "_masterfile_prep.R script", log = TRUE)
+# Start timer
+tic(msg = "_masterfile.R script", log = TRUE)
 
-
+# Create data output directory
 if (!dir.exists("data/processed")) {
   dir.create("data/processed", recursive = TRUE)
 }
 
-
-# CONSTRUCT MONTHLY COMMODITY REAL PRICES INDICES
-source(here::here("rsrc/processing/prep_cattle_price_index.R"), encoding = "UTF-8", echo = TRUE)
+# Construct monthly commodity real prices indices
+source("rsrc/processing/prep_cattle_price_index.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())
 
+# Extract sample of mapbiomas 30m-pixels and recover full panel (1985-2019)
+source("rsrc/processing/prep_pixel_sample.R", encoding = "UTF-8", echo = TRUE)
 
-
-# PIXEL LEVEL
-
-# EXTRACT RANDOM SAMPLE OF MAPBIOMAS 30M-PIXELS AND RECOVER FULL PANEL (1985-2019)
-source(here::here("rsrc/processing/prep_pixel_sample.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
+# Calculate area of 30m-pixels
+source("rsrc/processing/prep_pixel_area.R", encoding = "UTF-8", echo = TRUE)
 
-# CALCULATE AREA OF MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/processing/prep_pixel_area.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
+# Categorize 30m-pixels
+source("rsrc/processing/prep_pixel_categories.R", encoding = "UTF-8", echo = TRUE)
 
-# CREATE AGGREGATED CATEGORIES OF INTEREST BASED ON MAPBIOMAS 30M-PIXELS VALUES
-source(here::here("rsrc/processing/prep_pixel_categories.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
+# Obtain aboveground biomass for 30m-pixels classified as primary forest
+source("rsrc/processing/prep_pixel_biomass.R", encoding = "UTF-8", echo = TRUE)
 
-
-# ADD 2017 ABOVEGROUND BIOMASS DATA (ESA) TO MAPBIOMAS 30M-PIXELS
-source(here::here("rsrc/processing/prep_pixel_biomass.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
+# Define municipal-level sample
+source("rsrc/processing/prep_muni_sample.R", encoding = "UTF-8", echo = TRUE)
 
-
-
-# MUNI LEVEL
-
-# DEFINE MUNI-LEVEL SAMPLE AND SAVE IT IN SPATIAL, CROSS-SECTION AND PANEL FORMATS
-source(here::here("rsrc/processing/prep_muni_sample.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-# Prepare gamma muni
-source(here::here("rsrc/processing/prep_muni_biomass.R"), encoding = "UTF-8", echo = T)
+# Obtain aboveground biomass in primary forest at municipal level
+source("rsrc/processing/prep_muni_biomass.R", encoding = "UTF-8", echo = TRUE)
 
-# clear environment
+# Clear environment
 rm(list = ls())
 
+# Merge clean sources into full municipal-level data set
+source("rsrc/processing/prep_muni_data.R", encoding = "UTF-8", echo = TRUE)
 
-# COMBINE VARIABLES RELEVANT FOR THETA CALIBRATION AT THE MUNI LEVEL
-source(here::here("rsrc/processing/prep_muni_data.R"), encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-# STATE LEVEL
+# Prepare data to estimate agricultural emissions factor
+source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = TRUE)
 
-# PREPATE DATA TO ESTIMATE PARAMETER K (EMISSION FACTOR OF AGRICULTURAL SECTOR)
-source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = T)
-
-# clear environment
+# Clear environment
 rm(list = ls())
 
-# PREPATE GENERATE AGGREGATED MAPBIOMAS VARIABLES (FOREST, AGRICULTURAL USE, OTHER) - 1055 SITES
-source("rsrc/processing/prep_land_use_rasters.R", encoding = "UTF-8", echo = T)
+# Prepare rasters for mapbiomas variables
+source("rsrc/processing/prep_land_use_rasters.R", encoding = "UTF-8", echo = TRUE)
 
-# clear environment
+# Clear environment
 rm(list = ls())
 
-# PREPATE GENERATE AGGREGATED SAMPLE OF INTEREST (DIVIDE AMAZON BIOME INTO 1055 CELLS)
-source("rsrc/processing/prep_biome_rasters.R", encoding = "UTF-8", echo = T)
+# Prepare generate aggregated sample of interest
+source("rsrc/processing/prep_biome_rasters.R", encoding = "UTF-8", echo = TRUE)
 
-# clear environment
+# Clear environment
 rm(list = ls())
 
-
-
-# EXPORT TIME PROCESSING -----------------------------------------------------------------------------------------------------------------------------
-
-# END TIMER
-tictoc::toc(log = TRUE)
-
-
-
-
-# END OF SCRIPT --------------------------------------------------------------------------------------------------------------------------------------
+# End timer
+toc(log = TRUE)
