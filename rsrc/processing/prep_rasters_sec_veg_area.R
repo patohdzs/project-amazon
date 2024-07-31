@@ -10,28 +10,34 @@ in_file <- "data/raw/mapbiomas/land_use_cover/COLECAO_5_DOWNLOADS_COLECOES_ANUAL
 land_use_rst <- rast(in_file)
 
 # Read in secondary vegetation raster
-sec_veg_rst <- rast("data/raw/mapbiomas/secondary_vegetation/brasil_desmat_vsec_anual_2017.tif")
+sec_veg_area_rst <- rast(list.files(
+  "data/raw/mapbiomas/secondary_vegetation_area/",
+  full.names = TRUE
+))
 
 # Crop the the Amazonia subset
-sec_veg_rst <- sec_veg_rst |>
-    crop(land_use_rst) |>
-    mask(land_use_rst)
+sec_veg_area_rst <- sec_veg_area_rst |>
+  crop(land_use_rst) |>
+  mask(land_use_rst)
 
 # Create dummy for secondary vegetation class
-sec_veg_rst[sec_veg_rst != 303] <- 0
-sec_veg_rst[sec_veg_rst == 303] <- 1
+sec_veg_area_rst[sec_veg_area_rst != 303] <- 0
+sec_veg_area_rst[sec_veg_area_rst == 303] <- 1
 
 # Aggregate into pixel shares
-sec_veg_rst <- aggregate(
-    sec_veg_rst,
-    fact = 2250,
-    fun = sum,
-    na.rm = TRUE
+sec_veg_area_rst <- aggregate(
+  sec_veg_area_rst,
+  fact = 2250,
+  fun = sum,
+  na.rm = TRUE
 ) / (2250^2)
 
-# Rename raster layer
-names(sec_veg_rst) <- "share_secondary_vegetation_2017"
+# Rename raster layers
+names(sec_veg_area_rst) <- sapply(
+  1:nlyr(sec_veg_area_rst),
+  function(x) glue("share_sec_veg_{2005 + x}")
+)
 
 # Write raster
-out_file <- "data/processed/share_sec_veg_2017_1043_sites.tif"
-writeRaster(sec_veg_rst, out_file, overwrite = TRUE)
+out_file <- "data/processed/share_sec_veg.tif"
+writeRaster(sec_veg_area_rst, out_file, overwrite = TRUE)
