@@ -57,10 +57,16 @@ $load  theta
 $gdxIn
 display theta;
 
+parameter p_a(T);
+$call csv2gdx p_a.csv id=p_a index=1 values=2..lastCol useHeader=y trace=0
+$gdxIn p_a.gdx
+$load  p_a 
+$gdxIn
+display p_a;
 
 parameter delta / 0.02 /;
 
-parameter p_a / 41.945/;
+
 
 parameter alpha / 0.045007414 /;
 parameter kappa / 2.094215255 /;
@@ -98,7 +104,7 @@ w_def(T)$(ord(T) < card(T))..
   w(T) =e= sum(R, u(T,R) + v(T,R));
 
 obj_def..
-  obj =e= sum(T$(ord(T) < card(T)), exp(-delta*(ord(T)*dt-dt))*(-p_e*sum(R, kappa*z(T,R) - (x(T+1,R) - x(T,R))/dt) + p_a*sum(R, theta(R)*z(T,R)) - scale*zeta/2*sqr(w(T)))*dt);
+  obj =e= sum(T$(ord(T) < card(T)), exp(-delta*(ord(T)*dt-dt))*(-p_e*sum(R, kappa*z(T+1,R) - (x(T+1,R) - x(T,R))/dt) + p_a(T)*sum(R, theta(R)*z(T,R)) - scale*zeta/2*sqr(w(T)))*dt);
     
 model amazon / all /;
 
