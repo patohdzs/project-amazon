@@ -58,12 +58,20 @@ print(zeta_1)
 print(zeta_2)
 print(zeta_3)
 
-# Multiply zetas by proportions squared
-zeta_new <- zeta_1 * pasture_quals[1, 3]^2 +
-  zeta_2 * pasture_quals[2, 3]^2 +
-  zeta_3 * pasture_quals[3, 3]^2
 
-print(zeta_new)
+# Compute implied adjustment cost params (MC = MR condition)
+zeta_1_mc <- 674 / reforested_areas[1, 2]
+zeta_2_mc <- 472 / reforested_areas[2, 2]
+zeta_3_mc <- 52 / reforested_areas[3, 2]
+
+# Multiply zetas by proportions squared
+cost_one_hectare_mc <-
+  (zeta_1_mc / 2) * pasture_quals[1, 3]^2 +
+  (zeta_2_mc / 2) * pasture_quals[2, 3]^2 +
+  (zeta_3_mc / 2) * pasture_quals[3, 3]^2
+
+print("Cost one hectare (new, mc)")
+print(cost_one_hectare_mc)
 
 # Old calibration
 # We transform to dollars using an FX rate of 4.14 (December 2019)
@@ -75,7 +83,8 @@ aux_transition_cost <- 1614.54 / 4.14
 #   resulting in an annual average of 2,347,052 ha.
 aux_transition_area <- (0.065 * 0.72 * 501506775) / (2017 - 2008 + 1)
 zeta_old <- aux_transition_cost / aux_transition_area
-print(zeta_old)
+print("Cost one hectare (old)")
+print(zeta_old / 2)
 
 # Alternative value based on https://shorturl.at/jgp9i
 zeta_alt <- 483 / aux_transition_area
