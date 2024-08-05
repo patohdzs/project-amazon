@@ -1,15 +1,12 @@
 data {
   int<lower=0> S; // Number of sites
   int<lower=0> N_theta;
-  int<lower=0> N_gamma;
   int<lower=0> K_theta; // Number of coefficients on theta
-  int<lower=0> K_gamma; // Number of coefficients on gamma
+  int<lower=0> K_gamma; 
 
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
 
-  matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
-  matrix[S, N_gamma] G_gamma; // Groups for gamma
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
@@ -34,6 +31,6 @@ generated quantities {
                                                 sigma_sq_gamma * inv_Q_gamma);
 
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
+  // vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
+  // vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
 }

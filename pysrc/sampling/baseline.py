@@ -27,7 +27,7 @@ def sample(num_sites: int, **stan_kwargs):
         S=num_sites,
         pa_2017=44.9736197781184,
         **theta_adj_reg_data(num_sites, site_theta_df),
-        **gamma_adj_reg_data(num_sites, site_gamma_df),
+        # **gamma_adj_reg_data(num_sites, site_gamma_df),
         **baseline_hyperparams(municipal_theta_df, "theta"),
         **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )
@@ -63,13 +63,23 @@ def baseline_hyperparams(municipal_df, var):
     m = inv_Q @ X.T @ y
     a = (X.shape[0]) / 2
     b = 0.5 * (y.T @ y - m.T @ X.T @ X @ m)
-    return {
-        f"inv_Q_{var}": inv_Q,
-        f"m_{var}": m,
-        f"a_{var}": a,
-        f"b_{var}": b,
+    
+    
+    return_dict = {
+    f"inv_Q_{var}": inv_Q,
+    f"m_{var}": m,
+    f"a_{var}": a,
+    f"b_{var}": b,
     }
 
+    if var == "gamma":
+        N, K = X.shape
+        return_dict.update({
+            "K_gamma": K,
+        })
+        print("m",m)
+
+    return return_dict
 
 def _theta_muni_reg_data(df):
     # Get outcome
@@ -92,5 +102,5 @@ def _gamma_muni_reg_data(df):
     y = df["log_co2e_ha_2017"].to_numpy()
 
     # Get regression design matrix and its dimensions
-    X = df.iloc[:, :5].to_numpy()
+    X = df.iloc[:, :6].to_numpy()
     return y, X
