@@ -30,6 +30,7 @@ def solve_planner_problem(
     delta=0.02,
     kappa=2.094215255,
     zeta=1.66e-4 * 1e9,
+    solver="gurobi",
 ):
     model = ConcreteModel()
 
@@ -45,7 +46,15 @@ def solve_planner_problem(
     model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
     model.pe = Param(initialize=pe)
-    model.pa = Param(initialize=pa)
+
+    # Set price of agriculture as series
+    if isinstance(pa, float):
+        pa = {t + 1: pa for t in range(T)}
+    else:
+        pa = {t + 1: pa[t] for t in range(T)}
+
+    model.pa = Param(model.T, initialize=pa)
+
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
     model.zeta = Param(initialize=zeta)
@@ -76,11 +85,14 @@ def solve_planner_problem(
         model.w[max(model.T)].fix(0)
 
     # Solve the model
-    solver = SolverFactory("gurobi")
-
+    opt = SolverFactory(solver)
     print("Solving the optimization problem...")
     start_time = time.time()
-    solver.solve(model, tee=True)
+    if solver == "gams":
+        opt.solve(model, tee=True, solver="cplex", mtype="qcp")
+    else:
+        opt.solve(model, tee=True)
+
     print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
 
     Z = np.array([[model.z[t, r].value for r in model.S] for t in model.T])
@@ -117,7 +129,7 @@ def vectorize_trajectories(Z, X, U, V, w):
 
 
 def _planner_obj(model):
-    return sum(
+    return pyo.quicksum(
         math.exp(-model.delta * (t * model.dt - model.dt))
         * (
             -model.pe
@@ -126,7 +138,8 @@ def _planner_obj(model):
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
-            + model.pa * sum(model.theta[s] * model.z[t + 1, s] for s in model.S)
+            + model.pa[t]
+            * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - model.zeta / 2 * (model.w[t] ** 2)
         )
         * model.dt

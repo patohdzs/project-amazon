@@ -5,7 +5,7 @@ from cmdstanpy import CmdStanModel
 
 from pysrc.sampling import baseline
 
-from ..optimization import gams, gurobi
+from ..optimization.gurobi import solve_planner_problem, vectorize_trajectories
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -27,7 +27,7 @@ def sample(
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
     # Optimizer
-    optimizer="gurobi",
+    solver="gurobi",
     # Sampling params
     max_iter=20000,
     tol=0.001,
@@ -113,18 +113,7 @@ def sample(
         # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forest_area_2017
 
-        # Choose optimizer
-        if optimizer == "gurobi":
-            solve_planner_problem = gurobi.solve_planner_problem
-            vectorize_trajectories = gurobi.vectorize_trajectories
-
-        elif optimizer == "gams":
-            solve_planner_problem = gams.solve_planner_problem
-            vectorize_trajectories = gams.vectorize_trajectories
-
-        else:
-            raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
-
+        # Solve planner problem
         trajectories = solve_planner_problem(
             T=T,
             theta=theta_vals,
@@ -139,6 +128,7 @@ def sample(
             delta=delta,
             kappa=kappa,
             zeta=zeta,
+            solver=solver,
         )
 
         # Update trackers
