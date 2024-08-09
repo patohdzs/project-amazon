@@ -62,14 +62,8 @@ source("rsrc/cleaning/agCensus2017AgUseArea_raw2clean.R", encoding = "UTF-8", ec
 # clear environment
 rm(list = ls())
 
-# CLEAN RAW CATTLE SOLD FOR SLAUGHTER - AGRICULTURAL CENSUS 2006 (IBGE)
-source("rsrc/cleaning/agCensus2006CattleSlaughter_raw2clean.R", encoding = "UTF-8", echo = TRUE)
-
 # clear environment
 rm(list = ls())
-
-# CLEAN RAW AGRICULTURAL USE AREA - AGRICULTURAL CENSUS 2006 (IBGE)
-source("rsrc/cleaning/agCensus2006AgUseArea_raw2clean.R", encoding = "UTF-8", echo = TRUE)
 
 # clear environment
 rm(list = ls())

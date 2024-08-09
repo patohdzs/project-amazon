@@ -1,11 +1,14 @@
+library(sf)
+library(tictoc)
+library(tidyverse)
 
-tictoc::tic(msg = "gamma.R script", log = TRUE)
+tictoc::tic(msg = "calibrate_gamma_reg.R script", log = TRUE)
 
-# DATA INPUT
-load("data/prepData/muniTheta_prepData.Rdata")
+# Load variables at the muni level to calibrate gamma
+load("data/processed/muni_data.Rdata")
 
 # Convert biomass into CO2e, add column of ones, take logs, and scale
-df <- muniTheta_prepData %>%
+df <- muni_data %>%
   mutate(co2e_ha_2017 = (agb_2017 / 2) * (44 / 12)) %>%
   mutate(
     X1 = 1,
@@ -33,31 +36,31 @@ df <- muniTheta_prepData %>%
 
 # Output municipality-level regression data
 st_write(df,
-  "data/calibration/hmc/muni_data_gamma.geojson",
+  "data/calibration/hmc/gamma_reg_muni_data.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
 
 
 # Output site-level regression data
-for (n in list(10, 24, 40, 78,1043)) {
+for (n in list(78, 1043)) {
   # Get site boundaries
   id_df <- st_read(sprintf("data/calibration/hmc/id_%d.geojson", n))
 
   # Project data to site level
-  site_gamma2017 <- df %>%
+  site_level_df <- df %>%
     st_intersection(id_df)
 
   # Set area units to hectares
-  site_gamma2017$muni_site_area <-
-    st_area(site_gamma2017) %>%
+  site_level_df$muni_site_area <-
+    st_area(site_level_df) %>%
     units::set_units(ha) %>%
     unclass()
 
   # Write to file
   st_write(
-    site_gamma2017,
-    sprintf("data/calibration/hmc/site_%d_data_gamma.geojson", n),
+    site_level_df,
+    sprintf("data/calibration/hmc/gamma_reg_%d_sites_data.geojson", n),
     driver = "GeoJSON",
     delete_dsn = TRUE
   )
