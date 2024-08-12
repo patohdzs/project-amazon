@@ -115,15 +115,15 @@ def sample(
 
         # Solve planner problem
         planner_solution = solve_planner_problem(
-            T=T,
+            time_horizon=T,
             theta=theta_vals,
             gamma=gamma_vals,
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
             dt=dt,
-            pe=pe,
-            pa=pa,
+            price_emissions=pe,
+            price_cattle=pa,
             alpha=alpha,
             delta=delta,
             kappa=kappa,

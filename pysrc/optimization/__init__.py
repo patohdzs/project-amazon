@@ -27,15 +27,15 @@ class PlannerSolution:
 
 
 def solve_planner_problem(
-    T,
-    theta,
-    gamma,
     x0,
     z0,
     zbar,
+    gamma,
+    theta,
     dt=1,
-    pe=20.76,
-    pa=44.75,
+    time_horizon=200,
+    price_emissions=20.76,
+    price_cattle=44.75,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
@@ -45,7 +45,7 @@ def solve_planner_problem(
     model = ConcreteModel()
 
     # Indexing sets for time and sites
-    model.T = RangeSet(T + 1)
+    model.T = RangeSet(time_horizon + 1)
     model.S = RangeSet(gamma.size)
 
     # Parameters
@@ -55,15 +55,15 @@ def solve_planner_problem(
     model.gamma = Param(model.S, initialize=_np_to_dict(gamma))
     model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
-    model.pe = Param(initialize=pe)
+    model.pe = Param(initialize=price_emissions)
 
-    # Set price of agriculture as series
-    if isinstance(pa, float):
-        pa = {t + 1: pa for t in range(T)}
+    # Set cattle price as series
+    if isinstance(price_cattle, float):
+        price_cattle = {t + 1: price_cattle for t in range(time_horizon)}
     else:
-        pa = {t + 1: pa[t] for t in range(T)}
+        price_cattle = {t + 1: price_cattle[t] for t in range(time_horizon)}
 
-    model.pa = Param(model.T, initialize=pa)
+    model.pa = Param(model.T, initialize=price_cattle)
 
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)

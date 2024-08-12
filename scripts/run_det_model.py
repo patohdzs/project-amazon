@@ -25,20 +25,19 @@ baseline_fit = baseline.sample(
 theta = baseline_fit.stan_variable("theta").mean(axis=0)
 gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 
-
 # Computing carbon absorbed in start period
-x0_vals = gamma * forest_area_2017
+x_2017 = gamma * forest_area_2017
 
-
+# Solve planner problem
 results = solve_planner_problem(
-    T=T,
-    theta=theta,
-    gamma=gamma,
-    x0=x0_vals,
-    zbar=zbar_2017,
+    x0=x_2017,
     z0=z_2017,
-    pe=pee + b,
-    pa=pa,
+    zbar=zbar_2017,
+    gamma=gamma,
+    theta=theta,
+    time_horizon=T,
+    price_emissions=pee + b,
+    price_cattle=pa,
 )
 
 

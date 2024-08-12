@@ -39,14 +39,14 @@ def get_optimization(
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
             solve_planner_problem(
-                T=200,
+                time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
                 x0=x0_vals,
                 zbar=zbar_2017,
                 z0=z_2017,
-                pe=pe,
-                pa=pa,
+                price_emissions=pe,
+                price_cattle=pa,
             )
             print("Results for pe = ", pe)
             output_base_path = str(get_path("output"))
@@ -95,14 +95,14 @@ def get_optimization(
             x0_vals = gamma_vals * forest_area_2017
 
             solve_planner_problem(
-                T=200,
+                time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
                 x0=x0_vals,
                 zbar=zbar_2017,
                 z0=z_2017,
-                pe=pe,
-                pa=pa,
+                price_emissions=pe,
+                price_cattle=pa,
             )
             print("Results for pe = ", pe)
             output_base_path = str(get_path("output"))

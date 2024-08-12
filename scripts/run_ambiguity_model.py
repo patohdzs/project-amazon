@@ -80,14 +80,14 @@ for pe in pe_values:
 
     b_val = pe - pee
     results = solve_planner_problem(
-        T=T,
+        time_horizon=T,
         theta=theta_vals,
         gamma=gamma_vals,
         x0=x0_vals,
         zbar=zbar_2017,
         z0=z_2017,
-        pe=pe,
-        pa=pa,
+        price_emissions=pe,
+        price_cattle=pa,
     )
 
     print(
