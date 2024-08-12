@@ -25,7 +25,7 @@ generate_dummies <- function(df, sec_var, max_sec) {
 combined_df <- generate_dummies(combined_df, "sec", 32)
 
 
-formula <- as.formula(paste("ratio ~ -1 +", paste(paste0("dummy_", 1:32), collapse = " + ")))
+formula <- as.formula(paste("ratio ~  ", paste(paste0("dummy_", 2:32), collapse = " + ")))
 
 
 model <- lm(formula , data = combined_df)
@@ -33,32 +33,60 @@ summary(model)
 
 
 
+coefficients <- coef(model)[paste0("dummy_", 2:32)]
+stderr <- summary(model)$coefficients[paste0("dummy_", 2:32), "Std. Error"]
 
-
-coefficients <- coef(model)[paste0("dummy_", 1:32)]
-
-# Create a data frame for plotting
 coefficients_df <- data.frame(
-  dummy = 1:32,
-  coefficient = coefficients
+  dummy = 2:32,
+  coefficient = coefficients,
+  lower_bound = coefficients - stderr,
+  upper_bound = coefficients + stderr,
+  type = "Coefficients"
 )
 
-# Plot the coefficients
-p <- ggplot(coefficients_df, aes(x = dummy, y = coefficient)) +
-  geom_point() +
-  geom_line() +
-  labs(title = "Coefficients of Dummy Variables",
-       x = "Dummy Variable Index (age)",
-       y = "Coefficient Value") +
-  theme_minimal()
-ggsave("coefficients_plot.png", plot = p, width = 8, height = 6)
+# Generate the theoretical function values starting from t=0 to t=32
+x_values <- 0:32
+theoretical_values <- 1 - exp(-0.045 * x_values)
 
+# Create a data frame for plotting the theoretical function
+theoretical_df <- data.frame(
+  dummy = x_values,
+  coefficient = theoretical_values,
+  type = "Theoretical Function"
+)
+
+# Combine the two data frames
+plot_df <- bind_rows(coefficients_df, theoretical_df)
+
+# Plot the coefficients with error bars and overlay the theoretical function
+p <- ggplot(plot_df, aes(x = dummy, y = coefficient, color = type, linetype = type)) +
+  geom_point(data = coefficients_df) +
+  geom_line(data = coefficients_df) +
+  geom_errorbar(data = coefficients_df, aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  geom_line(data = theoretical_df, size = 1) +
+  labs(title = "Coefficients of Dummy Variables with Theoretical Function",
+       x = "Dummy Variable Index (age)",
+       y = "Coefficient Value",
+       color = "Legend",
+       linetype = "Legend") +
+  scale_color_manual(values = c("Coefficients" = "black", "Theoretical Function" = "blue")) +
+  scale_linetype_manual(values = c("Coefficients" = "solid", "Theoretical Function" = "dashed")) +
+  theme_minimal() +
+  theme(legend.position = c(0.85, 0.15))  # Position the legend inside the plot
+
+
+
+# Save the plot
+ggsave("coefficients_plot_with_intercept.png", plot = p, width = 8, height = 6)
+
+
+stop()
 
 combined_df <- combined_df %>%
   mutate(Tp = 1-exp(-0.045*sec))
 
 
-model2 <- lm(ratio ~  Tp , data = combined_df)
+model2 <- lm(ratio ~ -1 +  Tp , data = combined_df)
 summary(model2)
 
 
