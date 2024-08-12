@@ -5,22 +5,14 @@ from pysrc.services.data_service import load_site_data
 
 # Model hyperparameters
 solver = "gurobi"
-pee = 7.1
+pee = 7.6
 pa = 41.11
 sitenum = 1043
 T = 200
 b = 25
 
 # Load site data
-(
-    zbar_2017,
-    z_2017,
-    forest_area_2017,
-    _,
-    _,
-    _,
-    _,
-) = load_site_data(sitenum)
+(zbar_2017, z_2017, forest_area_2017) = load_site_data(sitenum)
 
 # Set productivity parameters using baseline mean
 baseline_fit = baseline.sample(

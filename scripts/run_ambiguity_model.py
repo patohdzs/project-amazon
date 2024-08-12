@@ -1,6 +1,3 @@
-####### Uncertainty in productivity with hmc
-
-
 import os
 import pickle
 
@@ -56,21 +53,10 @@ for pe in pe_values:
         pickle.dump(results, outfile)
         print(f"Results saved to {outfile_path}")
 
-
-#### solving the model with hmc sampled parameters
-
 # Load site data
-(
-    zbar_2017,
-    z_2017,
-    forest_area_2017,
-    _,
-    _,
-    _,
-    _,
-) = load_site_data(num_sites)
+(zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
-# read uncertain parameters
+# Read ambiguity-adjusted parameters
 result_folder = os.path.join(
     str(get_path("output")),
     "sampling",
@@ -79,11 +65,15 @@ result_folder = os.path.join(
     f"pa_{pa}",
     f"xi_{xi}",
 )
+
+
+# Solving the model with sampled parameters
 b = [0, 10, 15, 20, 25]
 pe_values = [pee + bi for bi in b]
 for pe in pe_values:
     with open(result_folder + f"/pe_{pe}/results.pcl", "rb") as f:
         para = pickle.load(f)
+
     theta_vals = para["final_sample"][:16000, :78].mean(axis=0)
     gamma_vals = para["final_sample"][:16000, 78:].mean(axis=0)
     x0_vals = gamma_vals * forest_area_2017

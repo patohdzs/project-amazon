@@ -8,7 +8,7 @@ from pysrc.sampling import baseline
 from ..optimization.gurobi import solve_planner_problem, vectorize_trajectories
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
-from ..services.data_service import load_site_data
+from ..services.data_service import load_productivity_reg_data, load_site_data
 from ..services.file_service import get_path
 
 
@@ -41,16 +41,16 @@ def sample(
         force_compile=True,
     )
 
-    # Load sites' data
+    # Load site data
+    (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
+
+    # Load parameter regression data
     (
-        zbar_2017,
-        z_2017,
-        forest_area_2017,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(num_sites)
+    ) = load_productivity_reg_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
     baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
