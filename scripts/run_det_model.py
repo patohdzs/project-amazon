@@ -1,5 +1,5 @@
 from pysrc.analysis import value_decomposition
-from pysrc.optimization.gurobi import solve_planner_problem
+from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 

@@ -5,7 +5,7 @@ from cmdstanpy import CmdStanModel
 
 from pysrc.sampling import baseline
 
-from ..optimization.gurobi import solve_planner_problem, vectorize_trajectories
+from ..optimization import solve_planner_problem, vectorize_trajectories
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_productivity_reg_data, load_site_data

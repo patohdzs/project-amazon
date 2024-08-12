@@ -2,7 +2,7 @@ import os
 import pickle
 import shutil
 
-from pysrc.optimization.gurobi import solve_planner_problem
+from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
