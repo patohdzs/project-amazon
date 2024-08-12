@@ -1,23 +1,13 @@
-####### Baseline model without uncertainty
-
-# For uncertainty in productivity, please look at scripts/conduction_hmc
-# For uncertainty in price, please look at scripts/conduction_mpc
-
-
-import pandas as pd
-
 from pysrc.analysis import value_decomposition
 from pysrc.optimization.gurobi import solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
 
-# ## Model scenario
-
-
+# Model hyperparameters
 solver = "gurobi"
 pee = 7.1
 pa = 41.11
-sitenum = 78
+sitenum = 1043
 T = 200
 b = 25
 
@@ -44,11 +34,6 @@ theta = baseline_fit.stan_variable("theta").mean(axis=0)
 gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 
 
-base_parameter = pd.DataFrame({"theta": theta.round(2), "gamma": gamma.round(2)})
-
-# Save the DataFrame to a CSV file
-base_parameter.to_csv("theta_gamma.csv", index=False)
-
 # Computing carbon absorbed in start period
 x0_vals = gamma * forest_area_2017
 
@@ -66,7 +51,6 @@ results = solve_planner_problem(
 
 
 print(
-    "result",
     value_decomposition(
         Z=results["Z"],
         X=results["X"],
@@ -77,5 +61,5 @@ print(
         pa=pa,
         b=b,
         theta=theta,
-    ),
+    )
 )
