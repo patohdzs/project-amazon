@@ -2,24 +2,23 @@
 
 ## Requirements
 - Python >= 3.9
-- Gurobi >= 10.0.3 or GAMs >= (add version)
-(Currently only works with Gurobi solver, please make sure install Gurobi before using the quick_script)
-
-## Data directory structure
+- Gurobi >= 10.0.3
+## Data Requirements
+To replicate, make sure to download the raw data into the directory structure below:
 ```
 .
 └── data
-    └── hmc
-        ├── muni_data_gamma.geojson
-        ├── muni_data_theta.geojson
-        ├── hmc_78SitesModel.csv
-        ├── hmc_1043SitesModel.csv
-        └── id_78.geojson
-        └── id_1043.geojson
-        └── site_78_data_gamma.geojson
-        └── site_78_data_theta.geojson
-        └── site_1043_data_gamma.geojson
-        └── site_1043_data_theta.geojson
+    └── raw
+        ├── esa
+        ├── fgv
+        ├── global_forest_watch
+        ├── ibge
+        ├── ipea
+        ├── mapbiomas
+        ├── seabpr
+        ├── seeg
+        ├── worldbank
+        └── worldclim
 ```
 
 ## Installation
@@ -27,8 +26,8 @@
 0. Clone git repository and move into `project-amazon/`
 1. Create and activate a new virtual environment
 ```
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 ```
 2. Install python dependencies
 ```
