@@ -3,28 +3,23 @@
 ## Requirements
 - Python >= 3.9
 - Gurobi >= 10.0.3 or GAMs >= (add version)
-
+(Currently only works with Gurobi solver, please make sure install Gurobi before using the quick_script)
 
 ## Data directory structure
 ```
 .
 └── data
-    ├── calibration
-    │   ├── farm_gate_price.xlsx
-    │   ├── ipeadata[21-08-2023-01-28].xls
-    │   └── prepData
-    │       ├── muniTheta_prepData.Rdata
-    │       ├── muniTheta_prepData_gamma.Rdata
-    │       └── seriesPriceCattle_prepData.Rdata
     └── hmc
-        ├── data_gamma.geojson
-        ├── data_theta.geojson
-        ├── hmc_10SitesModel.csv
-        ├── hmc_24SitesModel.csv
-        ├── hmc_40SitesModel.csv
-        ├── id_10.geojson
-        ├── id_24.geojson
-        └── id_40.geojson
+        ├── muni_data_gamma.geojson
+        ├── muni_data_theta.geojson
+        ├── hmc_78SitesModel.csv
+        ├── hmc_1043SitesModel.csv
+        └── id_78.geojson
+        └── id_1043.geojson
+        └── site_78_data_gamma.geojson
+        └── site_78_data_theta.geojson
+        └── site_1043_data_gamma.geojson
+        └── site_1043_data_theta.geojson
 ```
 
 ## Installation

@@ -45,7 +45,7 @@ st_write(df,
 # Output site-level regression data
 for (n in list(78, 1043)) {
   # Get site boundaries
-  id_df <- st_read(sprintf("data/calibration/hmc/id_%d.geojson", n))
+  id_df <- st_read(sprintf("data/calibration/grid_%d_sites.geojson", n))
 
   # Project data to site level
   site_level_df <- df %>%
