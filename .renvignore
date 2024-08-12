@@ -1,0 +1,6 @@
+# Ignore everything
+*
+
+# Do not ignore the rsrc directory and its contents
+!rsrc/
+!rsrc/**/*
