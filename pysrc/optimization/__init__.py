@@ -1,5 +1,6 @@
 import math
 import time
+from dataclasses import dataclass
 
 import numpy as np
 import pyomo.environ as pyo
@@ -14,6 +15,15 @@ from pyomo.environ import (
     maximize,
 )
 from pyomo.opt import SolverFactory
+
+
+@dataclass
+class PlannerSolution:
+    Z: np.ndarray
+    X: np.ndarray
+    U: np.ndarray
+    V: np.ndarray
+    w: np.ndarray
 
 
 def solve_planner_problem(
@@ -101,23 +111,17 @@ def solve_planner_problem(
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
     w = np.array([model.w[t].value for t in model.T])
 
-    return {
-        "Z": Z,
-        "X": X,
-        "U": U,
-        "V": V,
-        "w": w,
-    }
+    return PlannerSolution(Z, X, U, V, w)
 
 
-def vectorize_trajectories(Z, X, U, V, w):
-    X_agg = X.sum(axis=1)
+def vectorize_trajectories(traj: PlannerSolution):
+    X_agg = traj.X.sum(axis=1)
     X_agg = X_agg.reshape(X_agg.size, 1)
 
-    sol_val_Ua = (w[:-1] ** 2).T.flatten()
-    sol_val_X = np.concatenate((Z.T, X_agg.T, np.ones((1, Z.T.shape[1]))))
-    sol_val_Up = U[:-1, :].T
-    sol_val_Um = V[:-1, :].T
+    sol_val_Ua = (traj.w[:-1] ** 2).T.flatten()
+    sol_val_X = np.concatenate((traj.Z.T, X_agg.T, np.ones((1, traj.Z.T.shape[1]))))
+    sol_val_Up = traj.U[:-1, :].T
+    sol_val_Um = traj.V[:-1, :].T
     sol_val_Z = sol_val_Up - sol_val_Um
     return {
         "sol_val_X": sol_val_X,

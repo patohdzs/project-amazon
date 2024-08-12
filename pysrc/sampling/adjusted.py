@@ -114,7 +114,7 @@ def sample(
         x0_vals = gamma_vals * forest_area_2017
 
         # Solve planner problem
-        trajectories = solve_planner_problem(
+        planner_solution = solve_planner_problem(
             T=T,
             theta=theta_vals,
             gamma=gamma_vals,
@@ -132,7 +132,7 @@ def sample(
         )
 
         # Update trackers
-        solution_tracker.append(trajectories)
+        solution_tracker.append(planner_solution)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
@@ -148,13 +148,7 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
-            **vectorize_trajectories(
-                trajectories["Z"],
-                trajectories["X"],
-                trajectories["U"],
-                trajectories["V"],
-                trajectories["w"],
-            ),
+            **vectorize_trajectories(planner_solution),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),

@@ -93,10 +93,10 @@ for pe in pe_values:
     print(
         "result",
         value_decomposition(
-            Z=results["Z"],
-            X=results["X"],
-            U=results["U"],
-            V=results["V"],
+            Z=results.Z,
+            X=results.X,
+            U=results.U,
+            V=results.V,
             T=T,
             pee=pee,
             pa=pa,
