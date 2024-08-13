@@ -1,6 +1,4 @@
-# Load necessary libraries
 library(sf)
-library(stars)
 library(tictoc)
 library(terra)
 library(tidyverse)
@@ -8,11 +6,17 @@ library(conflicted)
 library(sjlabelled)
 
 # Resolve conflicts
-conflicts_prefer(dplyr::filter())
-conflicts_prefer(terra::extract())
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(terra::extract)
 
 # Start timer
 tic(msg = "merge_agb_sec_veg.R script", log = TRUE)
+
+# Load calibrated gamma
+load("data/calibration/gamma_calibration_1043_sites.Rdata")
+
+# Load clean mapbiomas raster
+clean_mapbiomas <- rast("data/clean/land_use_cover_2000.tif")
 
 # Load secondary vegetation age data for 2017
 sec_veg_age_rst <- rast(
@@ -23,8 +27,8 @@ sec_veg_age_rst <- rast(
   )
 )
 
-# Load aboveground biomass raster data
-agb_rasters  <- map(
+# Load aboveground biomass raster data for 2017
+agb_rst <- map(
   list.files(
     "data/raw/esa/above_ground_biomass/",
     pattern = "_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2017-fv3.0.tif",
@@ -41,72 +45,47 @@ pq_rst <- rast(
   )
 )
 
+# Combine AGB zonal rasters into a single raster
+agb_rst <- do.call(merge, agb_rst)
+
+# Crop the the Amazonia subset
+sec_veg_age_rst <- sec_veg_age_rst |>
+  crop(clean_mapbiomas) |>
+  mask(clean_mapbiomas)
 
 # Aggregate secondary vegetation raster by 4
+sec_veg_age_rst <- aggregate(
+  sec_veg_age_rst,
+  fact = 8,
+  fun = median,
+  na.rm = TRUE
+)
 
-sec_veg_age_aggregated <- aggregate(sec_veg_age_rst, fact = 4, fun = mean, na.rm = TRUE)
-
-
-writeRaster(sec_veg_age_aggregated, "data/calibration/sec_veg_age_aggregated.tif", overwrite = TRUE)
-
-
-# Combine resampled AGB rasters into a single raster stack
-combined_agb_raster <- do.call(merge, agb_rasters)
-
-# resample to match sec_veg resolution 
-resampled_agb_raster <- resample(combined_agb_raster, sec_veg_age_aggregated, method = "near")
-
-
-writeRaster(resampled_agb_raster, "data/calibration/resampled_agb_aggregated.tif", overwrite = TRUE)
-
+# Resample to match sec_veg resolution and mask values outside Amazonia
+agb_rst <- resample(agb_rst, sec_veg_age_rst, method = "near") |>
+  mask(sec_veg_age_rst)
 
 # Resample pasture quality to match sec_veg resolution
-resampled_pq_rst <- resample(pq_rst, sec_veg_age_aggregated, method = "near")
+pq_rst <- resample(pq_rst, sec_veg_age_rst, method = "near") |>
+  mask(sec_veg_age_rst)
 
-writeRaster(resampled_pq_rst, "data/calibration/resampled_pq_rst.tif", overwrite = TRUE)
+gamma_rst <- calib_df |>
+  rasterize(sec_veg_age_rst, field = "site_reg_gamma")
 
-# Resample gamma with secondary vege 
-load("data/calibration/gamma_calibration_1043_sites.Rdata")
+# Stack
+carbon_accumulation_rst <- c(sec_veg_age_rst, agb_rst, pq_rst, gamma_rst)
 
-raster_gamma<-as(st_rasterize(calib_df %>% dplyr::select(site_reg_gamma, geometry)),"SpatRaster")
+# Convert to data frame
+df <- carbon_accumulation_rst |>
+  as.data.frame(xy = TRUE) |>
+  as_tibble()
 
-resampled_gamma <- resample(raster_gamma, sec_veg_age_aggregated, method = "near")
+# Rename
+names(df) <- c("x", "y", "age", "agb", "pq", "gamma")
 
-writeRaster(resampled_gamma, "data/calibration/resampled_gamma.tif", overwrite = TRUE)
+# Convert AGB -> CO2e
+df <- df |>
+  mutate(co2e = (agb / 2) * (44 / 12))
 
-
-
-
-#### Transform into dataframe
-
-
-resampled_agb_raster <- rast("data/calibration/resampled_agb_aggregated.tif")
-sec_veg_age_aggregated <- rast("data/calibration/sec_veg_age_aggregated.tif")
-resampled_gamma <- rast("data/calibration/resampled_gamma.tif")
-resampled_pq_rst <- rast("data/calibration/resampled_pq_rst.tif")
-
-aggregate_agb_df <- data.frame(terra::values(resampled_agb_raster))
-
-aggregate_sec_df <- data.frame(terra::values(sec_veg_age_aggregated))
-
-aggregate_gamma_df <- data.frame(terra::values(resampled_gamma))
-
-aggregate_resampled_pq_rst <- data.frame(terra::values(resampled_pq_rst))
-
-
-
-combined_df <- data.frame(
-  agb = ((aggregate_agb_df$N00W050_ESACCI.BIOMASS.L4.AGB.MERGED.100m.2017.fv3.0 / 2) * (44 / 12)),
-  sec = aggregate_sec_df$sec_veg_age_2017,
-  gamma = aggregate_gamma_df$site_reg_gamma,
-  pq = aggregate_resampled_pq_rst$pasture_quality_2014
-) %>%
-  filter(agb != 0, sec != 0)
-
-save(combined_df, file = "data/calibration/combined_df.Rdata")
-
-
-
-
-
-
+# Save
+save(df, file = "data/calibration/carbon_accumulation.Rdata")
