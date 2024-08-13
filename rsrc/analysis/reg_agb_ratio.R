@@ -13,7 +13,7 @@ df <- df %>%
   mutate(age = round(age)) %>%
   mutate(ratio = co2e / gamma)
 
-# Fit regression from approach 1
+# Fit regression from approach 1 (NOTE exclude level 1)
 model_1 <- lm(ratio ~ 0 + factor(age), data = df)
 stargazer(model_1, out = "plots/gamma_alpha/table_1.tex")
 stargazer(model_1, out = "plots/gamma_alpha/table_1.txt")
@@ -62,7 +62,7 @@ ggsave("plots/gamma_alpha/coefs_plot.png", plot = p)
 df <- df %>%
   mutate(Tp = 1 - exp(-0.045 * age))
 
-
 model_2 <- lm(ratio ~ 0 + Tp, data = df)
-stargazer(model_2, out = "plots/gamma_alpha/table_2.tex")
-stargazer(model_2, out = "plots/gamma_alpha/table_2.txt")
+model_3 <- lm(ratio ~ Tp, data = df)
+stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.tex")
+stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.txt")

@@ -72,8 +72,16 @@ pq_rst <- resample(pq_rst, sec_veg_age_rst, method = "near") |>
 gamma_rst <- calib_df |>
   rasterize(sec_veg_age_rst, field = "site_reg_gamma")
 
+site_rst <- calib_df |>
+  rasterize(sec_veg_age_rst, field = "id")
+
 # Stack
-carbon_accumulation_rst <- c(sec_veg_age_rst, agb_rst, pq_rst, gamma_rst)
+carbon_accumulation_rst <- c(
+  sec_veg_age_rst,
+  agb_rst, pq_rst,
+  gamma_rst,
+  site_rst
+)
 
 # Convert to data frame
 df <- carbon_accumulation_rst |>
@@ -81,7 +89,7 @@ df <- carbon_accumulation_rst |>
   as_tibble()
 
 # Rename
-names(df) <- c("x", "y", "age", "agb", "pq", "gamma")
+names(df) <- c("x", "y", "age", "agb", "pq", "gamma", "site")
 
 # Convert AGB -> CO2e
 df <- df |>
