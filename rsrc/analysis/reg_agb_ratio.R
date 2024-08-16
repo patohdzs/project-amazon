@@ -1,22 +1,21 @@
 library(tidyverse)
 library(stargazer)
 library(ggplot2)
+library(broom)
+library(fixest)
 
 load("data/calibration/carbon_accumulation.Rdata")
 
-# Filter out empty pixels
-df <- df %>%
-  filter(!is.na(co2e) & !is.na(age) & !is.na(gamma) & !is.na(pq))
-
-# Pre-processing
-df <- df %>%
-  mutate(age = round(age)) %>%
-  mutate(ratio = co2e / gamma)
-
-# Fit regression from approach 1 (NOTE exclude level 1)
+# Fit regression from approach 1
 model_1 <- lm(ratio ~ 0 + factor(age), data = df)
-stargazer(model_1, out = "plots/gamma_alpha/table_1.tex")
-stargazer(model_1, out = "plots/gamma_alpha/table_1.txt")
+
+# Fit regression interacting with last pasture quality
+model_2 <- df %>%
+  filter(last_pq != 0) %>%
+  lm(ratio ~ 0 + factor(age):factor(last_pq), data = .)
+
+stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.tex")
+stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.txt")
 
 # Get coefficients
 coefs <- coef(model_1)[paste0("factor(age)", 2:32)]
@@ -44,7 +43,7 @@ plot_df <- bind_rows(coefs_df, theoretical_df)
 p <- plot_df |> ggplot(aes(x = time, y = coef, color = type, linetype = type)) +
   geom_point(data = coefs_df) +
   geom_line(data = coefs_df) +
-  geom_line(data = theoretical_df, size = 1) +
+  geom_line(data = theoretical_df) +
   labs(
     x = "Time (years)",
     y = "Coefficient",
@@ -56,7 +55,39 @@ p <- plot_df |> ggplot(aes(x = time, y = coef, color = type, linetype = type)) +
   theme_minimal()
 
 # Save the plot
-ggsave("plots/gamma_alpha/coefs_plot.png", plot = p)
+ggsave("plots/gamma_alpha/coefs.png", plot = p)
+
+coefs_df <- coef(model_2) |>
+  as.data.frame() |>
+  rownames_to_column("term") |>
+  as_tibble() |>
+  rename(coef = `coef(model_2)`) |>
+  separate(term, into = c("factor_age", "factor_last_pq"), sep = ":") |>
+  mutate(
+    age = gsub("factor\\(age\\)", "", factor_age),
+    last_pq = gsub("factor\\(last_pq\\)", "", factor_last_pq)
+  )
+
+coefs_df <- coefs_df |>
+  select(age, last_pq, coef) |>
+  mutate(time = as.numeric(age)) |>
+  mutate(theory = 1 - exp(-0.045 * time))
+
+p <- coefs_df |> ggplot() +
+  geom_line(aes(x = time, y = coef, color = last_pq), linewidth = 1) +
+  geom_line(aes(x = time, y = theory, color = "Theory"), linewidth = 1) +
+  geom_point(aes(x = time, y = coef, color = last_pq), linewidth = 2) +
+  geom_point(aes(x = time, y = theory, color = "Theory"), linewidth = 2) +
+  labs(
+    x = "Time (years)",
+    y = "Coefficient",
+    color = "Legend",
+    linetype = "Legend"
+  )
+
+# Save the plot
+ggsave("plots/gamma_alpha/coefs_by_pq.png", plot = p)
+
 
 # Perform approach 2 regression
 df <- df %>%
