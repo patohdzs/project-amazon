@@ -116,24 +116,6 @@ df <- df |>
     last_year_pasture == 2017 ~ pasture_quality_2017
   ))
 
-
-# Check
-pattern_match <- with(
-  df,
-  (pasture_quality_2008 == 0 & pasture_quality_2009 != 0) |
-    (pasture_quality_2009 == 0 & pasture_quality_2010 != 0) |
-    (pasture_quality_2010 == 0 & pasture_quality_2011 != 0) |
-    (pasture_quality_2011 == 0 & pasture_quality_2012 != 0) |
-    (pasture_quality_2012 == 0 & pasture_quality_2013 != 0) |
-    (pasture_quality_2013 == 0 & pasture_quality_2014 != 0) |
-    (pasture_quality_2014 == 0 & pasture_quality_2015 != 0) |
-    (pasture_quality_2015 == 0 & pasture_quality_2016 != 0) |
-    (pasture_quality_2016 == 0 & pasture_quality_2017 != 0)
-)
-
-# Print the result
-print(sum(pattern_match) / nrow(df))
-
 # Convert AGB -> CO2e and get accumulation ratio
 df <- df |>
   mutate(co2e = (agb / 2) * (44 / 12)) |>
