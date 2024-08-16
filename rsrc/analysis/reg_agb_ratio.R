@@ -26,7 +26,7 @@ coefs_df <- data.frame(
 )
 
 # Generate the theoretical values from t=0 to 32
-time <- 0:32
+time <- 0:max(df$age)
 theoretical_values <- 1 - exp(-0.045 * time)
 
 # Create a data frame for plotting the theoretical function
@@ -57,6 +57,7 @@ p <- plot_df |> ggplot(aes(x = time, y = coef, color = type, linetype = type)) +
 # Save the plot
 ggsave("plots/gamma_alpha/coefs.png", plot = p)
 
+# Get coefficients from model with interactions
 coefs_df <- coef(model_2) |>
   as.data.frame() |>
   rownames_to_column("term") |>
@@ -68,16 +69,17 @@ coefs_df <- coef(model_2) |>
     last_pq = gsub("factor\\(last_pq\\)", "", factor_last_pq)
   )
 
+# Add theoretical curve
 coefs_df <- coefs_df |>
   select(age, last_pq, coef) |>
   mutate(time = as.numeric(age)) |>
   mutate(theory = 1 - exp(-0.045 * time))
 
 p <- coefs_df |> ggplot() +
-  geom_line(aes(x = time, y = coef, color = last_pq), linewidth = 1) +
-  geom_line(aes(x = time, y = theory, color = "Theory"), linewidth = 1) +
-  geom_point(aes(x = time, y = coef, color = last_pq), linewidth = 2) +
-  geom_point(aes(x = time, y = theory, color = "Theory"), linewidth = 2) +
+  geom_line(aes(x = time, y = coef, color = last_pq)) +
+  geom_line(aes(x = time, y = theory, color = "Theory")) +
+  geom_point(aes(x = time, y = coef, color = last_pq)) +
+  geom_point(aes(x = time, y = theory, color = "Theory")) +
   labs(
     x = "Time (years)",
     y = "Coefficient",
