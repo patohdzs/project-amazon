@@ -9,7 +9,7 @@ conflicts_prefer(terra::extract())
 # START TIMER
 tic(msg = "prep_biome_class_rasters.R script", log = TRUE)
 
-in_files <- "data/raw/mapbiomas/pasture_quality/mapbiomas-brazil-collection-80-pasture-quality-amazonia-2017.tif"
+in_files <- "data/raw/mapbiomas/pq-export/mapbiomas-brazil-collection-80-pasture-quality-amazonia-2017.tif"
 
 for (level in c(1, 2, 3)) {
   # Read in pasture quality raster
@@ -22,15 +22,15 @@ for (level in c(1, 2, 3)) {
   # Aggregate into pixel shares
   pasture_quality_rst <- aggregate(
     pasture_quality_rst,
-    fact = 675,
+    fact = 2250,
     fun = sum,
     na.rm = TRUE
-  ) / (675^2)
+  ) / (2250^2)
 
   # Rename raster layers
   names(pasture_quality_rst) <- sapply(
     1:nlyr(pasture_quality_rst),
-    function(x) glue("share_pasture_quality_{level}_{1999 + x}")
+    function(x) glue("share_pasture_quality_{level}_2017")
   )
 
   # Write rasters
