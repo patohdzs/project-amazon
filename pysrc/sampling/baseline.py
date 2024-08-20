@@ -2,21 +2,18 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
-from ..services.data_service import load_site_data
+from ..services.data_service import load_productivity_reg_data
 from ..services.file_service import get_path
 
 
 def sample(num_sites: int, **stan_kwargs):
-    # Load sites data
+    # Load parameter regression data
     (
-        _,
-        _,
-        _,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(num_sites)
+    ) = load_productivity_reg_data(num_sites)
 
     # Read model code
     stan_file = get_path("stan_model") / "baseline.stan"
@@ -73,7 +70,7 @@ def baseline_hyperparams(municipal_df, var):
 
 def _theta_muni_reg_data(df):
     # Get outcome
-    y = df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+    y = df["log_slaughter_value_per_ha"].to_numpy()
 
     # Normalize weights
     w = df["weights"] / df["weights"].sum()

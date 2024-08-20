@@ -16,7 +16,7 @@ def get_sampling(opt="gams", num_sites=78, pa=41.11, pee=5, xi=1):
             weight=0.25,
             num_sites=num_sites,
             T=200,
-            optimizer=opt,
+            solver=opt,
             max_iter=100,
             final_sample_size=5_000,
             iter_sampling=1000,
