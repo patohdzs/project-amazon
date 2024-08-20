@@ -1,4 +1,5 @@
-library(stargazer)
+library(fixest)
+library(modelsummary)
 library(ggplot2)
 library(terra)
 library(tidyverse)
@@ -17,8 +18,16 @@ precip_rst <- rast("data/clean/precipitation.tif")
 # Load pixel-level biomass data for 2017
 load("data/processed/pixel_biomass_2017.Rdata")
 
+# Load big sites
+load("data/calibration/calibration_78_sites.Rdata")
+
+large_sites <- calib_df %>% select(large_site_id = id)
+
 # Load calibration data set
 load("data/calibration/calibration_1043_sites.Rdata")
+
+# Add big sites
+calib_df <- st_join(calib_df, large_sites, join = st_nearest_feature)
 
 # Convert and filter biomass -> CO2e
 pixel_biomass_2017 <- pixel_biomass_2017 %>%
@@ -96,9 +105,20 @@ model_3 <- lm(
   na.action = na.exclude
 )
 
+model_4 <- feols(
+  log(co2e) ~
+    log(hist_precip) +
+    log(hist_temp) +
+    lat +
+    lon +
+    lat * lon,
+  data = calib_df,
+  cluster = ~large_site_id
+)
+
 # Save regression tables
-stargazer(model_1, model_2, model_3, out = "plots/gamma_calib/1043_sites_reg_table.tex")
-stargazer(model_1, model_2, model_3, out = "plots/gamma_calib/1043_sites_reg_table.txt")
+modelsummary(list(model_1, model_2, model_3, model_4), stars= TRUE, out = "plots/gamma_calib/1043_sites_reg_table.png")
+modelsummary(list(model_1, model_2, model_3, model_4), stars= TRUE, out = "plots/gamma_calib/1043_sites_reg_table.tex")
 
 # Predict gammas
 calib_df <- calib_df %>%
