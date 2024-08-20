@@ -22,6 +22,10 @@ sec_veg_age_rst <- rast(
     full.names = TRUE
   )
 )
+# Select Amazonia subset
+sec_veg_age_rst <- sec_veg_age_rst |>
+  crop(pq_rst) |>
+  mask(pq_rst)
 
 # Get pixel areas
 pixel_areas <- cellSize(pq_rst, unit = "ha")
@@ -35,9 +39,6 @@ print(pasture_quals)
 pixel_areas <- cellSize(sec_veg_age_rst, unit = "ha")
 area_by_age <- zonal(pixel_areas, sec_veg_age_rst, sum, na.rm = TRUE)
 print(area_by_age)
-
-# Resample pasture quality to match sec_veg resolution
-pq_rst <- resample(pq_rst, sec_veg_age_rst, method = "near")
 
 # Set areas with no two-year-old sec veg to 0
 pq_rst[(sec_veg_age_rst != 2)] <- 0
