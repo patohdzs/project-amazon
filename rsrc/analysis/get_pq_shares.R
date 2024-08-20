@@ -40,12 +40,6 @@ calib_df <- calib_df %>%
     starts_with("area_")
   )
 
-# REMOVE
-calib_df <- calib_df %>%
-  rename_with(~ gsub("2008", "2017", .x), starts_with("area_pasture_quality_"))
-
-
-
 # Compute total pasture area
 calib_df <- calib_df %>%
   mutate(
