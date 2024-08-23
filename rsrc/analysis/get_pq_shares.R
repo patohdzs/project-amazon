@@ -7,38 +7,8 @@ library(conflicted)
 
 conflicts_prefer(dplyr::filter)
 
-# Load raster data (amazon biome share, pixel areas, and land uses)
-amazon_rsts <- rast(
-  list.files(
-    "data/processed/",
-    pattern = ".tif",
-    full.names = TRUE
-  )
-)
-
-# Extract variables as polygons and project data
-calib_df <- as.polygons(amazon_rsts, dissolve = FALSE) %>%
-  st_as_sf() %>%
-  st_transform(5880)
-
-# Remove sites with less than 3% overlap with the amazon biome
-calib_df <- calib_df %>%
-  filter(share_amazon_biome >= 0.03)
-
-# Add id variable
-calib_df$id <- seq_len(nrow(calib_df))
-
-# Transform share variables into area (ha)
-calib_df <- calib_df %>%
-  mutate(across(
-    starts_with("share_"),
-    .names = "area_{.col}",
-    ~ . * pixel_area_ha
-  )) %>%
-  rename_with(
-    ~ str_replace(., "share_", ""),
-    starts_with("area_")
-  )
+# Load calibration data
+load("data/calibration/calibration_1043_sites.Rdata")
 
 # Compute total pasture area
 calib_df <- calib_df %>%
@@ -51,7 +21,7 @@ calib_df <- calib_df %>%
 # Compute pasture area as share of agricultural area (Z)
 calib_df <- calib_df %>%
   mutate(
-    share_pasture_z = area_pasture_2017 / area_agricultural_use_2017
+    share_pasture_z = area_pasture_2017 / z_2017
   )
 
 # Compute as share of total pasture area
@@ -65,9 +35,9 @@ calib_df <- calib_df %>%
 # Compute as share of total agricultural area (Z)
 calib_df <- calib_df %>%
   mutate(
-    share_pq_1_z = area_pasture_quality_1_2017 / area_agricultural_use_2017,
-    share_pq_2_z = area_pasture_quality_2_2017 / area_agricultural_use_2017,
-    share_pq_3_z = area_pasture_quality_3_2017 / area_agricultural_use_2017,
+    zshare_pq_1 = area_pasture_quality_1_2017 / z_2017,
+    zshare_pq_2 = area_pasture_quality_2_2017 / z_2017,
+    zshare_pq_3 = area_pasture_quality_3_2017 / z_2017,
   )
 
 # Some checks
@@ -89,9 +59,9 @@ calib_df %>%
 
 calib_df %>%
   select(
-    share_pq_1_z,
-    share_pq_2_z,
-    share_pq_3_z
+    zshare_pq_1,
+    zshare_pq_2,
+    zshare_pq_3
   ) %>%
   summary()
 
@@ -144,7 +114,7 @@ print(zeta_3)
 zeta_1_mc <- 674 / reforested_areas[1, 2]
 zeta_2_mc <- 472 / reforested_areas[2, 2]
 zeta_3_mc <- 52 / reforested_areas[3, 2]
-
+print("Zeta (MC)")
 print(zeta_1_mc)
 print(zeta_2_mc)
 print(zeta_3_mc)
@@ -232,3 +202,8 @@ fig_4 <- calib_df %>%
   )
 
 ggsave(filename = "plots/adj_costs_calib/share_pq_3_pasture.pdf", plot = fig_4)
+
+
+calib_df <- calib_df %>%
+  select(starts_with("share_pq")) %>%
+  write_csv("data/calibration/pq_shares.csv")

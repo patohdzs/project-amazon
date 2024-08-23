@@ -38,7 +38,7 @@ load("data/processed/cattle_price_index.Rdata")
 raster_variables <- rast(
   list.files(
     "data/processed/",
-    pattern = "amazon_",
+    pattern = ".tif",
     full.names = TRUE
   )
 )
@@ -58,22 +58,26 @@ calib_df$id <- seq_len(nrow(calib_df))
 # Transform share variables into area (ha)
 calib_df <- calib_df %>%
   rename(site_area_ha = pixel_area_ha) %>%
-  mutate(
-    amazon_biome_area_ha = share_amazon_biome * site_area_ha,
-    forest_area_1995_ha = share_forest_1995 * site_area_ha,
-    forest_area_2008_ha = share_forest_2008 * site_area_ha,
-    forest_area_2017_ha = share_forest_2017 * site_area_ha,
-    other_area_1995_ha = share_other_1995 * site_area_ha,
-    other_area_2008_ha = share_other_2008 * site_area_ha,
-    other_area_2017_ha = share_other_2017 * site_area_ha,
+  mutate(across(
+    starts_with("share_"),
+    .names = "area_{.col}",
+    ~ . * site_area_ha
+  )) %>%
+  rename_with(
+    ~ str_replace(., "share_", ""),
+    starts_with("area_")
+  )
+
+# Change names to z and add zbar
+calib_df <- calib_df %>%
+  rename_with(
+    ~ str_replace(., "area_agricultural_use", "z"),
+    starts_with("area_agricultural_use")
   ) %>%
   mutate(
-    z_1995 = share_agricultural_use_1995 * site_area_ha,
-    z_2008 = share_agricultural_use_2008 * site_area_ha,
-    z_2017 = share_agricultural_use_2017 * site_area_ha,
-    zbar_1995 = forest_area_1995_ha + z_1995,
-    zbar_2008 = forest_area_2008_ha + z_2008,
-    zbar_2017 = forest_area_2017_ha + z_2017,
+    zbar_1995 = area_forest_1995 + z_1995,
+    zbar_2008 = area_forest_2008 + z_2008,
+    zbar_2017 = area_forest_2017 + z_2017,
   ) %>%
   select(id, contains("area"), contains("z"))
 
