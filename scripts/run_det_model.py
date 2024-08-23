@@ -7,17 +7,17 @@ from pysrc.services.data_service import load_site_data
 solver = "gurobi"
 pee = 7.6
 pa = 41.11
-sitenum = 1043
+num_sites = 1043
 T = 200
 b = 25
 
 # Load site data
-(zbar_2017, z_2017, forest_area_2017) = load_site_data(sitenum)
+(zbar_2017, z_2017, forest_area_2017, low_pq_2017) = load_site_data(num_sites)
 
 # Set productivity parameters using baseline mean
 baseline_fit = baseline.sample(
-    num_sites=sitenum,
-    iter_sampling=10**4,
+    num_sites=num_sites,
+    iter_sampling=10**3,
     chains=5,
     seed=1,
 )
@@ -36,8 +36,9 @@ results = solve_planner_problem(
     gamma=gamma,
     theta=theta,
     time_horizon=T,
-    price_emissions=pee + b,
     price_cattle=pa,
+    price_emissions=pee + b,
+    low_pq=low_pq_2017,
 )
 
 

@@ -32,6 +32,7 @@ def solve_planner_problem(
     zbar,
     gamma,
     theta,
+    low_pq,
     dt=1,
     time_horizon=200,
     price_emissions=20.76,
@@ -39,7 +40,9 @@ def solve_planner_problem(
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v_1=1.66e-4 * 1e9,
+    zeta_v_2=1.66e-4 * 1e9,
     solver="gurobi",
 ):
     model = ConcreteModel()
@@ -65,13 +68,19 @@ def solve_planner_problem(
 
     model.pa = Param(model.T, initialize=price_cattle)
 
+    model.low_pq = Param(model.S, initialize=_np_to_dict(low_pq))
+    model.high_pq = Param(model.S, initialize=_np_to_dict(1 - low_pq))
+
+    # Asymmetric adj. costs
+    model.zeta_u = Param(initialize=zeta_u)
+    model.zeta_v_low = Param(initialize=zeta_v_1)
+    model.zeta_v_high = Param(initialize=zeta_v_2)
+
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
-    model.zeta = Param(initialize=zeta)
     model.dt = Param(initialize=dt)
 
     # Variables
-    model.w = Var(model.T)
     model.x = Var(model.T, model.S)
     model.z = Var(model.T, model.S, within=NonNegativeReals)
     model.u = Var(model.T, model.S, within=NonNegativeReals)
@@ -80,7 +89,6 @@ def solve_planner_problem(
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
-    model.w_def = Constraint(model.T, rule=_w_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -92,7 +100,6 @@ def solve_planner_problem(
         model.z[min(model.T), s].fix(model.z0[s])
         model.u[max(model.T), s].fix(0)
         model.v[max(model.T), s].fix(0)
-        model.w[max(model.T)].fix(0)
 
     # Solve the model
     opt = SolverFactory(solver)
@@ -133,7 +140,7 @@ def vectorize_trajectories(traj: PlannerSolution):
 
 
 def _planner_obj(model):
-    return pyo.quicksum(
+    return sum(
         math.exp(-model.delta * (t * model.dt - model.dt))
         * (
             -model.pe
@@ -144,7 +151,11 @@ def _planner_obj(model):
             )
             + model.pa[t]
             * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
-            - model.zeta / 2 * (model.w[t] ** 2)
+            - (model.zeta_u / 2) * (pyo.quicksum(model.u[t, s] for s in model.S) ** 2)
+            - (model.zeta_v_low / 2)
+            * (pyo.quicksum(model.low_pq[s] * model.v[t, s] for s in model.S) ** 2)
+            - (model.zeta_v_high / 2)
+            * (pyo.quicksum(model.high_pq[s] * model.v[t, s] for s in model.S) ** 2)
         )
         * model.dt
         for t in model.T
