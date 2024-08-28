@@ -8,7 +8,7 @@ tictoc::tic(msg = "calibrate_gamma_reg.R script", log = TRUE)
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
 
 # Convert biomass into CO2e, add column of ones, take logs, and scale
-df <- calib_df %>%
+df <- calib_1043 %>%
   mutate(
     X1 = 1,
     log_hist_precip = log(hist_precip),
@@ -31,8 +31,9 @@ df <- calib_df %>%
     lon,
     latlon,
     log_co2e_ha_2017,
-    id
-  )
+    id_group
+  ) %>%
+  filter(!is.na(log_co2e_ha_2017))
 
 model_3 <- lm(
   formula = log_co2e_ha_2017 ~
