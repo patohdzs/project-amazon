@@ -7,7 +7,7 @@ from pysrc.services.data_service import load_site_data
 solver = "gurobi"
 pee = 7.1
 pa = 41.11
-num_sites = 78
+num_sites = 1043
 T = 200
 b = 25
 

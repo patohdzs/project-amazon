@@ -68,7 +68,7 @@ def solve_planner_problem(
     model.pa = Param(model.T, initialize=price_cattle)
 
     model.low_pq = Param(model.S, initialize=_np_to_dict(low_pq))
-    model.high_pq = Param(model.S, initialize=_np_to_dict(low_pq))
+    model.high_pq = Param(model.S, initialize=_np_to_dict(1 - low_pq))
 
     # Asymmetric adj. costs
     model.zeta_u = Param(initialize=zeta_u)
