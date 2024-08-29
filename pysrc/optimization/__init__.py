@@ -85,9 +85,17 @@ def solve_planner_problem(
     model.u = Var(model.T, model.S, within=NonNegativeReals)
     model.v = Var(model.T, model.S, within=NonNegativeReals)
 
+    # Auxilary variables
+    model.w1 = Var(model.T)
+    model.w2 = Var(model.T)
+    model.w3 = Var(model.T)
+
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
+    model.w1_def = Constraint(model.T, rule=_w1_const)
+    model.w2_def = Constraint(model.T, rule=_w2_const)
+    model.w3_def = Constraint(model.T, rule=_w3_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -99,6 +107,9 @@ def solve_planner_problem(
         model.z[min(model.T), s].fix(model.z0[s])
         model.u[max(model.T), s].fix(0)
         model.v[max(model.T), s].fix(0)
+        model.w1[max(model.T)].fix(0)
+        model.w2[max(model.T)].fix(0)
+        model.w3[max(model.T)].fix(0)
 
     # Solve the model
     opt = SolverFactory(solver)
@@ -138,7 +149,7 @@ def vectorize_trajectories(traj: PlannerSolution):
 
 
 def _planner_obj(model):
-    return sum(
+    return pyo.quicksum(
         math.exp(-model.delta * (t * model.dt - model.dt))
         * (
             -model.pe
@@ -149,11 +160,9 @@ def _planner_obj(model):
             )
             + model.pa[t]
             * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
-            - (model.zeta_u / 2) * (pyo.quicksum(model.u[t, s] for s in model.S) ** 2)
-            - (model.zeta_v_low / 2)
-            * (pyo.quicksum(model.low_pq[s] * model.v[t, s] for s in model.S) ** 2)
-            - (model.zeta_v_high / 2)
-            * (pyo.quicksum(model.high_pq[s] * model.v[t, s] for s in model.S) ** 2)
+            - (model.zeta_u / 2) * (model.w1[t] ** 2)
+            - (model.zeta_v_low / 2) * (model.w2[t] ** 2)
+            - (model.zeta_v_high / 2) * (model.w3[t] ** 2)
         )
         * model.dt
         for t in model.T
@@ -181,10 +190,26 @@ def _xdot_const(model, t, s):
         return Constraint.Skip
 
 
-def _w_const(model, t):
+def _w1_const(model, t):
     if t < max(model.T):
-        return model.w[t] == pyo.quicksum(
-            model.u[t, s] + model.v[t, s] for s in model.S
+        return model.w1[t] == pyo.quicksum(model.u[t, s] for s in model.S)
+    else:
+        return Constraint.Skip
+
+
+def _w2_const(model, t):
+    if t < max(model.T):
+        return model.w2[t] == pyo.quicksum(
+            model.low_pq[s] * model.v[t, s] for s in model.S
+        )
+    else:
+        return Constraint.Skip
+
+
+def _w3_const(model, t):
+    if t < max(model.T):
+        return model.w3[t] == pyo.quicksum(
+            model.high_pq[s] * model.v[t, s] for s in model.S
         )
     else:
         return Constraint.Skip
