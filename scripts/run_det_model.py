@@ -5,9 +5,9 @@ from pysrc.services.data_service import load_site_data
 
 # Model hyperparameters
 solver = "gurobi"
-pee = 7.6
+pee = 7.1
 pa = 41.11
-num_sites = 1043
+num_sites = 78
 T = 200
 b = 25
 

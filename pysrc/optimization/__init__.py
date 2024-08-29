@@ -23,7 +23,6 @@ class PlannerSolution:
     X: np.ndarray
     U: np.ndarray
     V: np.ndarray
-    w: np.ndarray
 
 
 def solve_planner_problem(
@@ -69,7 +68,7 @@ def solve_planner_problem(
     model.pa = Param(model.T, initialize=price_cattle)
 
     model.low_pq = Param(model.S, initialize=_np_to_dict(low_pq))
-    model.high_pq = Param(model.S, initialize=_np_to_dict(1 - low_pq))
+    model.high_pq = Param(model.S, initialize=_np_to_dict(low_pq))
 
     # Asymmetric adj. costs
     model.zeta_u = Param(initialize=zeta_u)
@@ -116,9 +115,8 @@ def solve_planner_problem(
     X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
     U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
-    w = np.array([model.w[t].value for t in model.T])
 
-    return PlannerSolution(Z, X, U, V, w)
+    return PlannerSolution(Z, X, U, V)
 
 
 def vectorize_trajectories(traj: PlannerSolution):
