@@ -5,7 +5,7 @@ from cmdstanpy import CmdStanModel
 
 from pysrc.sampling import baseline
 
-from ..optimization import gams, gurobi
+from ..optimization import gurobi
 from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
@@ -27,7 +27,7 @@ def sample(
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
     # Optimizer
-    optimizer="gurobi",
+    optimizer="gams",
     # Sampling params
     max_iter=20000,
     tol=0.001,

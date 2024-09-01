@@ -49,12 +49,96 @@ model_3 <- lm(
 summary(model_3)
 
 
+model_4 <- lmer(
+  formula = log_co2e_ha_2017 ~
+    log_hist_precip +
+    log_hist_temp +
+    lat +
+    lon +
+    latlon +
+    (1 | id_group),
+  data = df,
+  na.action = na.exclude
+)
+summary(model_4)
+
+
+
+
+
 # Output municipality-level regression data
 st_write(df,
   "data/calibration/hmc/gamma_reg_site_1043.geojson",
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Convert biomass into CO2e, add column of ones, take logs, and scale
+df2 <- calib_1043 %>%
+  mutate(
+    X1 = 1,
+    log_hist_precip = log(hist_precip),
+    log_hist_temp = log(hist_temp),
+    latlon = lat * lon,
+    log_co2e_ha_2017 = log(co2e)
+  ) %>%
+  mutate(
+    log_hist_precip = scale(log_hist_precip),
+    log_hist_temp = scale(log_hist_temp),
+    lat = scale(lat),
+    lon = scale(lon),
+    latlon = scale(latlon),
+  ) %>%
+  select(
+    X1,
+    log_hist_precip,
+    log_hist_temp,
+    lat,
+    lon,
+    latlon,
+    log_co2e_ha_2017,
+    id_group
+  ) 
+
+
+
+# Output municipality-level regression data
+st_write(df2,
+         "data/calibration/hmc/gamma_data_site_1043.geojson",
+         driver = "GeoJSON",
+         delete_dsn = TRUE
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # END TIMER

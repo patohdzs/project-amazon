@@ -29,7 +29,7 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
 
     # Read site level data
     site_theta_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_theta.geojson")
-    site_gamma_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_gamma.geojson")
+    site_gamma_2017 = gpd.read_file(data_dir / f"gamma_data_site_{num_sites}.geojson")
 
     # Remove geometries
     site_theta_2017_df = site_theta_2017.iloc[:, :-1]

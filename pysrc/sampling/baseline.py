@@ -27,6 +27,8 @@ def sample(num_sites: int, **stan_kwargs):
         S=num_sites,
         pa_2017=44.9736197781184,
         **theta_adj_reg_data(num_sites, site_theta_df),
+        N_gamma=site_gamma_df.iloc[:, :6].to_numpy().shape[0],
+        X_gamma=site_gamma_df.iloc[:, :6].to_numpy(),
         # **gamma_adj_reg_data(num_sites, site_gamma_df),
         **baseline_hyperparams(municipal_theta_df, "theta"),
         **baseline_hyperparams(municipal_gamma_df, "gamma"),
