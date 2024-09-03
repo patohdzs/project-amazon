@@ -13,15 +13,15 @@ df <- calib_1043 %>%
     X1 = 1,
     log_hist_precip = log(hist_precip),
     log_hist_temp = log(hist_temp),
-    latlon = lat * lon,
-    log_co2e_ha_2017 = log(co2e)
+    log_co2e_ha_2017 = log(co2e),
   ) %>%
+  filter(!is.na(log_co2e_ha_2017))%>%
   mutate(
-    log_hist_precip = scale(log_hist_precip),
-    log_hist_temp = scale(log_hist_temp),
+    log_hist_precip=scale(log_hist_precip),
+    log_hist_temp=scale(log_hist_temp),
     lat = scale(lat),
     lon = scale(lon),
-    latlon = scale(latlon),
+    latlon = lat*lon,
   ) %>%
   select(
     X1,
@@ -32,8 +32,7 @@ df <- calib_1043 %>%
     latlon,
     log_co2e_ha_2017,
     id_group
-  ) %>%
-  filter(!is.na(log_co2e_ha_2017))
+  )
 
 model_3 <- lm(
   formula = log_co2e_ha_2017 ~
@@ -97,11 +96,11 @@ df2 <- calib_1043 %>%
     log_co2e_ha_2017 = log(co2e)
   ) %>%
   mutate(
-    log_hist_precip = scale(log_hist_precip),
-    log_hist_temp = scale(log_hist_temp),
+    log_hist_precip=scale(log_hist_precip),
+    log_hist_temp=scale(log_hist_temp),
     lat = scale(lat),
     lon = scale(lon),
-    latlon = scale(latlon),
+    latlon = lat*lon,
   ) %>%
   select(
     X1,
@@ -128,6 +127,9 @@ st_write(df2,
 
 
 
+calib_test <- df %>%
+  mutate(site_reg_gamma_iid = exp(predict(model_3, .)))%>%
+  mutate(site_reg_gamma_re = exp(predict(model_4, .)))
 
 
 
