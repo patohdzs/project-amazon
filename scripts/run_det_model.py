@@ -1,4 +1,5 @@
-from pysrc.analysis import value_decomposition
+import matplotlib.pyplot as plt
+
 from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
@@ -9,7 +10,6 @@ pee = 7.6
 pa = 41.11
 num_sites = 1043
 T = 200
-b = 25
 
 # Load site data
 (zbar_2017, z_2017, forest_area_2017, low_pq_2017) = load_site_data(num_sites)
@@ -29,29 +29,29 @@ gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
 x_2017 = gamma * forest_area_2017
 
 # Solve planner problem
-results = solve_planner_problem(
-    x0=x_2017,
-    z0=z_2017,
-    zbar=zbar_2017,
-    gamma=gamma,
-    theta=theta,
-    time_horizon=T,
-    price_cattle=pa,
-    price_emissions=pee + b,
-    low_pq=low_pq_2017,
-)
-
-
-print(
-    value_decomposition(
-        Z=results.Z,
-        X=results.X,
-        U=results.U,
-        V=results.V,
-        T=T,
-        pee=pee,
-        pa=pa,
-        b=b,
-        theta=theta,
+results = []
+for b in range(0, 30, 5):
+    results.append(
+        solve_planner_problem(
+            x0=x_2017,
+            z0=z_2017,
+            zbar=zbar_2017,
+            gamma=gamma,
+            theta=theta,
+            time_horizon=T,
+            price_cattle=pa,
+            price_emissions=pee + b,
+            low_pq=low_pq_2017,
+        )
     )
-)
+
+# Plotting the line plots for V and W
+for i, res in enumerate(results):
+    plt.plot(res.X.sum(axis=1)[:50], label=f"b=${i*5}")
+
+# Adding legend
+plt.legend()
+
+# Adding labels and title
+plt.xlabel("Time (years)")
+plt.ylabel("Carbon stock (Gigatons)")
