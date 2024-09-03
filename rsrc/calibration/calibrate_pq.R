@@ -155,23 +155,23 @@ pq_rst[(sec_veg_age_rst != 2)] <- 0
 pixel_areas <- cellSize(pq_rst, unit = "ha")
 
 # Calculate the total area for each pasture quality
-reforested_areas <- zonal(pixel_areas, pq_rst, sum, na.rm = TRUE) %>%
+reforestation <- zonal(pixel_areas, pq_rst, sum, na.rm = TRUE) %>%
   slice(-1) %>%
   mutate(prop = area / sum(area, na.rm = TRUE))
 
-print(reforested_areas)
+print(reforestation)
 
 # Get site-specific MC's
-MC_low_pq <- reforested_areas[1, 2] * calib_df$fit_share_low_pq
-MC_high_pq <- (reforested_areas[2, 2] + reforested_areas[3, 2]) * (1 - calib_df$fit_share_low_pq)
+MC_low_pq <- reforestation[1, 2] * calib_df$fit_share_low_pq
+MC_high_pq <- (reforestation[2, 2] + reforestation[3, 2]) * (1 - calib_df$fit_share_low_pq)
 
 # Compute implied adjustment cost params (MC = MR condition)
-zeta_2_mc <- 674 / mean(MC_low_pq)
-zeta_3_mc <- 52 / mean(MC_high_pq)
+zeta_2 <- 674 / mean(MC_low_pq)
+zeta_3 <- 52 / mean(MC_high_pq)
 
 print("Zeta (MC)")
-print(zeta_2_mc)
-print(zeta_3_mc)
+print(zeta_2)
+print(zeta_3)
 
 # Deforestation cost calibration
 # We transform to dollars using an FX rate of 4.14 (December 2019)
