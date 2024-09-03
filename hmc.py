@@ -2,21 +2,21 @@ import os
 import pickle
 
 from pysrc.analysis import value_decomposition
-from pysrc.optimization.gurobi import solve_planner_problem
+from pysrc.optimization.gams import solve_planner_problem
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
 # ## Model scenario
-opt = "gurobi"  # need to install gurobi solver
+opt = "gams"  # need to install gurobi solver
 pee = 7.1
 pa = 41.11
-num_sites = 1043
+num_sites = 78
 T = 200
 # b = [0, 10, 15, 20, 25]
-b = [10]
+b = [15]
 pe_values = [pee + bi for bi in b]
-xi = 1000
+xi = 1
 
 
 # conduct hmc sampling, details see adjusted.py
@@ -35,7 +35,7 @@ for pe in pe_values:
         iter_warmup=500,
         show_progress=True,
         seed=1,
-        inits=0.2,
+        # inits=0.2,
     )
 
     output_base_path = os.path.join(
@@ -55,7 +55,7 @@ for pe in pe_values:
         print(f"Results saved to {outfile_path}")
 
 # Load site data
-(zbar_2017, z_2017, forest_area_2017,_,_,_,_) = load_site_data(sitenum)
+(zbar_2017, z_2017, forest_area_2017,_,_,_,_) = load_site_data(num_sites)
 
 # Read ambiguity-adjusted parameters
 result_folder = os.path.join(
@@ -81,23 +81,23 @@ for pe in pe_values:
 
     b_val = pe - pee
     results = solve_planner_problem(
-        time_horizon=T,
+        T=T,
         theta=theta_vals,
         gamma=gamma_vals,
         x0=x0_vals,
         zbar=zbar_2017,
         z0=z_2017,
-        price_emissions=pe,
-        price_cattle=pa,
+        pe=pe,
+        pa=pa,
     )
 
     print(
         "result",
         value_decomposition(
-            Z=results.Z,
-            X=results.X,
-            U=results.U,
-            V=results.V,
+            Z=results['Z'],
+            X=results['X'],
+            U=results['U'],
+            V=results['V'],
             T=T,
             pee=pee,
             pa=pa,

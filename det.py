@@ -41,12 +41,13 @@ results = solve_planner_problem(
 )
 
 
+
 print(
     value_decomposition(
-        Z=results.Z,
-        X=results.X,
-        U=results.U,
-        V=results.V,
+        Z=results['Z'],
+        X=results['X'],
+        U=results['U'],
+        V=results['V'],
         T=T,
         pee=pee,
         pa=pa,

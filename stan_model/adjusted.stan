@@ -66,11 +66,13 @@ data {
   int<lower=0> N_gamma;
   int<lower=0> K_theta; // Number of coefficients on theta
   int<lower=0> K_gamma; // Number of coefficients on gamma
+  int<lower=0> M_gamma;
+
 
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] G_theta; // Groups for theta
-  matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
-  matrix[S, N_gamma] G_gamma; // Groups for gamma
+  matrix[S, K_gamma] X_gamma; // Design matrix for regressors on gamma
+
   real<lower=0> pa_2017; // Price of cattle in 2017
 
   // Prior hyperparams
@@ -79,41 +81,73 @@ data {
   real<lower=0> a_theta;
   real<lower=0> b_theta;
 
+
+
   cov_matrix[K_gamma] inv_Q_gamma;
-  vector[K_gamma] m_gamma;
   real<lower=0> a_gamma;
   real<lower=0> b_gamma;
+  real<lower=0> a_nu;
+  real<lower=0> b_nu;
+  cov_matrix[K_gamma] gamma_vcov;
+  vector[K_gamma] gamma_mean;
+  vector[M_gamma] V_mean;
+  vector[M_gamma] V_var;
+  array[N_gamma] int g;
+  vector[N_gamma] y_gamma;
+  matrix[N_gamma, K_gamma] X_gamma_reg;
+  // matrix[K_gamma, K_gamma] L_gamma;
 }
 transformed data {
   matrix[K_theta, K_theta] L_theta = cholesky_decompose(inv_Q_theta);
-  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(inv_Q_gamma);
+  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(gamma_vcov);  
 }
 parameters {
   real<lower=0> sigma_sq_theta; // Variance of log_theta
   vector[K_theta] alpha_theta;
 
-  real<lower=0> sigma_sq_gamma; // Variance of log_gamma
+
+  real<lower=0> eta; 
+  real<lower=0> nu;
+  // vector[M_gamma] alpha_Vj;
   vector[K_gamma] alpha_gamma;
+  vector[M_gamma] Vj;
+  // vector[K_gamma] beta_gamma;
+
 }
 transformed parameters {
   // Coefs
   vector[K_theta] beta_theta = m_theta + sqrt(sigma_sq_theta) * L_theta * alpha_theta;
-  vector[K_gamma] beta_gamma = m_gamma + sqrt(sigma_sq_gamma) * L_gamma * alpha_gamma;
+  // vector[K_gamma] beta_gamma = inv_Q_gamma * (X_gamma_reg' * (y_gamma - Vj[g])) +  L_gamma * alpha_gamma;
+  vector[K_gamma] beta_gamma = gamma_mean +  L_gamma * alpha_gamma;
 
   // Grouped average
   vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
+  
+  vector<lower=0>[S] gamma = exp(X_gamma * beta_gamma + Vj);
+
 }
 model {
   // Hierarchical priors
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
-
   alpha_theta ~ std_normal();
+
+  eta ~ gamma(a_gamma,1/b_gamma);
+  nu ~ gamma(a_nu,1/b_nu);
+
   alpha_gamma ~ std_normal();
+
+  for (j in 1:M_gamma) {
+  Vj[j] ~ normal(V_mean[j],sqrt(V_var[j]));
+  }
+
+
+
   // Value function
   target += log_value(gamma, theta, T, S, alpha, sol_val_X,
                                  sol_val_Ua, sol_val_Up, zbar_2017,
                                  forest_area_2017, alpha_p_Adym, Bdym,
                                  ds_vect, zeta, xi, kappa, pa, pf);
 }
+
+
+  

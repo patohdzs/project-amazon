@@ -75,11 +75,14 @@ def baseline_hyperparams(municipal_df, var):
     }
 
     if var == "gamma":
+
         N, K = X.shape
-        return_dict.update({
-            "K_gamma": K,
-        })
-        print("m",m)
+        return_dict = {
+        "K_gamma": K,
+        f"inv_Q_{var}": inv_Q,
+        "y_gamma": y,
+        "X_gamma_reg":X,
+        }
 
     return return_dict
 
