@@ -82,20 +82,12 @@ data {
   real<lower=0> b_theta;
 
 
-
-  cov_matrix[K_gamma] inv_Q_gamma;
-  real<lower=0> a_gamma;
-  real<lower=0> b_gamma;
-  real<lower=0> a_nu;
-  real<lower=0> b_nu;
   cov_matrix[K_gamma] gamma_vcov;
   vector[K_gamma] gamma_mean;
   vector[M_gamma] V_mean;
   vector[M_gamma] V_var;
   array[N_gamma] int g;
-  vector[N_gamma] y_gamma;
-  matrix[N_gamma, K_gamma] X_gamma_reg;
-  // matrix[K_gamma, K_gamma] L_gamma;
+
 }
 transformed data {
   matrix[K_theta, K_theta] L_theta = cholesky_decompose(inv_Q_theta);
@@ -106,24 +98,20 @@ parameters {
   vector[K_theta] alpha_theta;
 
 
-  real<lower=0> eta; 
-  real<lower=0> nu;
-  // vector[M_gamma] alpha_Vj;
   vector[K_gamma] alpha_gamma;
   vector[M_gamma] Vj;
-  // vector[K_gamma] beta_gamma;
 
 }
 transformed parameters {
   // Coefs
   vector[K_theta] beta_theta = m_theta + sqrt(sigma_sq_theta) * L_theta * alpha_theta;
-  // vector[K_gamma] beta_gamma = inv_Q_gamma * (X_gamma_reg' * (y_gamma - Vj[g])) +  L_gamma * alpha_gamma;
+
   vector[K_gamma] beta_gamma = gamma_mean +  L_gamma * alpha_gamma;
 
   // Grouped average
   vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
   
-  vector<lower=0>[S] gamma = exp(X_gamma * beta_gamma + Vj);
+  vector<lower=0>[S] gamma = exp(X_gamma * beta_gamma + Vj[g]);
 
 }
 model {
@@ -131,8 +119,6 @@ model {
   sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
   alpha_theta ~ std_normal();
 
-  eta ~ gamma(a_gamma,1/b_gamma);
-  nu ~ gamma(a_nu,1/b_nu);
 
   alpha_gamma ~ std_normal();
 
