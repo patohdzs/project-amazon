@@ -29,6 +29,8 @@ sec_veg_age_rst <- rast(
   )
 )
 
+clean_mapbiomas <- rast("data/clean/land_use_cover_2000.tif")
+
 # Historical temperature
 temp_rst <- rast("data/clean/temperature.tif")
 
@@ -145,8 +147,14 @@ calib_df %>%
 
 # Select Amazonia subset
 sec_veg_age_rst <- sec_veg_age_rst |>
-  crop(pq_rst) |>
-  mask(pq_rst)
+  crop(clean_mapbiomas) |>
+  mask(clean_mapbiomas)
+
+pq_rst <- pq_rst |>
+  crop(clean_mapbiomas) |>
+  mask(clean_mapbiomas)
+
+no_pq <- (pq_rst == 0) & (sec_veg_age_rst == 2)
 
 # Set areas with no two-year-old sec veg to 0
 pq_rst[(sec_veg_age_rst != 2)] <- 0
@@ -155,19 +163,33 @@ pq_rst[(sec_veg_age_rst != 2)] <- 0
 pixel_areas <- cellSize(pq_rst, unit = "ha")
 
 # Calculate the total area for each pasture quality
-reforestation <- zonal(pixel_areas, pq_rst, sum, na.rm = TRUE) %>%
+ref <- zonal(pixel_areas, pq_rst, sum, na.rm = TRUE) %>%
   slice(-1) %>%
   mutate(prop = area / sum(area, na.rm = TRUE))
 
-print(reforestation)
+print(ref)
 
-# Get site-specific MC's
-MC_low_pq <- reforestation[1, 2] * calib_df$fit_share_low_pq
-MC_high_pq <- (reforestation[2, 2] + reforestation[3, 2]) * (1 - calib_df$fit_share_low_pq)
+no_pq_ref <- zonal(pixel_areas, no_pq, sum, na.rm = TRUE) %>%
+  slice(-1) %>%
+  mutate(prop = area / sum(area, na.rm = TRUE))
+
+print(no_pq_ref)
+
+no_pq_ref <- no_pq_ref[[1, "area"]]
+
+# Get mean share of low pasture quality across sites
+avg_share_low_pq <- mean(calib_df$fit_share_low_pq)
+
+# Get site-specific MC's (up to factor of zeta)
+r_low <- ref[1, 2] + avg_share_low_pq * no_pq_ref
+r_high <- ref[2, 2] + ref[3, 2] + (1 - avg_share_low_pq) * no_pq_ref
+
+mc_low_pq <- r_low * calib_df$fit_share_low_pq
+mc_high_pq <- r_high * (1 - calib_df$fit_share_low_pq)
 
 # Compute implied adjustment cost params (MC = MR condition)
-zeta_2 <- 674 / mean(MC_low_pq)
-zeta_3 <- 52 / mean(MC_high_pq)
+zeta_2 <- 674 / mean(mc_low_pq)
+zeta_3 <- 52 / mean(mc_high_pq)
 
 print("Zeta (MC)")
 print(zeta_2)
