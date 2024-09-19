@@ -44,6 +44,9 @@ pq_rst <- rast(
   )
 )
 
+# Load percipitation data
+precip_rsts <- rast("data/clean/precipitation.tif")
+
 # Combine AGB zonal rasters into a single raster
 agb_rst <- do.call(merge, agb_rst)
 
@@ -51,6 +54,12 @@ agb_rst <- do.call(merge, agb_rst)
 sec_veg_age_rst <- sec_veg_age_rst |>
   crop(clean_mapbiomas) |>
   mask(clean_mapbiomas)
+
+# Resample percipitation data into sites
+mean_precip_rst <- precip_rsts |>
+  resample(amazon_rsts) |>
+  mean()
+
 
 # Get gamma and site number as rasters
 gamma_rst <- calib_df |>
