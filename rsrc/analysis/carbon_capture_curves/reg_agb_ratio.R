@@ -14,8 +14,16 @@ model_2 <- df %>%
   filter(last_pq != 0) %>%
   lm(ratio ~ 0 + factor(age):factor(last_pq), data = .)
 
-stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.tex")
-stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.txt")
+# Fit regression interacting with mean percipitation
+model_3 <- df %>%
+  lm(ratio ~ 0 + factor(age) + factor(age):percip, data = .)
+
+# Fit regression interacting with last pasture quality
+model_4 <- df %>%
+  lm(ratio ~ 0 + percip + factor(age), data = .)
+
+stargazer(model_1, model_2, model_3, out = "plots/gamma_alpha/table_1.tex")
+stargazer(model_1, model_2, model_3, out = "plots/gamma_alpha/table_1.txt")
 
 # Get coefficients
 coefs <- coef(model_1)[paste0("factor(age)", 2:32)]
@@ -51,8 +59,7 @@ p <- plot_df |> ggplot(aes(x = time, y = coef, color = type, linetype = type)) +
     linetype = "Legend"
   ) +
   scale_color_manual(values = c("Coefficients" = "black", "Theoretical Function" = "blue")) +
-  scale_linetype_manual(values = c("Coefficients" = "solid", "Theoretical Function" = "dashed")) +
-  theme_minimal()
+  scale_linetype_manual(values = c("Coefficients" = "solid", "Theoretical Function" = "dashed"))
 
 # Save the plot
 ggsave("plots/gamma_alpha/coefs.png", plot = p)
@@ -97,5 +104,6 @@ df <- df %>%
 
 model_2 <- lm(ratio ~ 0 + Tp, data = df)
 model_3 <- lm(ratio ~ Tp, data = df)
+model_4 <- lm(ratio ~ Tp + mp, data = df)
 stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.tex")
 stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.txt")

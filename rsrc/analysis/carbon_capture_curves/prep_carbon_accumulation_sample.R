@@ -56,10 +56,7 @@ sec_veg_age_rst <- sec_veg_age_rst |>
   mask(clean_mapbiomas)
 
 # Resample percipitation data into sites
-mean_precip_rst <- precip_rsts |>
-  resample(amazon_rsts) |>
-  mean()
-
+mean_precip_rst <- precip_rsts |> mean()
 
 # Get gamma and site number as rasters
 gamma_rst <- calib_df |>
@@ -86,18 +83,20 @@ pq <- extract(pq_rst, sec_veg_age[, c("x", "y")])
 agb <- extract(agb_rst, sec_veg_age[, c("x", "y")])
 gamma <- extract(gamma_rst, sec_veg_age[, c("x", "y")])
 site <- extract(site_rst, sec_veg_age[, c("x", "y")])
+mean_precip <- extract(mean_precip_rst, sec_veg_age[, c("x", "y")])
 
 # Combine the extracted values
-df <- data.frame(sec_veg_age, pq, agb, gamma, site) |>
+df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip) |>
   as_tibble()
 
 # Rename some columns
 df <- df |>
-  rename(agb = !!names(df)[ncol(df) - 4]) |>
+  rename(agb = !!names(df)[ncol(df) - 6]) |>
   rename(
     site = id,
     gamma = site_reg_gamma,
-    age = sec_veg_age_2017
+    age = sec_veg_age_2017,
+    percip = mean
   ) |>
   select(-matches("^ID"))
 
