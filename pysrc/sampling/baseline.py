@@ -27,11 +27,11 @@ def sample(num_sites: int, **stan_kwargs):
         S=num_sites,
         pa_2017=44.9736197781184,
         **theta_adj_reg_data(num_sites, site_theta_df),
-        N_gamma=site_gamma_df.iloc[:, :6].to_numpy().shape[0],
-        X_gamma=site_gamma_df.iloc[:, :6].to_numpy(),
+        # N_gamma=site_gamma_df.iloc[:, :6].to_numpy().shape[0],
+        # X_gamma=site_gamma_df.iloc[:, :6].to_numpy(),
         # **gamma_adj_reg_data(num_sites, site_gamma_df),
         **baseline_hyperparams(municipal_theta_df, "theta"),
-        **baseline_hyperparams(municipal_gamma_df, "gamma"),
+        # **baseline_hyperparams(municipal_gamma_df, "gamma"),
     )
 
     # Sampling
@@ -66,7 +66,7 @@ def baseline_hyperparams(municipal_df, var):
     a = (X.shape[0]) / 2
     b = 0.5 * (y.T @ y - m.T @ X.T @ X @ m)
     
-    
+    print("Q",inv_Q)
     return_dict = {
     f"inv_Q_{var}": inv_Q,
     f"m_{var}": m,
@@ -88,10 +88,10 @@ def baseline_hyperparams(municipal_df, var):
 
 def _theta_muni_reg_data(df):
     # Get outcome
-    y = df["log_cattleSlaughter_valuePerHa_2017"].to_numpy()
+    y = df["log_slaughter"].to_numpy()
 
     # Normalize weights
-    w = df["weights"] / df["weights"].sum()
+    w = df["weights"] / df["weights"].mean()
 
     # # Get weights pre-multiplication matrix
     W = np.diag(np.sqrt(w))

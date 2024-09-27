@@ -53,9 +53,9 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
-    theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
-    
+    # baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
+    theta_vals=pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
+
 
     gamma_vals=pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
 
@@ -89,7 +89,7 @@ def sample(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        baseline_fit=baseline_fit,
+        # baseline_fit=baseline_fit,
         final_sample_size=final_sample_size,
         weight=weight,
     )
@@ -170,15 +170,11 @@ def sample(
             ),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
-            # **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **baseline_hyperparams(municipal_theta_df, "theta"),
-            **baseline_hyperparams(municipal_gamma_df, "gamma"),
-            N_gamma=site_gamma_df.iloc[:, :6].to_numpy().shape[0],
-            X_gamma=site_gamma_df.iloc[:, :6].to_numpy(),
-            M_gamma=78,
-            # K_gamma=6,
-            **gibbs_sampling(),
-            g=site_gamma_df.iloc[:,7]
+            **gamma_adj_reg_data(num_sites, site_gamma_df),
+            # **baseline_hyperparams(municipal_theta_df, "theta"),
+            # **baseline_hyperparams(municipal_gamma_df, "gamma"),
+            **gibbs_sampling("gamma"),
+            **gibbs_sampling("theta"),         
         )
 
         # Sampling from adjusted distribution
@@ -281,8 +277,9 @@ def sample(
     gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
     # eta_samples = fit.stan_variable("eta")
     # nu_samples = fit.stan_variable("nu")
-    V_samples  = fit.stan_variable("Vj")
-
+    V_gamma_samples  = fit.stan_variable("Vj_gamma")
+    V_theta_samples  = fit.stan_variable("Vj_theta")
+    
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
         (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
@@ -293,7 +290,8 @@ def sample(
     
     # results.update({"eta_sample": eta_samples})
     # results.update({"nu_sample": nu_samples})
-    results.update({"V_sample": V_samples})
+    results.update({"V_gamma_sample": V_gamma_samples})
+    results.update({"V_theta_sample": V_theta_samples})
 
     return results
 

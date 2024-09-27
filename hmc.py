@@ -9,14 +9,14 @@ from pysrc.services.file_service import get_path
 
 # ## Model scenario
 opt = "gams"  # need to install gurobi solver
-pee = 7.1
+pee = 5.3
 pa = 41.11
 num_sites = 78
 T = 200
 # b = [0, 10, 15, 20, 25]
 b = [15]
 pe_values = [pee + bi for bi in b]
-xi = 1
+xi = 10000
 
 
 # conduct hmc sampling, details see adjusted.py

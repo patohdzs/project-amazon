@@ -24,11 +24,11 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     forest_area_2017 /= norm_fac
 
     # Read municipal level data
-    municipal_theta_df = gpd.read_file(data_dir / "muni_data_theta.geojson")
+    municipal_theta_df = gpd.read_file(data_dir / "theta_reg.geojson")
     municipal_gamma_df = gpd.read_file(data_dir / "gamma_reg_site_1043.geojson")
 
     # Read site level data
-    site_theta_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_theta.geojson")
+    site_theta_2017 = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
     site_gamma_2017 = gpd.read_file(data_dir / f"gamma_data_site_{num_sites}.geojson")
 
     # Remove geometries
@@ -49,7 +49,7 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
 
 def load_price_data():
     # Read data file
-    file_path = get_path("data", "hmc") / "seriesPriceCattle_prepared.csv"
+    file_path = get_path("data", "calibration","hmc") / "seriesPriceCattle_prepared.csv"
     df = pd.read_csv(file_path)
     average_prices = df.groupby("year")["price_real_mon_cattle"].mean()
     p_a_list = np.array(average_prices)
@@ -60,17 +60,17 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     from pysrc.sampling import baseline
 
     # Set data directory
-    data_dir = get_path("data", "hmc")
+    data_dir = get_path("data","calibration", "hmc")
 
     # Read data file
     file_path = data_dir / f"hmc_{num_sites}SitesModel.csv"
     df = pd.read_csv(file_path)
 
     # Extract information
-    z_1995 = df[f"z_1995_{num_sites}Sites"].to_numpy()
-    z_2008 = df[f"z_2008_{num_sites}Sites"].to_numpy()
-    zbar_1995 = df[f"zbar_1995_{num_sites}Sites"].to_numpy()
-    forest_area_1995 = df[f"forestArea_1995_ha_{num_sites}Sites"].to_numpy()
+    z_1995 = df[f"z_1995"].to_numpy()
+    z_2008 = df[f"z_2008"].to_numpy()
+    zbar_1995 = df[f"zbar_1995"].to_numpy()
+    forest_area_1995 = df[f"forest_area_1995_ha"].to_numpy()
 
     # Normalize Z data
     zbar_1995 /= norm_fac
@@ -79,11 +79,11 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
 
     # Read municipal level data
     municipal_theta_df = gpd.read_file(data_dir / "muni_data_theta.geojson")
-    municipal_gamma_df = gpd.read_file(data_dir / "muni_data_gamma.geojson")
+    municipal_gamma_df = gpd.read_file(data_dir / "gamma_reg_site_1043.geojson")
 
     # Read site level data
     site_theta_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_theta.geojson")
-    site_gamma_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_gamma.geojson")
+    site_gamma_2017 = gpd.read_file(data_dir / f"gamma_data_site_{num_sites}.geojson")
 
     # Remove geometries
     site_theta_2017_df = site_theta_2017.iloc[:, :-1]
@@ -95,7 +95,8 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     )
 
     theta = baseline_fit.stan_variable("theta").mean(axis=0)
-    gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
+    gamma = pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
+
 
     print(f"Data successfully loaded from {data_dir}")
     return (
