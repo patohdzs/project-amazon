@@ -104,7 +104,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(5, 7, 0.1)
+        pe_values = np.arange(4, 5, 0.1)
         results = []
         for pe in pe_values:
             samples = adjusted.sample(
@@ -187,16 +187,16 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
 
 
 ## det 1043 sites
-min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
-print("min_result",min_result,"min_pe",det_1043_pe)    
-min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
-print("min_result",min_result,"min_pe",det_78_pe)    
+# min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
+# print("min_result",min_result,"min_pe",det_1043_pe)    
+# min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
+# print("min_result",min_result,"min_pe",det_78_pe)    
 
 
 ## hmc 78 sites
 min_result,hmc_78_pe=shadow_price_cal(sitenum=78,model='hmc',xi=1)
 print("min_result",min_result,"min_pe",hmc_78_pe)  
     
-## mpc 78 sites    
-min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
-print("min_result",min_result,"min_pe",mpc_78_pe)
+# ## mpc 78 sites    
+# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
+# print("min_result",min_result,"min_pe",mpc_78_pe)

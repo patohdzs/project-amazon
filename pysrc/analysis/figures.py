@@ -20,8 +20,8 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
     output_folder = str(get_path("output")) + "/figures"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    df_ori = pd.read_csv(str(get_path("data")) + f"/hmc/hmc_{num_sites}SitesModel.csv")
-    dfz_bar = df_ori[f"zbar_2017_{num_sites}Sites"]
+    df_ori = pd.read_csv(str(get_path("data")) + f"/calibration/hmc/hmc_{num_sites}SitesModel.csv")
+    dfz_bar = df_ori[f"zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
 
     variable_dict = {}

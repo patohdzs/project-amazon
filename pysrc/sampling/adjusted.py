@@ -1,12 +1,12 @@
 import time
-
+import pandas as pd
 import numpy as np
 from cmdstanpy import CmdStanModel
 
 from pysrc.sampling import baseline
 
-from ..optimization import gurobi
-from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
+from ..optimization import gurobi,gams
+from ..sampling import gamma_adj_reg_data, theta_adj_reg_data,gibbs_sampling
 from ..sampling.baseline import baseline_hyperparams
 from ..services.data_service import load_site_data
 from ..services.file_service import get_path
@@ -30,7 +30,7 @@ def sample(
     optimizer="gams",
     # Sampling params
     max_iter=20000,
-    tol=0.001,
+    tol=0.005,
     final_sample_size=5_000,
     **stan_kwargs,
 ):
@@ -53,10 +53,13 @@ def sample(
     ) = load_site_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
-    theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
-    gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
+    # baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
+    theta_vals=pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
 
+
+    gamma_vals=pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
+
+    # print("theta",theta_vals.shape,"gamma",gamma_vals.shape)
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -86,7 +89,7 @@ def sample(
         pa=pa,
         xi=xi,
         zeta=zeta,
-        baseline_fit=baseline_fit,
+        # baseline_fit=baseline_fit,
         final_sample_size=final_sample_size,
         weight=weight,
     )
@@ -168,8 +171,10 @@ def sample(
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **baseline_hyperparams(municipal_theta_df, "theta"),
-            **baseline_hyperparams(municipal_gamma_df, "gamma"),
+            # **baseline_hyperparams(municipal_theta_df, "theta"),
+            # **baseline_hyperparams(municipal_gamma_df, "gamma"),
+            **gibbs_sampling("gamma"),
+            **gibbs_sampling("theta"),         
         )
 
         # Sampling from adjusted distribution
@@ -270,7 +275,11 @@ def sample(
     gamma_adj_samples = fit.stan_variable("gamma")
     theta_coe_adj_samples = fit.stan_variable("beta_theta")
     gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
-
+    # eta_samples = fit.stan_variable("eta")
+    # nu_samples = fit.stan_variable("nu")
+    V_gamma_samples  = fit.stan_variable("Vj_gamma")
+    V_theta_samples  = fit.stan_variable("Vj_theta")
+    
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
         (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
@@ -278,6 +287,11 @@ def sample(
 
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
+    
+    # results.update({"eta_sample": eta_samples})
+    # results.update({"nu_sample": nu_samples})
+    results.update({"V_gamma_sample": V_gamma_samples})
+    results.update({"V_theta_sample": V_theta_samples})
 
     return results
 
