@@ -127,5 +127,11 @@ calib_1043 <- intersections
 save(calib_1043, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
 
 
+#gamma <- read.csv("gamma_fit_1043.csv")
+#gamma <- gamma %>%
+#  mutate(id.x = row_number()) %>%
+#  rename(gamma_re = gamma_fit)
 
+#calib_1043 <- merge(calib_1043, gamma, by = "id.x")
+#save(calib_1043, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
 

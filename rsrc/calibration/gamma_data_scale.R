@@ -70,7 +70,8 @@ df2_scaled <- df2 %>%
     log_hist_temp = (log_hist_temp - scaling_params$mean_log_hist_temp) / scaling_params$sd_log_hist_temp,
     lat = (lat - scaling_params$mean_lat) / scaling_params$sd_lat,
     lon = (lon - scaling_params$mean_lon) / scaling_params$sd_lon,
-    latlon = lat * lon
+    latlon = lat * lon,
+    id_group = row_number(),
   ) %>%
   select(
     X1,
@@ -79,7 +80,8 @@ df2_scaled <- df2 %>%
     lat,
     lon,
     latlon,
-    log_co2e_ha_2017
+    log_co2e_ha_2017,
+    id_group,
   ) 
 
 
