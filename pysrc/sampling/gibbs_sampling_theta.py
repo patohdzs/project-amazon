@@ -89,39 +89,34 @@ def gibbs_sampling_with_data(X, Y, site_ids,weights,n_iterations=500000, beta_pr
         V_samples[i, :] = V_current
     
     
-    beta_samples_final = beta_samples[400000:,:]
-    eta_samples_final = eta_samples[400000:]
-    nu_samples_final = nu_samples[400000:]
-    V_samples_final = V_samples[400000:,:]
+    beta_samples_final = beta_samples[300000:,:]
+    eta_samples_final = eta_samples[300000:]
+    nu_samples_final = nu_samples[300000:]
+    V_samples_final = V_samples[300000:,:]
     
-    # Posterior means
-    beta_posterior_mean = beta_samples_final.mean(axis=0)
-    eta_posterior_mean = eta_samples_final.mean()
-    nu_posterior_mean = nu_samples_final.mean()
+
+    beta_posterior_mean = np.mean(beta_samples_final,axis=0)
+    beta_posterior_variance = np.cov(beta_samples_final, rowvar=False, ddof=0)  
+
+    eta_posterior_mean = np.mean(eta_samples_final)
+    eta_posterior_variance = np.var(eta_samples_final, ddof=0)  
+
+    nu_posterior_mean = np.mean(nu_samples_final)
+    nu_posterior_variance = np.var(nu_samples_final, ddof=0)  
+
+    V_posterior_mean = np.mean(V_samples_final,axis=0)
+    V_posterior_variance = np.var(V_samples_final, ddof=0,axis=0)
     
-    return beta_posterior_mean, eta_posterior_mean, nu_posterior_mean, beta_samples_final, eta_samples_final, nu_samples_final, V_samples_final
+    return beta_posterior_mean, eta_posterior_mean, nu_posterior_mean,V_posterior_mean, beta_posterior_variance, eta_posterior_variance, nu_posterior_variance, V_posterior_variance
 
 # Run Gibbs sampling with the extracted data
 # Assuming X, Y, and site_ids are already defined
-beta_posterior_mean, eta_posterior_mean, nu_posterior_mean, beta_samples, eta_samples, nu_samples, V_samples = gibbs_sampling_with_data(X=X, Y=Y, site_ids=site_ids,weights=weights)
+beta_posterior_mean, eta_posterior_mean, nu_posterior_mean,V_posterior_mean, beta_posterior_variance, eta_posterior_variance, nu_posterior_variance, V_posterior_variance = gibbs_sampling_with_data(X=X, Y=Y, site_ids=site_ids,weights=weights)
 
 # Output the results
 print(f"Posterior mean of beta: {beta_posterior_mean}")
 print(f"Posterior mean of eta: {eta_posterior_mean}")
 print(f"Posterior mean of nu: {nu_posterior_mean}")
-
-
-beta_posterior_mean = np.mean(beta_samples,axis=0)
-beta_posterior_variance = np.cov(beta_samples, rowvar=False, ddof=0)  
-
-eta_posterior_mean = np.mean(eta_samples)
-eta_posterior_variance = np.var(eta_samples, ddof=0)  
-
-nu_posterior_mean = np.mean(nu_samples)
-nu_posterior_variance = np.var(nu_samples, ddof=0)  
-
-V_posterior_mean = np.mean(V_samples,axis=0)
-V_posterior_variance = np.var(V_samples, ddof=0,axis=0)
 
 
 
@@ -147,26 +142,26 @@ for i in range(len(V_posterior_mean)):
     data.append({'Parameter': f'V_{i+1}', 'Posterior Mean': V_posterior_mean[i], 'Posterior Variance': V_posterior_variance[i]})
 
 
+
 df = pd.DataFrame(data)
 
 
 df.to_csv(data_dir/'theta_posterior_means_and_variances.csv', index=False)
 
+## fit values
 
-np.savetxt("theta_prior_beta_samples.csv", beta_samples, delimiter=",")
-np.savetxt("theta_prior_eta_samples.csv", eta_samples, delimiter=",")
-np.savetxt("theta_prior_nu_samples.csv", nu_samples, delimiter=",")
-np.savetxt("theta_prior_V_samples.csv", V_samples, delimiter=",")
+beta=np.random.multivariate_normal(beta_posterior_mean,beta_posterior_variance,100000)
+V=np.random.normal(V_posterior_mean,np.sqrt(V_posterior_variance),(100000,len(np.unique(site_ids))))
 
 
 
 mean_pa_2017=44.97362
 theta_fit_df_78= gpd.read_file("/project/lhansen/HMC_re/project-amazon/data/calibration/hmc/theta_fit_78.geojson")
 X_fit = theta_adj_reg_data(78,theta_fit_df_78)['X_theta']
-weights = theta_adj_reg_data(78,theta_fit_df_78)['G_theta']
+weights = theta_adj_reg_data(78,theta_fit_df_78)['SG_theta']
 fit_ids = theta_fit_df_78["group_id"].values -1   # Column 8 as site_ids
 fit_ids = fit_ids.astype(int)
-site_theta= np.mean(np.exp(X_fit @ beta_samples.T + V_samples[:, fit_ids].T),axis=1)
+site_theta= np.mean(np.exp(X_fit @ beta.T + V[:, fit_ids].T),axis=1)
 theta_78 = weights@site_theta/44.97362
 theta_78_df = pd.DataFrame(theta_78, columns=['theta_fit'])
 theta_78_df.to_csv(data_dir/'theta_fit_78.csv', index=False)

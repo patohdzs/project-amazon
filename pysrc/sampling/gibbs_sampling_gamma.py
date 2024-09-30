@@ -75,39 +75,33 @@ def gibbs_sampling_with_data(X, Y, site_ids, n_iterations=500000, beta_prior_mea
         V_samples[i, :] = V_current
     
     
-    beta_samples_final = beta_samples[200000:,:]
-    eta_samples_final = eta_samples[200000:]
-    nu_samples_final = nu_samples[200000:]
-    V_samples_final = V_samples[200000:,:]
+    beta_samples_final = beta_samples[300000:,:]
+    eta_samples_final = eta_samples[300000:]
+    nu_samples_final = nu_samples[300000:]
+    V_samples_final = V_samples[300000:,:]
     
-    # Posterior means
-    beta_posterior_mean = beta_samples_final.mean(axis=0)
-    eta_posterior_mean = eta_samples_final.mean()
-    nu_posterior_mean = nu_samples_final.mean()
+
+    beta_posterior_mean = np.mean(beta_samples_final,axis=0)
+    beta_posterior_variance = np.cov(beta_samples_final, rowvar=False, ddof=0)  
+
+    eta_posterior_mean = np.mean(eta_samples_final)
+    eta_posterior_variance = np.var(eta_samples_final, ddof=0)  
+
+    nu_posterior_mean = np.mean(nu_samples_final)
+    nu_posterior_variance = np.var(nu_samples_final, ddof=0)  
+
+    V_posterior_mean = np.mean(V_samples_final,axis=0)
+    V_posterior_variance = np.var(V_samples_final, ddof=0,axis=0)
     
-    return beta_posterior_mean, eta_posterior_mean, nu_posterior_mean, beta_samples_final, eta_samples_final, nu_samples_final, V_samples_final
+    return beta_posterior_mean, eta_posterior_mean, nu_posterior_mean,V_posterior_mean, beta_posterior_variance, eta_posterior_variance, nu_posterior_variance, V_posterior_variance
 
 
-beta_posterior_mean, eta_posterior_mean, nu_posterior_mean, beta_samples, eta_samples, nu_samples, V_samples = gibbs_sampling_with_data(X, Y, site_ids)
+beta_posterior_mean, eta_posterior_mean, nu_posterior_mean,V_posterior_mean, beta_posterior_variance, eta_posterior_variance, nu_posterior_variance, V_posterior_variance = gibbs_sampling_with_data(X, Y, site_ids)
 
 
 print(f"Posterior mean of beta: {beta_posterior_mean}")
 print(f"Posterior mean of eta: {eta_posterior_mean}")
 print(f"Posterior mean of nu: {nu_posterior_mean}")
-
-
-
-beta_posterior_mean = np.mean(beta_samples,axis=0)
-beta_posterior_variance = np.cov(beta_samples, rowvar=False, ddof=0)  
-
-eta_posterior_mean = np.mean(eta_samples)
-eta_posterior_variance = np.var(eta_samples, ddof=0)  
-
-nu_posterior_mean = np.mean(nu_samples)
-nu_posterior_variance = np.var(nu_samples, ddof=0)  
-
-V_posterior_mean = np.mean(V_samples,axis=0)
-V_posterior_variance = np.var(V_samples, ddof=0,axis=0)
 
 
 
@@ -138,17 +132,27 @@ df = pd.DataFrame(data)
 
 df.to_csv(data_dir/'gamma_posterior_means_and_variances.csv', index=False)
 
+
+
+
+## fit values
+
+beta=np.random.multivariate_normal(beta_posterior_mean,beta_posterior_variance,100000)
+V=np.random.normal(V_posterior_mean,np.sqrt(V_posterior_variance),(100000,len(np.unique(site_ids))))
+
+
+
 gamma_fit_df_1043 = gpd.read_file(data_dir/"gamma_data_site_1043.geojson")
 X_fit = gamma_fit_df_1043.iloc[:, 0:6].values  
 id_fit = gamma_fit_df_1043.iloc[:, 7].values 
-gamma_fit_df_1043 = np.mean(np.exp(X_fit @ beta_samples.T + V_samples[:, id_fit-1].T),axis=1)
+gamma_fit_df_1043 = np.mean(np.exp(X_fit @ beta.T + V[:, id_fit-1].T),axis=1)
 gamma_fit_df_1043_df = pd.DataFrame(gamma_fit_df_1043, columns=['gamma_fit'])
 gamma_fit_df_1043_df.to_csv(data_dir/'gamma_fit_1043.csv', index=False)
 
 gamma_fit_df_78 = gpd.read_file(data_dir/"gamma_data_site_78.geojson")
 X_fit = gamma_fit_df_78.iloc[:, 0:6].values  # Columns 1 to 6 as X
 id_fit = gamma_fit_df_78.iloc[:, 7].values  # Columns 1 to 6 as X
-gamma_fit_df_78 = np.mean(np.exp(X_fit @ beta_samples.T + V_samples[:,].T),axis=1)
+gamma_fit_df_78 = np.mean(np.exp(X_fit @ beta.T + V[:,].T),axis=1)
 gamma_fit_df_78_df = pd.DataFrame(gamma_fit_df_78, columns=['gamma_fit'])
 gamma_fit_df_78_df.to_csv(data_dir/'gamma_fit_78.csv', index=False)
 
