@@ -137,8 +137,7 @@ random_effects <- ranef(theta_reg_re)$FEATURE_ID %>%
 
 # Extract fitted values
 muni_data <- muni_data %>%
-  mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .))) %>%
-  mutate(slaughter_value_per_ha_fitted_re = exp(predict(theta_reg_re, .)))
+  mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .))) 
 
 # Match municipalities with sites
 site_level_theta <- calib_df %>%
@@ -148,8 +147,7 @@ site_level_theta <- calib_df %>%
     muni_code,
     muni_area,
     pasture_area_2017,
-    slaughter_value_per_ha_fitted,
-    slaughter_value_per_ha_fitted_re
+    slaughter_value_per_ha_fitted
   )
 
 # Calculate municipality areas inside each site
@@ -186,11 +184,6 @@ site_level_theta <- site_level_theta %>%
       w = muni_site_area,
       na.rm = TRUE
     ),
-    theta_re = weighted.mean(
-      slaughter_value_per_ha_fitted_re / mean_pa_2017,
-      w = muni_site_area,
-      na.rm = TRUE
-    ),
     pasture_area_2017_i = sum(pasture_area_2017 * (muni_site_area / muni_area), na.rm = TRUE),
   )
 
@@ -199,11 +192,6 @@ calib_df <- calib_df %>%
   inner_join(site_level_theta, by = "id")
 
 
-
-calib_df_output<-calib_df %>%
-  select(theta_iid,theta_re, id)
-
-write.csv(calib_df_output, file = "C:\\Users\\pengyu\\Desktop\\HMC_re_results\\theta\\theta_re.csv", row.names = FALSE)
 
 
 save(calib_df, file = "data/calibration/theta_calibration_78_sites.Rdata")
@@ -245,7 +233,57 @@ df_reg<-muni_data %>%
              group_id
   )
 
-st_write(df_reg,
+
+scaling_params_fit <- df_reg %>%
+  st_drop_geometry() %>% 
+  summarise(
+    mean_lat = mean(lat, na.rm = TRUE),
+    sd_lat = sd(lat, na.rm = TRUE),
+    mean_sq_lat = mean(sq_lat, na.rm = TRUE),
+    sd_sq_lat = sd(sq_lat, na.rm = TRUE),
+    mean_historical_temp = mean(historical_temp, na.rm = TRUE),
+    sd_historical_temp = sd(historical_temp, na.rm = TRUE),
+    mean_sq_temp = mean(sq_temp, na.rm = TRUE),
+    sd_sq_temp = sd(sq_temp, na.rm = TRUE),
+    mean_historical_precip = mean(historical_precip, na.rm = TRUE),
+    sd_historical_precip = sd(historical_precip, na.rm = TRUE),
+    mean_distance = mean(distance, na.rm = TRUE),
+    sd_distance = sd(distance, na.rm = TRUE),
+    mean_log_gate_price = mean(log_gate_price, na.rm = TRUE),
+    sd_log_gate_price = sd(log_gate_price, na.rm = TRUE)
+  )
+
+
+df_reg_scaled <- df_reg %>%
+  mutate(
+    lat = (lat - scaling_params_fit$mean_lat) / scaling_params_fit$sd_lat,
+    sq_lat = (sq_lat - scaling_params_fit$mean_sq_lat) / scaling_params_fit$sd_sq_lat,
+    historical_temp = (historical_temp - scaling_params_fit$mean_historical_temp) / scaling_params_fit$sd_historical_temp,
+    sq_temp = (sq_temp - scaling_params_fit$mean_sq_temp) / scaling_params_fit$sd_sq_temp,
+    historical_precip = (historical_precip - scaling_params_fit$mean_historical_precip) / scaling_params_fit$sd_historical_precip,
+    distance = (distance - scaling_params_fit$mean_distance) / scaling_params_fit$sd_distance,
+    log_gate_price = (log_gate_price - scaling_params_fit$mean_log_gate_price) / scaling_params_fit$sd_log_gate_price
+  ) %>%
+  select(X1, lat, sq_lat, historical_temp, sq_temp, historical_precip, distance, log_gate_price, log_slaughter, weights, group_id)
+
+df_fit_scaled <- df_fit %>%
+  mutate(
+    lat = (lat - scaling_params_fit$mean_lat) / scaling_params_fit$sd_lat,
+    sq_lat = (sq_lat - scaling_params_fit$mean_sq_lat) / scaling_params_fit$sd_sq_lat,
+    historical_temp = (historical_temp - scaling_params_fit$mean_historical_temp) / scaling_params_fit$sd_historical_temp,
+    sq_temp = (sq_temp - scaling_params_fit$mean_sq_temp) / scaling_params_fit$sd_sq_temp,
+    historical_precip = (historical_precip - scaling_params_fit$mean_historical_precip) / scaling_params_fit$sd_historical_precip,
+    distance = (distance - scaling_params_fit$mean_distance) / scaling_params_fit$sd_distance,
+    log_gate_price = (log_gate_price - scaling_params_fit$mean_log_gate_price) / scaling_params_fit$sd_log_gate_price
+  ) %>%
+  select(X1, lat, sq_lat, historical_temp, sq_temp, historical_precip, distance, log_gate_price, group_id)
+
+
+
+
+
+
+st_write(df_reg_scaled,
          "data/calibration/hmc/theta_reg.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE
@@ -258,7 +296,7 @@ st_write(df_reg,
 id_sfdata<-calib_df %>%
   select(id)
 
-site_theta<- df_fit %>%
+site_theta<- df_fit_scaled %>%
   st_intersection(id_sfdata)
 
 site_theta$muni_site_area <-
