@@ -73,11 +73,13 @@ data {
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
   matrix[S, N_theta] SG_theta; // Site Groups for theta
 
-  vector[K_theta] theta_mean;
-  cov_matrix[K_theta] theta_vcov;
+
+
+  vector[K_theta] beta_theta_mean; // Baseline distribution
+  cov_matrix[K_theta] beta_theta_vcov;
   vector[M_theta] V_theta_mean;
   vector[M_theta] V_theta_var;
-  array[N_theta] int G_theta;
+  array[N_theta] int G_theta; // Large group indicator
 
   real<lower=0> pa_2017; // Price of cattle in 2017
 
@@ -90,19 +92,19 @@ data {
   int<lower=0> M_gamma; // Number of large groups
   matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
 
-  vector[K_gamma] gamma_mean;
-  cov_matrix[K_gamma] gamma_vcov;
+  vector[K_gamma] beta_gamma_mean; // Baseline distribution
+  cov_matrix[K_gamma] beta_gamma_vcov;
   vector[M_gamma] V_gamma_mean;
   vector[M_gamma] V_gamma_var;
-  array[N_gamma] int G_gamma;
+  array[N_gamma] int G_gamma; // Large group indicator
 
 
 }
 
 
 transformed data {
-  matrix[K_theta, K_theta] L_theta = cholesky_decompose(theta_vcov);
-  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(gamma_vcov);  
+  matrix[K_theta, K_theta] L_theta = cholesky_decompose(beta_theta_vcov);
+  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(beta_gamma_vcov);  
 }
 
 
@@ -116,9 +118,9 @@ parameters {
 }
 transformed parameters {
   // Coefs
-  vector[K_theta] beta_theta = theta_mean +  L_theta * alpha_theta;
+  vector[K_theta] beta_theta = beta_theta_mean +  L_theta * alpha_theta;
 
-  vector[K_gamma] beta_gamma = gamma_mean +  L_gamma * alpha_gamma;
+  vector[K_gamma] beta_gamma = beta_gamma_mean +  L_gamma * alpha_gamma;
 
   // Grouped average
   vector<lower=0>[S] theta = (SG_theta * exp(X_theta * beta_theta + Vj_theta[G_theta])) / pa_2017;
