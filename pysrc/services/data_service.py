@@ -57,7 +57,7 @@ def load_price_data():
 
 
 def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
-    from pysrc.sampling import baseline
+
 
     # Set data directory
     data_dir = get_path("data","calibration", "hmc")
@@ -90,11 +90,11 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     site_gamma_2017_df = site_gamma_2017.iloc[:, :-1]
 
     # Get theta and gamma samples
-    baseline_fit = baseline.sample(
-        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    )
+    # baseline_fit = baseline.sample(
+    #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
+    # )
 
-    theta = baseline_fit.stan_variable("theta").mean(axis=0)
+    theta = pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
     gamma = pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
 
 

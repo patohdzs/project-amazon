@@ -12,10 +12,11 @@ def theta_adj_reg_data(num_sites, theta_df):
     X = theta_df.iloc[:, :8].to_numpy()
     N, K = X.shape
 
+    # Large group indicator
     G=theta_df.iloc[:,8]
     G=G.astype(int)
     
-    # Get site indicator matrix
+    # Municipal level to site level projection matrix
     SG = np.array(
         [(theta_df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
     )
@@ -23,6 +24,8 @@ def theta_adj_reg_data(num_sites, theta_df):
     # Multiply by area overalp weights
     SG = theta_df["muni_site_area"].to_numpy() * SG
     SG = SG / SG.sum(axis=1, keepdims=True)
+    
+    
     return {
         "M_theta": M,
         "X_theta": X,
@@ -39,6 +42,8 @@ def gamma_adj_reg_data(num_sites, gamma_df):
     X = gamma_df.iloc[:, :6].to_numpy()
     N, K = X.shape
     
+    
+    # Large group indicator
     G=gamma_df.iloc[:,7]
 
 
@@ -71,8 +76,8 @@ def gibbs_sampling(var):
 
 
     return_dict = {
-    f"{var}_mean":beta_mean,
-    f"{var}_vcov":beta_cov,
+    f"beta_{var}_mean":beta_mean,
+    f"beta_{var}_vcov":beta_cov,
     f"V_{var}_mean":V_mean,
     f"V_{var}_var":V_var,
     }
