@@ -41,7 +41,6 @@ for b in range(0, 30, 5):
             time_horizon=T,
             price_cattle=pa,
             price_emissions=pee + b,
-            low_pq=low_pq_2017,
         )
     )
 

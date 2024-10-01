@@ -31,7 +31,6 @@ def solve_planner_problem(
     zbar,
     gamma,
     theta,
-    low_pq,
     dt=1,
     time_horizon=200,
     price_emissions=20.76,
@@ -40,8 +39,7 @@ def solve_planner_problem(
     delta=0.02,
     kappa=2.094215255,
     zeta_u=1.66e-4 * 1e9,
-    zeta_v_1=0.1473979 * 1e9,
-    zeta_v_2=0.00010203 * 1e9,
+    zeta_v=0.00010203 * 1e9,
     solver="gurobi",
 ):
     model = ConcreteModel()
@@ -67,13 +65,9 @@ def solve_planner_problem(
 
     model.pa = Param(model.T, initialize=price_cattle)
 
-    model.low_pq = Param(model.S, initialize=_np_to_dict(low_pq))
-    model.high_pq = Param(model.S, initialize=_np_to_dict(1 - low_pq))
-
     # Asymmetric adj. costs
     model.zeta_u = Param(initialize=zeta_u)
-    model.zeta_v_low = Param(initialize=zeta_v_1)
-    model.zeta_v_high = Param(initialize=zeta_v_2)
+    model.zeta_v = Param(initialize=zeta_v)
 
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
@@ -88,14 +82,12 @@ def solve_planner_problem(
     # Auxilary variables
     model.w1 = Var(model.T)
     model.w2 = Var(model.T)
-    model.w3 = Var(model.T)
 
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
     model.w1_def = Constraint(model.T, rule=_w1_const)
     model.w2_def = Constraint(model.T, rule=_w2_const)
-    model.w3_def = Constraint(model.T, rule=_w3_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -109,7 +101,6 @@ def solve_planner_problem(
         model.v[max(model.T), s].fix(0)
         model.w1[max(model.T)].fix(0)
         model.w2[max(model.T)].fix(0)
-        model.w3[max(model.T)].fix(0)
 
     # Solve the model
     opt = SolverFactory(solver)
@@ -161,8 +152,7 @@ def _planner_obj(model):
             + model.pa[t]
             * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
             - (model.zeta_u / 2) * (model.w1[t] ** 2)
-            - (model.zeta_v_low / 2) * (model.w2[t] ** 2)
-            - (model.zeta_v_high / 2) * (model.w3[t] ** 2)
+            - (model.zeta_v / 2) * (model.w2[t] ** 2)
         )
         * model.dt
         for t in model.T
@@ -199,18 +189,7 @@ def _w1_const(model, t):
 
 def _w2_const(model, t):
     if t < max(model.T):
-        return model.w2[t] == pyo.quicksum(
-            model.low_pq[s] * model.v[t, s] for s in model.S
-        )
-    else:
-        return Constraint.Skip
-
-
-def _w3_const(model, t):
-    if t < max(model.T):
-        return model.w3[t] == pyo.quicksum(
-            model.high_pq[s] * model.v[t, s] for s in model.S
-        )
+        return model.w2[t] == pyo.quicksum(model.v[t, s] for s in model.S)
     else:
         return Constraint.Skip
 
