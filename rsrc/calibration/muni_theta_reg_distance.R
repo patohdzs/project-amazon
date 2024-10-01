@@ -1,10 +1,11 @@
 library(stargazer)
-library(ggplot2)
+
 library(terra)
-library(tidyverse)
+
 library(sf)
 library(conflicted)
 library(units)
+library(dplyr)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(terra::extract)
 
@@ -38,8 +39,8 @@ map_basin2 <- map_basin2 %>%
 calib_df <- calib_df %>%
   st_transform(st_crs(map_basin))
 
-muni_data <- muni_data %>%
-  st_transform(st_crs(map_basin))
+#muni_data <- muni_data %>%
+#  st_transform(st_crs(map_basin))
 
 centroids <- muni_data %>%
   st_centroid() %>%
@@ -138,6 +139,8 @@ random_effects <- ranef(theta_reg_re)$FEATURE_ID %>%
 # Extract fitted values
 muni_data <- muni_data %>%
   mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .))) 
+
+stop()
 
 # Match municipalities with sites
 site_level_theta <- calib_df %>%
@@ -312,3 +315,27 @@ st_write(
 )
 
 
+load("data/calibration/gamma_calibration_1043_sites.Rdata")
+calib_1043<-calib_1043 %>%
+  mutate(id=id.x)
+
+calib_1043 <- calib_1043 %>%
+  st_transform(st_crs(muni_data))
+
+id_sfdata<-calib_1043 %>%
+  select(id)
+
+site_theta<- df_fit_scaled %>%
+  st_intersection(id_sfdata)
+
+site_theta$muni_site_area <-
+  st_area(site_theta) %>%
+  units::set_units(ha) %>%
+  unclass()
+
+st_write(
+  site_theta,
+  sprintf("data/calibration/hmc/theta_fit_1043.geojson", n),
+  driver = "GeoJSON",
+  delete_dsn = TRUE
+)
