@@ -17,14 +17,13 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     z_2017 = df["z_2017"].to_numpy()
     zbar_2017 = df["zbar_2017"].to_numpy()
     forest_area_2017 = df["area_forest_2017"].to_numpy()
-    share_low_pq_2017 = df["fit_share_low_pq"].to_numpy()
 
     # Normalize Z and forest data
     zbar_2017 /= norm_fac
     z_2017 /= norm_fac
     forest_area_2017 /= norm_fac
 
-    return (zbar_2017, z_2017, forest_area_2017, share_low_pq_2017)
+    return (zbar_2017, z_2017, forest_area_2017)
 
 
 def load_productivity_reg_data(num_sites: int):

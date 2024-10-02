@@ -12,7 +12,7 @@ num_sites = 1043
 T = 200
 
 # Load site data
-(zbar_2017, z_2017, forest_area_2017, low_pq_2017) = load_site_data(num_sites)
+(zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
 # Set productivity parameters using baseline mean
 baseline_fit = baseline.sample(
@@ -30,7 +30,7 @@ x_2017 = gamma * forest_area_2017
 
 # Solve planner problem
 results = []
-for b in range(0, 30, 5):
+for b in range(0, 5, 5):
     results.append(
         solve_planner_problem(
             x0=x_2017,
