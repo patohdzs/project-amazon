@@ -39,7 +39,7 @@ def solve_planner_problem(
     delta=0.02,
     kappa=2.094215255,
     zeta_u=1.66e-4 * 1e9,
-    zeta_v=0.00010203 * 1e9,
+    zeta_v=1.00e-4 * 1e9,
     solver="gurobi",
 ):
     model = ConcreteModel()
