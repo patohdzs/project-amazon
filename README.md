@@ -1,30 +1,24 @@
 # Project Amazon
 
 ## Requirements
-- Python >= 3.9
-- Gurobi >= 10.0.3 or GAMs >= (add version)
-
-
-## Data directory structure
+- Python >= 3.9, <3.12
+- Gurobi >= 10.0.3
+## Data Requirements
+To replicate, make sure to download the raw data into the directory structure below:
 ```
 .
 └── data
-    ├── calibration
-    │   ├── farm_gate_price.xlsx
-    │   ├── ipeadata[21-08-2023-01-28].xls
-    │   └── prepData
-    │       ├── muniTheta_prepData.Rdata
-    │       ├── muniTheta_prepData_gamma.Rdata
-    │       └── seriesPriceCattle_prepData.Rdata
-    └── hmc
-        ├── data_gamma.geojson
-        ├── data_theta.geojson
-        ├── hmc_10SitesModel.csv
-        ├── hmc_24SitesModel.csv
-        ├── hmc_40SitesModel.csv
-        ├── id_10.geojson
-        ├── id_24.geojson
-        └── id_40.geojson
+    └── raw
+        ├── esa
+        ├── fgv
+        ├── global_forest_watch
+        ├── ibge
+        ├── ipea
+        ├── mapbiomas
+        ├── seabpr
+        ├── seeg
+        ├── worldbank
+        └── worldclim
 ```
 
 ## Installation
@@ -32,8 +26,8 @@
 0. Clone git repository and move into `project-amazon/`
 1. Create and activate a new virtual environment
 ```
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 ```
 2. Install python dependencies
 ```

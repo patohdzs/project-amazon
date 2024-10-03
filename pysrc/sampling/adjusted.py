@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from cmdstanpy import CmdStanModel
 
-from ..optimization import gams, gurobi
+from ..optimization import solve_planner_problem, vectorize_trajectories
 from ..sampling import gamma_adj_reg_data, gibbs_sampling, theta_adj_reg_data
-from ..services.data_service import load_site_data
+from ..services.data_service import load_productivity_reg_data, load_site_data
 from ..services.file_service import get_path
 
 
@@ -25,7 +25,7 @@ def sample(
     zeta=1.66e-4 * 1e9,  # use the same normalization factor
     pa_2017=44.9736197781184,
     # Optimizer
-    optimizer="gams",
+    solver="gurobi",
     # Sampling params
     max_iter=20000,
     tol=0.005,
@@ -39,16 +39,16 @@ def sample(
         force_compile=True,
     )
 
-    # Load sites' data
+    # Load site data
+    (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
+
+    # Load parameter regression data
     (
-        zbar_2017,
-        z_2017,
-        forest_area_2017,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(num_sites)
+    ) = load_productivity_reg_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
     # baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
@@ -124,36 +124,26 @@ def sample(
         # Computing carbon absorbed in start period
         x0_vals = gamma_vals * forest_area_2017
 
-        # Choose optimizer
-        if optimizer == "gurobi":
-            solve_planner_problem = gurobi.solve_planner_problem
-            vectorize_trajectories = gurobi.vectorize_trajectories
-
-        elif optimizer == "gams":
-            solve_planner_problem = gams.solve_planner_problem
-            vectorize_trajectories = gams.vectorize_trajectories
-
-        else:
-            raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
-
-        trajectories = solve_planner_problem(
-            T=T,
+        # Solve planner problem
+        planner_solution = solve_planner_problem(
+            time_horizon=T,
             theta=theta_vals,
             gamma=gamma_vals,
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
             dt=dt,
-            pe=pe,
-            pa=pa,
+            price_emissions=pe,
+            price_cattle=pa,
             alpha=alpha,
             delta=delta,
             kappa=kappa,
             zeta=zeta,
+            solver=solver,
         )
 
         # Update trackers
-        solution_tracker.append(trajectories)
+        solution_tracker.append(planner_solution)
 
         # HMC sampling
         print("Starting HMC sampling...\n")
@@ -169,13 +159,7 @@ def sample(
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
-            **vectorize_trajectories(
-                trajectories["Z"],
-                trajectories["X"],
-                trajectories["U"],
-                trajectories["V"],
-                trajectories["w"],
-            ),
+            **vectorize_trajectories(planner_solution),
             **_dynamics_matrices(T, dt, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),

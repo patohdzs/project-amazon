@@ -1,38 +1,30 @@
 import os
 import pickle
 import shutil
+
 import pandas as pd
-from pysrc.optimization import gams, gurobi
-from pysrc.sampling import baseline
+
+from pysrc.optimization import solve_planner_problem
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
 
 def get_optimization(
-    opt="gams",
+    solver="gurobi",
     num_sites=78,
     pee=5,
     pa=41.11,
-    interval=5,
     model="det",
     xi=1,
 ):
-    opt = "gams"
-
-    if opt == "gurobi":
-        solve_planner_problem = gurobi.solve_planner_problem
-
-    elif opt == "gams":
-        solve_planner_problem = gams.solve_planner_problem
-
     (
         zbar_2017,
         z_2017,
         forest_area_2017,
-        site_theta_df,
-        site_gamma_df,
-        municipal_theta_df,
-        municipal_gamma_df,
+        _,
+        _,
+        _,
+        _,
     ) = load_site_data(num_sites)
 
     if model == "det":
@@ -40,22 +32,34 @@ def get_optimization(
         # baseline_fit = baseline.sample(
         #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
         # )
-        theta_vals = pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
-        gamma_vals = pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
+        theta_vals = (
+            pd.read_csv(
+                get_path("data", "calibration", "hmc") / f"theta_fit_{num_sites}.csv"
+            )
+            .to_numpy()[:,]
+            .flatten()
+        )
+        gamma_vals = (
+            pd.read_csv(
+                get_path("data", "calibration", "hmc") / f"gamma_fit_{num_sites}.csv"
+            )
+            .to_numpy()[:,]
+            .flatten()
+        )
         x0_vals = gamma_vals * forest_area_2017
 
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
             solve_planner_problem(
-                T=200,
+                time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
                 x0=x0_vals,
                 zbar=zbar_2017,
                 z0=z_2017,
-                pe=pe,
-                pa=pa,
+                price_emissions=pe,
+                price_cattle=pa,
             )
             print("Results for pe = ", pe)
             output_base_path = str(get_path("output"))
@@ -64,7 +68,7 @@ def get_optimization(
                 output_base_path,
                 "optimization",
                 model,
-                opt,
+                solver,
                 f"{num_sites}sites",
                 f"pa_{pa}",
                 f"pe_{pe}",
@@ -89,7 +93,7 @@ def get_optimization(
         result_folder = os.path.join(
             str(get_path("output")),
             "sampling",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"xi_{xi}",
@@ -104,14 +108,14 @@ def get_optimization(
             x0_vals = gamma_vals * forest_area_2017
 
             solve_planner_problem(
-                T=200,
+                time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
                 x0=x0_vals,
                 zbar=zbar_2017,
                 z0=z_2017,
-                pe=pe,
-                pa=pa,
+                price_emissions=pe,
+                price_cattle=pa,
             )
             print("Results for pe = ", pe)
             output_base_path = str(get_path("output"))
@@ -120,7 +124,7 @@ def get_optimization(
                 output_base_path,
                 "optimization",
                 model,
-                opt,
+                solver,
                 f"{num_sites}sites",
                 f"pa_{pa}",
                 f"pe_{pe}",

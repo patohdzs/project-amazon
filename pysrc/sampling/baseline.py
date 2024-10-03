@@ -1,22 +1,19 @@
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
-from ..services.data_service import load_site_data
+from ..sampling import theta_adj_reg_data
+from ..services.data_service import load_productivity_reg_data
 from ..services.file_service import get_path
 
 
 def sample(num_sites: int, **stan_kwargs):
-    # Load sites data
+    # Load parameter regression data
     (
-        _,
-        _,
-        _,
         site_theta_df,
         site_gamma_df,
         municipal_theta_df,
         municipal_gamma_df,
-    ) = load_site_data(num_sites)
+    ) = load_productivity_reg_data(num_sites)
 
     # Read model code
     stan_file = get_path("stan_model") / "baseline.stan"
@@ -65,26 +62,26 @@ def baseline_hyperparams(municipal_df, var):
     m = inv_Q @ X.T @ y
     a = (X.shape[0]) / 2
     b = 0.5 * (y.T @ y - m.T @ X.T @ X @ m)
-    
-    print("Q",inv_Q)
+
+    print("Q", inv_Q)
     return_dict = {
-    f"inv_Q_{var}": inv_Q,
-    f"m_{var}": m,
-    f"a_{var}": a,
-    f"b_{var}": b,
+        f"inv_Q_{var}": inv_Q,
+        f"m_{var}": m,
+        f"a_{var}": a,
+        f"b_{var}": b,
     }
 
     if var == "gamma":
-
         N, K = X.shape
         return_dict = {
-        "K_gamma": K,
-        f"inv_Q_{var}": inv_Q,
-        "y_gamma": y,
-        "X_gamma_reg":X,
+            "K_gamma": K,
+            f"inv_Q_{var}": inv_Q,
+            "y_gamma": y,
+            "X_gamma_reg": X,
         }
 
     return return_dict
+
 
 def _theta_muni_reg_data(df):
     # Get outcome
