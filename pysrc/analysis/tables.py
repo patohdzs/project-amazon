@@ -13,11 +13,11 @@ def format_float(value):
 
 
 def read_theta(num_sites):
-    baseline_fit = baseline.sample(
-        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    )
+    # baseline_fit = baseline.sample(
+    #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
+    # )
 
-    dft_np = baseline_fit.stan_variable("theta").mean(axis=0)
+    dft_np = pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
     return dft_np
 
 

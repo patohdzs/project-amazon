@@ -1,7 +1,7 @@
 import os
 import pickle
 import shutil
-
+import pandas as pd
 from pysrc.optimization import gams, gurobi
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
@@ -37,11 +37,11 @@ def get_optimization(
 
     if model == "det":
         # Set initial theta & gamma using baseline mean
-        baseline_fit = baseline.sample(
-            num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-        )
-        theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
-        gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
+        # baseline_fit = baseline.sample(
+        #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
+        # )
+        theta_vals = pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
+        gamma_vals = pd.read_csv(get_path("data", "calibration", "hmc")/f"gamma_fit_{num_sites}.csv").to_numpy()[:,].flatten()
         x0_vals = gamma_vals * forest_area_2017
 
         b = [0, 10, 15, 20, 25]
