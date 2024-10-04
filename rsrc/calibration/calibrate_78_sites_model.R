@@ -38,40 +38,49 @@ load("data/processed/cattle_price_index.Rdata")
 rsts <- rast(
   list.files(
     "data/processed/",
-    pattern = "amazon_",
+    pattern = ".tif",
     full.names = TRUE
   )
 )
 
 # Transform shares to areas
-rsts$amazon_biome_area_ha <-
+rsts$area_amazon_biome <-
   rsts$share_amazon_biome * rsts$pixel_area_ha
 
-rsts$forest_area_1995_ha <-
+rsts$area_forest_1995 <-
   rsts$share_forest_1995 * rsts$pixel_area_ha
 
-rsts$agricultural_use_area_1995_ha <-
+rsts$area_agricultural_use_1995 <-
   rsts$share_agricultural_use_1995 * rsts$pixel_area_ha
 
-rsts$other_area_1995_ha <-
+rsts$area_other_1995 <-
   rsts$share_other_1995 * rsts$pixel_area_ha
 
-rsts$forest_area_2017_ha <-
+rsts$area_forest_2017 <-
   rsts$share_forest_2017 * rsts$pixel_area_ha
 
-rsts$agricultural_use_area_2017_ha <-
+rsts$area_pasture_quality_1_2017 <-
+  rsts$share_pasture_quality_1_2017 * rsts$pixel_area_ha
+
+rsts$area_pasture_quality_2_2017 <-
+  rsts$share_pasture_quality_2_2017 * rsts$pixel_area_ha
+
+rsts$area_pasture_quality_3_2017 <-
+  rsts$share_pasture_quality_3_2017 * rsts$pixel_area_ha
+
+rsts$area_agricultural_use_2017 <-
   rsts$share_agricultural_use_2017 * rsts$pixel_area_ha
 
-rsts$other_area_2017_ha <-
+rsts$area_other_2017 <-
   rsts$share_other_2017 * rsts$pixel_area_ha
 
-rsts$forest_area_2008_ha <-
+rsts$area_forest_2008 <-
   rsts$share_forest_2008 * rsts$pixel_area_ha
 
-rsts$agricultural_use_area_2008_ha <-
+rsts$area_agricultural_use_2008 <-
   rsts$share_agricultural_use_2008 * rsts$pixel_area_ha
 
-rsts$other_area_2008_ha <-
+rsts$area_other_2008 <-
   rsts$share_other_2008 * rsts$pixel_area_ha
 
 # Aggregate into larger sites
@@ -89,23 +98,34 @@ calib_df <- as.polygons(rsts, dissolve = FALSE) %>%
 
 # Remove sites with less than 3% overlap with the amazon biome
 calib_df <- calib_df %>%
-  filter(amazon_biome_area_ha / pixel_area_ha >= 0.03)
+  filter(area_amazon_biome / pixel_area_ha >= 0.03)
 
 # Add id variable
 calib_df$id <- seq_len(nrow(calib_df))
 
-# Transform share variables into area (ha)
+# Change names to z and add zbar
 calib_df <- calib_df %>%
   rename(site_area_ha = pixel_area_ha) %>%
   mutate(
-    z_1995 = agricultural_use_area_1995_ha,
-    z_2008 = agricultural_use_area_2008_ha,
-    z_2017 = agricultural_use_area_2017_ha,
-    zbar_1995 = forest_area_1995_ha + z_1995,
-    zbar_2008 = forest_area_2008_ha + z_2008,
-    zbar_2017 = forest_area_2017_ha + z_2017,
+    z_1995 = area_agricultural_use_1995,
+    z_2008 = area_agricultural_use_2008,
+    z_2017 = area_agricultural_use_2017,
+    zbar_1995 = area_forest_1995 + z_1995,
+    zbar_2008 = area_forest_2008 + z_2008,
+    zbar_2017 = area_forest_2017 + z_2017,
+  )
+
+# Compute bad pasture quality shares
+calib_df <- calib_df %>%
+  mutate(
+    area_pasture_2017 = area_pasture_quality_1_2017 +
+      area_pasture_quality_2_2017 +
+      area_pasture_quality_3_2017
   ) %>%
-  select(id, contains("area"), contains("z"))
+  mutate(
+    share_low_pq = area_pasture_quality_1_2017 / area_pasture_2017,
+  ) %>%
+  select(id, contains("area"), contains("z"), contains("pq"))
 
 # Convert biomass to CO2 equivalent
 muni_data <- muni_data %>%

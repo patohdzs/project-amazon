@@ -23,7 +23,6 @@ class PlannerSolution:
     X: np.ndarray
     U: np.ndarray
     V: np.ndarray
-    w: np.ndarray
 
 
 def solve_planner_problem(
@@ -39,7 +38,8 @@ def solve_planner_problem(
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v=1.00e-4 * 1e9,
     solver="gurobi",
 ):
     model = ConcreteModel()
@@ -65,22 +65,29 @@ def solve_planner_problem(
 
     model.pa = Param(model.T, initialize=price_cattle)
 
+    # Asymmetric adj. costs
+    model.zeta_u = Param(initialize=zeta_u)
+    model.zeta_v = Param(initialize=zeta_v)
+
     model.alpha = Param(initialize=alpha)
     model.kappa = Param(initialize=kappa)
-    model.zeta = Param(initialize=zeta)
     model.dt = Param(initialize=dt)
 
     # Variables
-    model.w = Var(model.T)
     model.x = Var(model.T, model.S)
     model.z = Var(model.T, model.S, within=NonNegativeReals)
     model.u = Var(model.T, model.S, within=NonNegativeReals)
     model.v = Var(model.T, model.S, within=NonNegativeReals)
 
+    # Auxilary variables
+    model.w1 = Var(model.T)
+    model.w2 = Var(model.T)
+
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
-    model.w_def = Constraint(model.T, rule=_w_const)
+    model.w1_def = Constraint(model.T, rule=_w1_const)
+    model.w2_def = Constraint(model.T, rule=_w2_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -92,7 +99,8 @@ def solve_planner_problem(
         model.z[min(model.T), s].fix(model.z0[s])
         model.u[max(model.T), s].fix(0)
         model.v[max(model.T), s].fix(0)
-        model.w[max(model.T)].fix(0)
+        model.w1[max(model.T)].fix(0)
+        model.w2[max(model.T)].fix(0)
 
     # Solve the model
     opt = SolverFactory(solver)
@@ -109,9 +117,8 @@ def solve_planner_problem(
     X = np.array([[model.x[t, r].value for r in model.S] for t in model.T])
     U = np.array([[model.u[t, r].value for r in model.S] for t in model.T])
     V = np.array([[model.v[t, r].value for r in model.S] for t in model.T])
-    w = np.array([model.w[t].value for t in model.T])
 
-    return PlannerSolution(Z, X, U, V, w)
+    return PlannerSolution(Z, X, U, V)
 
 
 def vectorize_trajectories(traj: PlannerSolution):
@@ -144,7 +151,8 @@ def _planner_obj(model):
             )
             + model.pa[t]
             * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
-            - model.zeta / 2 * (model.w[t] ** 2)
+            - (model.zeta_u / 2) * (model.w1[t] ** 2)
+            - (model.zeta_v / 2) * (model.w2[t] ** 2)
         )
         * model.dt
         for t in model.T
@@ -172,11 +180,16 @@ def _xdot_const(model, t, s):
         return Constraint.Skip
 
 
-def _w_const(model, t):
+def _w1_const(model, t):
     if t < max(model.T):
-        return model.w[t] == pyo.quicksum(
-            model.u[t, s] + model.v[t, s] for s in model.S
-        )
+        return model.w1[t] == pyo.quicksum(model.u[t, s] for s in model.S)
+    else:
+        return Constraint.Skip
+
+
+def _w2_const(model, t):
+    if t < max(model.T):
+        return model.w2[t] == pyo.quicksum(model.v[t, s] for s in model.S)
     else:
         return Constraint.Skip
 
