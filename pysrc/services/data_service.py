@@ -17,10 +17,7 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     # Extract information
     z_2017 = df["z_2017"].to_numpy()
     zbar_2017 = df["zbar_2017"].to_numpy()
-    forest_area_2017 = df["forest_area_2017_ha"].to_numpy()
-    z_2017 = df["z_2017"].to_numpy()
-    zbar_2017 = df["zbar_2017"].to_numpy()
-    forest_area_2017 = df["forest_area_2017_ha"].to_numpy()
+    forest_area_2017 = df["area_forest_2017"].to_numpy()
 
     # Normalize Z and forest data
     zbar_2017 /= norm_fac
