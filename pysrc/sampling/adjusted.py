@@ -18,11 +18,11 @@ def sample(
     num_sites,
     # Model parameters
     T,
-    dt=1,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,  # use the same normalization factor
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v=1.00e-4 * 1e9,
     pa_2017=44.9736197781184,
     # Optimizer
     solver="gurobi",
@@ -90,14 +90,12 @@ def sample(
         num_sites=num_sites,
         tol=tol,
         T=T,
-        dt=dt,
         delta_t=delta,
         alpha=alpha,
         kappa=kappa,
         pf=pe,
         pa=pa,
         xi=xi,
-        zeta=zeta,
         final_sample_size=final_sample_size,
         weight=weight,
     )
@@ -132,13 +130,13 @@ def sample(
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
-            dt=dt,
             price_emissions=pe,
             price_cattle=pa,
             alpha=alpha,
             delta=delta,
             kappa=kappa,
-            zeta=zeta,
+            zeta_u=zeta_u,
+            zeta_v=zeta_v,
             solver=solver,
         )
 
@@ -153,14 +151,15 @@ def sample(
             alpha=alpha,
             zbar_2017=zbar_2017,
             forest_area_2017=forest_area_2017,
-            zeta=zeta,
+            zeta_u=zeta_u,
+            zeta_v=zeta_v,
             xi=xi,
             kappa=kappa,
             pa=pa,
             pa_2017=pa_2017,
             pf=pe,
             **vectorize_trajectories(planner_solution),
-            **_dynamics_matrices(T, dt, alpha, delta),
+            **_dynamics_matrices(T, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
             **gibbs_sampling("gamma"),
@@ -286,7 +285,7 @@ def sample(
     return results
 
 
-def _dynamics_matrices(T, dt, alpha, delta):
+def _dynamics_matrices(T, alpha, delta, dt=1):
     # Create dynamics matrices
     arr = np.cumsum(
         np.triu(np.ones((T, T))),
@@ -298,6 +297,6 @@ def _dynamics_matrices(T, dt, alpha, delta):
     alpha_p_Adym = np.power(1 - alpha, Adym)
 
     # Other placeholders!
-    ds_vect = np.exp(-delta * np.arange(T + 1) * dt)
+    ds_vect = np.exp(-delta * np.arange(T) * dt)
     ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
     return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}
