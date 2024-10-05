@@ -83,72 +83,74 @@ def gibbs_sampling_with_data(
             V_current[j] = np.random.normal(mean_V_j, np.sqrt(1 / precision_V_j))
         V_samples[i, :] = V_current
 
-    beta_samples_final = beta_samples[300000:, :]
-    eta_samples_final = eta_samples[300000:]
-    nu_samples_final = nu_samples[300000:]
-    V_samples_final = V_samples[300000:, :]
+    # Remove burnin samples
+    beta_samples = beta_samples[300000:, :]
+    eta_samples = eta_samples[300000:]
+    nu_samples = nu_samples[300000:]
+    V_samples = V_samples[300000:, :]
 
-    beta_posterior_mean = np.mean(beta_samples_final, axis=0)
-    beta_posterior_variance = np.cov(beta_samples_final, rowvar=False, ddof=0)
+    # Compute posterior hyperparams
+    beta_post_mean = np.mean(beta_samples, axis=0)
+    beta_post_var = np.cov(beta_samples, rowvar=False, ddof=0)
 
-    eta_posterior_mean = np.mean(eta_samples_final)
-    eta_posterior_variance = np.var(eta_samples_final, ddof=0)
+    eta_post_mean = np.mean(eta_samples)
+    eta_post_var = np.var(eta_samples, ddof=0)
 
-    nu_posterior_mean = np.mean(nu_samples_final)
-    nu_posterior_variance = np.var(nu_samples_final, ddof=0)
+    nu_post_mean = np.mean(nu_samples)
+    nu_post_var = np.var(nu_samples, ddof=0)
 
-    V_posterior_mean = np.mean(V_samples_final, axis=0)
-    V_posterior_variance = np.var(V_samples_final, ddof=0, axis=0)
+    V_post_mean = np.mean(V_samples, axis=0)
+    V_post_var = np.var(V_samples, ddof=0, axis=0)
 
     return (
-        beta_posterior_mean,
-        eta_posterior_mean,
-        nu_posterior_mean,
-        V_posterior_mean,
-        beta_posterior_variance,
-        eta_posterior_variance,
-        nu_posterior_variance,
-        V_posterior_variance,
+        beta_post_mean,
+        eta_post_mean,
+        nu_post_mean,
+        V_post_mean,
+        beta_post_var,
+        eta_post_var,
+        nu_post_var,
+        V_post_var,
     )
 
 
 (
-    beta_posterior_mean,
-    eta_posterior_mean,
-    nu_posterior_mean,
-    V_posterior_mean,
-    beta_posterior_variance,
-    eta_posterior_variance,
-    nu_posterior_variance,
-    V_posterior_variance,
+    beta_post_mean,
+    eta_post_mean,
+    nu_post_mean,
+    V_post_mean,
+    beta_post_var,
+    eta_post_var,
+    nu_post_var,
+    V_post_var,
 ) = gibbs_sampling_with_data(X, Y, site_ids)
 
 
-print(f"Posterior mean of beta: {beta_posterior_mean}")
-print(f"Posterior mean of eta: {eta_posterior_mean}")
-print(f"Posterior mean of nu: {nu_posterior_mean}")
+print(f"Posterior mean of beta: {beta_post_mean}")
+print(f"Posterior mean of eta: {eta_post_mean}")
+print(f"Posterior mean of nu: {nu_post_mean}")
 
 
 data = []
 
 
-for i in range(len(beta_posterior_mean)):
+for i in range(len(beta_post_mean)):
     data.append(
         {
             "Parameter": f"beta_{i+1}",
-            "Posterior Mean": beta_posterior_mean[i],
+            "Posterior Mean": beta_post_mean[i],
             "Posterior Variance": None,
         }
     )
 
 
-for i in range(len(beta_posterior_mean)):
-    for j in range(len(beta_posterior_mean)):
+for i in range(len(beta_post_mean)):
+    for j in range(len(beta_post_mean)):
         data.append(
             {
                 "Parameter": f"var_beta_{i+1}_{j+1}",
                 "Posterior Mean": None,
-                "Posterior Variance": beta_posterior_variance[i, j],
+                "Posterior Variance": beta_post_var[i, j],
             }
         )
 
@@ -156,8 +158,8 @@ for i in range(len(beta_posterior_mean)):
 data.append(
     {
         "Parameter": "eta",
-        "Posterior Mean": eta_posterior_mean,
-        "Posterior Variance": eta_posterior_variance,
+        "Posterior Mean": eta_post_mean,
+        "Posterior Variance": eta_post_var,
     }
 )
 
@@ -165,35 +167,31 @@ data.append(
 data.append(
     {
         "Parameter": "nu",
-        "Posterior Mean": nu_posterior_mean,
-        "Posterior Variance": nu_posterior_variance,
+        "Posterior Mean": nu_post_mean,
+        "Posterior Variance": nu_post_var,
     }
 )
 
 
-for i in range(len(V_posterior_mean)):
+for i in range(len(V_post_mean)):
     data.append(
         {
             "Parameter": f"V_{i+1}",
-            "Posterior Mean": V_posterior_mean[i],
-            "Posterior Variance": V_posterior_variance[i],
+            "Posterior Mean": V_post_mean[i],
+            "Posterior Variance": V_post_var[i],
         }
     )
 
 
 df = pd.DataFrame(data)
-
-
 df.to_csv(data_dir / "gamma_posterior_means_and_variances.csv", index=False)
 
 
-## fit values
+# Fit values
 
-beta = np.random.multivariate_normal(
-    beta_posterior_mean, beta_posterior_variance, 100000
-)
+beta = np.random.multivariate_normal(beta_post_mean, beta_post_var, 100000)
 V = np.random.normal(
-    V_posterior_mean, np.sqrt(V_posterior_variance), (100000, len(np.unique(site_ids)))
+    V_post_mean, np.sqrt(V_post_var), (100000, len(np.unique(site_ids)))
 )
 
 
