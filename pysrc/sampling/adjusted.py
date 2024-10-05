@@ -1,12 +1,15 @@
 import time
 
 import numpy as np
-import pandas as pd
 from cmdstanpy import CmdStanModel
 
 from ..optimization import solve_planner_problem, vectorize_trajectories
 from ..sampling import baseline_hyperparams, gamma_adj_reg_data, theta_adj_reg_data
-from ..services.data_service import load_productivity_reg_data, load_site_data
+from ..services.data_service import (
+    load_productivity_params,
+    load_reg_data,
+    load_site_data,
+)
 from ..services.file_service import get_path
 
 
@@ -43,32 +46,11 @@ def sample(
     (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
     # Load parameter regression data
-    (
-        site_theta_df,
-        site_gamma_df,
-        municipal_theta_df,
-        municipal_gamma_df,
-    ) = load_productivity_reg_data(num_sites)
+    (site_theta_df, site_gamma_df) = load_reg_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    # baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
-    theta_vals = (
-        pd.read_csv(
-            get_path("data", "calibration", "hmc") / f"theta_fit_{num_sites}.csv"
-        )
-        .to_numpy()[:,]
-        .flatten()
-    )
+    (theta_vals, gamma_vals) = load_productivity_params(num_sites)
 
-    gamma_vals = (
-        pd.read_csv(
-            get_path("data", "calibration", "hmc") / f"gamma_fit_{num_sites}.csv"
-        )
-        .to_numpy()[:,]
-        .flatten()
-    )
-
-    # print("theta",theta_vals.shape,"gamma",gamma_vals.shape)
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
     uncertain_vals_old = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -230,7 +212,7 @@ def sample(
             """
         )
 
-        # Exchange parameter values (for future weighting/update & error evaluation)
+        # Exchange parameter values
         uncertain_vals_old = uncertain_vals
 
         # Increase the counter

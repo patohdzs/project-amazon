@@ -27,13 +27,18 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     return (zbar_2017, z_2017, forest_area_2017)
 
 
-def load_productivity_reg_data(num_sites: int):
+def load_productivity_params(num_sites: int):
+    data_dir = get_path("data", "calibration", "hmc")
+    theta = pd.read_csv(data_dir / f"theta_fit_{num_sites}.csv")
+
+    gamma = pd.read_csv(data_dir / f"gamma_fit_{num_sites}.csv")
+
+    return (theta.to_numpy()[:,].flatten(), gamma.to_numpy()[:,].flatten())
+
+
+def load_reg_data(num_sites: int):
     # Set data directory
     data_dir = get_path("data", "calibration", "hmc")
-
-    # Read municipal level data
-    municipal_theta_df = gpd.read_file(data_dir / "theta_reg.geojson")
-    municipal_gamma_df = gpd.read_file(data_dir / "gamma_reg_site_1043.geojson")
 
     # Read site level data
     site_theta_df = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
@@ -47,8 +52,6 @@ def load_productivity_reg_data(num_sites: int):
     return (
         site_theta_df,
         site_gamma_df,
-        municipal_theta_df,
-        municipal_gamma_df,
     )
 
 
