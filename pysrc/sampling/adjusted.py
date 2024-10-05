@@ -157,7 +157,7 @@ def sample(
             kappa=kappa,
             pa=pa,
             pa_2017=pa_2017,
-            pf=pe,
+            pe=pe,
             **vectorize_trajectories(planner_solution),
             **_dynamics_matrices(T, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
