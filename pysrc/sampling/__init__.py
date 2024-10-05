@@ -52,7 +52,7 @@ def gamma_adj_reg_data(num_sites, gamma_df):
     }
 
 
-def gibbs_sampling(var):
+def baseline_hyperparams(var):
     # Load baseline hyperparameters
     data_dir = get_path("data", "calibration", "hmc")
     df = pd.read_csv(data_dir / f"{var}_posterior_means_and_variances.csv")

@@ -5,7 +5,7 @@ import pandas as pd
 from cmdstanpy import CmdStanModel
 
 from ..optimization import solve_planner_problem, vectorize_trajectories
-from ..sampling import gamma_adj_reg_data, gibbs_sampling, theta_adj_reg_data
+from ..sampling import baseline_hyperparams, gamma_adj_reg_data, theta_adj_reg_data
 from ..services.data_service import load_productivity_reg_data, load_site_data
 from ..services.file_service import get_path
 
@@ -162,8 +162,8 @@ def sample(
             **_dynamics_matrices(T, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **gibbs_sampling("gamma"),
-            **gibbs_sampling("theta"),
+            **baseline_hyperparams("gamma"),
+            **baseline_hyperparams("theta"),
         )
 
         # Sampling from adjusted distribution
