@@ -39,8 +39,8 @@ map_basin2 <- map_basin2 %>%
 calib_df <- calib_df %>%
   st_transform(st_crs(map_basin))
 
-#muni_data <- muni_data %>%
-#  st_transform(st_crs(map_basin))
+muni_data <- muni_data %>%
+  st_transform(st_crs(map_basin))
 
 centroids <- muni_data %>%
   st_centroid() %>%
@@ -140,7 +140,7 @@ random_effects <- ranef(theta_reg_re)$FEATURE_ID %>%
 muni_data <- muni_data %>%
   mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .))) 
 
-stop()
+
 
 # Match municipalities with sites
 site_level_theta <- calib_df %>%
@@ -295,7 +295,6 @@ st_write(df_reg_scaled,
 
 
 
-
 id_sfdata<-calib_df %>%
   select(id)
 
@@ -313,6 +312,8 @@ st_write(
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
+
+
 
 
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
