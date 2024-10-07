@@ -7,7 +7,7 @@ from ..services.file_service import get_path
 
 def load_site_data(num_sites: int, norm_fac: float = 1e9):
     # Set data directory
-    data_dir = get_path("data", "calibration")
+    data_dir = get_path("data", "calibration", "hmc")
 
     # Read data file
     file_path = data_dir / f"calibration_{num_sites}_sites.csv"
@@ -71,36 +71,20 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     data_dir = get_path("data", "calibration", "hmc")
 
     # Read data file
-    file_path = data_dir / f"hmc_{num_sites}SitesModel.csv"
+    file_path = data_dir / f"calibration_{num_sites}_sites.csv"
     df = pd.read_csv(file_path)
 
     # Extract information
     z_1995 = df["z_1995"].to_numpy()
     z_2008 = df["z_2008"].to_numpy()
     zbar_1995 = df["zbar_1995"].to_numpy()
-    forest_area_1995 = df["forest_area_1995_ha"].to_numpy()
+    forest_area_1995 = df["area_forest_1995"].to_numpy()
 
     # Normalize Z data
     zbar_1995 /= norm_fac
     z_1995 /= norm_fac
     forest_area_1995 /= norm_fac
 
-    # Read municipal level data
-    municipal_theta_df = gpd.read_file(data_dir / "muni_data_theta.geojson")
-    municipal_gamma_df = gpd.read_file(data_dir / "gamma_reg_site_1043.geojson")
-
-    # Read site level data
-    site_theta_2017 = gpd.read_file(data_dir / f"site_{num_sites}_data_theta.geojson")
-    site_gamma_2017 = gpd.read_file(data_dir / f"gamma_data_site_{num_sites}.geojson")
-
-    # Remove geometries
-    site_theta_2017_df = site_theta_2017.iloc[:, :-1]
-    site_gamma_2017_df = site_gamma_2017.iloc[:, :-1]
-
-    # Get theta and gamma samples
-    # baseline_fit = baseline.sample(
-    #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    # )
 
     theta = (
         pd.read_csv(
@@ -122,10 +106,6 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
         zbar_1995,
         z_1995,
         forest_area_1995,
-        site_theta_2017_df,
-        site_gamma_2017_df,
-        municipal_theta_df,
-        municipal_gamma_df,
         z_2008,
         theta,
         gamma,

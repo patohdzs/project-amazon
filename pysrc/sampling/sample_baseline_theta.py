@@ -237,3 +237,15 @@ site_theta = np.mean(np.exp(X_fit @ beta.T + V[:, fit_ids].T), axis=1)
 theta_78 = weights @ site_theta / 44.97362
 theta_78_df = pd.DataFrame(theta_78, columns=["theta_fit"])
 theta_78_df.to_csv(data_dir / "theta_fit_78.csv", index=False)
+
+theta_fit_df_1043 = gpd.read_file(
+    data_dir/"theta_fit_1043.geojson"
+)
+X_fit = theta_adj_reg_data(1043, theta_fit_df_1043)["X_theta"]
+weights = theta_adj_reg_data(1043, theta_fit_df_1043)["SG_theta"]
+fit_ids = theta_fit_df_1043["group_id"].values - 1  # Column 8 as site_ids
+fit_ids = fit_ids.astype(int)
+site_theta = np.mean(np.exp(X_fit @ beta.T + V[:, fit_ids].T), axis=1)
+theta_1043 = weights @ site_theta / 44.97362
+theta_1043_df = pd.DataFrame(theta_1043, columns=["theta_fit"])
+theta_1043_df.to_csv(data_dir / "theta_fit_1043.csv", index=False)

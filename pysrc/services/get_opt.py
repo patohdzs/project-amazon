@@ -1,7 +1,7 @@
 import os
 import pickle
 import shutil
-
+import numpy as np
 import pandas as pd
 
 from pysrc.optimization import solve_planner_problem
@@ -21,10 +21,6 @@ def get_optimization(
         zbar_2017,
         z_2017,
         forest_area_2017,
-        _,
-        _,
-        _,
-        _,
     ) = load_site_data(num_sites)
 
     if model == "det":
@@ -51,7 +47,7 @@ def get_optimization(
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
-            solve_planner_problem(
+            results=solve_planner_problem(
                 time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
@@ -61,11 +57,11 @@ def get_optimization(
                 price_emissions=pe,
                 price_cattle=pa,
             )
+
             print("Results for pe = ", pe)
-            output_base_path = str(get_path("output"))
-            gams_working_directory = str(get_path("gams_file")) + f"/{num_sites}sites/"
-            subfolder_path = os.path.join(
-                output_base_path,
+
+            output_folder = os.path.join(
+                str(get_path("output")),
                 "optimization",
                 model,
                 solver,
@@ -74,20 +70,14 @@ def get_optimization(
                 f"pe_{pe}",
             )
 
-            if not os.path.exists(subfolder_path):
-                os.makedirs(subfolder_path)
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+                
+            np.savetxt(os.path.join(output_folder, "Z.txt"), results.Z, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "X.txt"), results.X, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "U.txt"), results.U, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "V.txt"), results.V, delimiter=",")
 
-            file_names = [
-                "amazon_data_z.dat",
-                "amazon_data_x.dat",
-                "amazon_data_u.dat",
-                "amazon_data_v.dat",
-                "amazon_data_w.dat",
-            ]
-            for file_name in file_names:
-                source_file = os.path.join(gams_working_directory, file_name)
-                destination_file = os.path.join(subfolder_path, file_name)
-                shutil.copy(source_file, destination_file)
 
     if model == "hmc":
         result_folder = os.path.join(
@@ -107,7 +97,7 @@ def get_optimization(
             gamma_vals = b["final_sample"][:16000, 78:].mean(axis=0)
             x0_vals = gamma_vals * forest_area_2017
 
-            solve_planner_problem(
+            results=solve_planner_problem(
                 time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
@@ -118,10 +108,9 @@ def get_optimization(
                 price_cattle=pa,
             )
             print("Results for pe = ", pe)
-            output_base_path = str(get_path("output"))
-            gams_working_directory = str(get_path("gams_file")) + f"/{num_sites}sites/"
-            subfolder_path = os.path.join(
-                output_base_path,
+
+            output_folder = os.path.join(
+                str(get_path("output")),
                 "optimization",
                 model,
                 solver,
@@ -130,18 +119,11 @@ def get_optimization(
                 f"pe_{pe}",
             )
 
-            if not os.path.exists(subfolder_path):
-                os.makedirs(subfolder_path)
-
-            file_names = [
-                "amazon_data_z.dat",
-                "amazon_data_x.dat",
-                "amazon_data_u.dat",
-                "amazon_data_v.dat",
-                "amazon_data_w.dat",
-            ]
-            for file_name in file_names:
-                source_file = os.path.join(gams_working_directory, file_name)
-                destination_file = os.path.join(subfolder_path, file_name)
-                shutil.copy(source_file, destination_file)
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+                
+            np.savetxt(os.path.join(output_folder, "Z.txt"), results.Z, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "X.txt"), results.X, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "U.txt"), results.U, delimiter=",")
+            np.savetxt(os.path.join(output_folder, "V.txt"), results.V, delimiter=",")
     return

@@ -140,7 +140,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
     return
 
 
-def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"):
+def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="det"):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
 
@@ -158,14 +158,8 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    dfz = pd.read_csv(baseline_folder + "/amazon_data_z.dat", delimiter="\t")
-    dfz = dfz.drop("T/R ", axis=1)
-    dfz_np = dfz.to_numpy() / 1e2
-
-    dfx = pd.read_csv(baseline_folder + "/amazon_data_x.dat", delimiter="\t")
-    dfx = dfx.drop("T   ", axis=1)
-    dfx_np = dfx.to_numpy()
-    dfxdot = np.diff(dfx_np, axis=0) / 1e2
+    
+    (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(baseline_folder)
 
     results_NCE_base = []
     for i in range(y):
@@ -231,9 +225,10 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"
     return
 
 
-def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, xi=1):
+def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11, xi=1):
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     output_folder = str(get_path("output")) + "/tables/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -284,8 +279,12 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)
@@ -357,8 +356,12 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)

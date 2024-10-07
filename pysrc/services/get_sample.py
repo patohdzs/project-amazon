@@ -1,11 +1,11 @@
 import os
 import pickle
 
-from pysrc.sampling import adjusted, baseline
+from pysrc.sampling import adjusted
 from pysrc.services.file_service import get_path
 
 
-def get_sampling(opt="gams", num_sites=78, pa=41.11, pee=5, xi=1):
+def get_sampling(opt="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
     b = [0, 10, 15, 20, 25]
     pe_values = [pee + bi for bi in b]
     for pe in pe_values:
@@ -44,28 +44,28 @@ def get_sampling(opt="gams", num_sites=78, pa=41.11, pee=5, xi=1):
     return
 
 
-def get_prior(num_sites=78):
-    baseline_fit = baseline.sample(
-        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    )
+# def get_prior(num_sites=78):
+#     baseline_fit = baseline.sample(
+#         num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
+#     )
 
-    theta = baseline_fit.stan_variable("theta")
-    gamma = baseline_fit.stan_variable("gamma")
+#     theta = baseline_fit.stan_variable("theta")
+#     gamma = baseline_fit.stan_variable("gamma")
 
-    results_dir = os.path.join(
-        str(get_path("output")), "sampling", "prior", f"{num_sites}sites"
-    )
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
+#     results_dir = os.path.join(
+#         str(get_path("output")), "sampling", "prior", f"{num_sites}sites"
+#     )
+#     if not os.path.exists(results_dir):
+#         os.makedirs(results_dir)
 
-    filename = "prior.pcl"
-    file_path = os.path.join(results_dir, filename)
+#     filename = "prior.pcl"
+#     file_path = os.path.join(results_dir, filename)
 
-    data = {"theta": theta, "gamma": gamma}
+#     data = {"theta": theta, "gamma": gamma}
 
-    with open(file_path, "wb") as f:
-        pickle.dump(data, f)
+#     with open(file_path, "wb") as f:
+#         pickle.dump(data, f)
 
-    print(f"Results (theta and gamma) saved to {file_path}")
+#     print(f"Results (theta and gamma) saved to {file_path}")
 
-    return
+#     return

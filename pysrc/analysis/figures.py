@@ -9,7 +9,7 @@ import seaborn as sns
 from pysrc.services.file_service import get_path
 
 
-def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
+def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"):
     # Set transfer levels
     b = [0, 10, 15, 20, 25]
 
@@ -20,7 +20,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
     output_folder = str(get_path("output")) + "/figures"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    df_ori = pd.read_csv(str(get_path("data")) + f"/calibration/hmc/hmc_{num_sites}SitesModel.csv")
+    df_ori = pd.read_csv(str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv")
     dfz_bar = df_ori[f"zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
 
@@ -36,10 +36,9 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
             f"pa_{pa}",
             f"pe_{pe[order]}",
         )
-        dfz = pd.read_csv(result_folder + "/amazon_data_z.dat", delimiter="\t")
-        dfz = dfz.drop("T/R ", axis=1).to_numpy()
-        dfx = pd.read_csv(result_folder + "/amazon_data_x.dat", delimiter="\t")
-        dfx = dfx.drop("T   ", axis=1).to_numpy()
+        dfz = np.loadtxt(os.path.join(result_folder, "Z.txt"), delimiter=",")
+        dfx = np.sum(np.loadtxt(os.path.join(result_folder, "X.txt"), delimiter=","),axis=1)
+        
         variable_dict[f"results_zper{j}"] = []
         variable_dict[f"results_xagg{j}"] = dfx[:51]
         for i in range(51):
@@ -126,7 +125,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
     plt.show()
 
 
-def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
+def density(pee=7.6, num_sites=78, opt="gurobi", pa=41.11, xi=1, model="det"):
     output_folder = str(get_path("output")) + f"/figures/density/xi{xi}/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -140,7 +139,12 @@ def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
         f"xi_{xi}",
     )
     prior_folder = os.path.join(
-        str(get_path("output")), "sampling", "prior", f"{num_sites}sites"
+        str(get_path("output")),
+        "sampling",
+        opt,
+        f"{num_sites}sites",
+        f"pa_{pa}",
+        "xi_10000",
     )
 
     with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
@@ -149,11 +153,11 @@ def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
     with open(result_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         b15 = pickle.load(f)
 
-    with open(prior_folder + "/prior.pcl", "rb") as f:
+    with open(prior_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         results_unadjusted = pickle.load(f)
 
-    theta_unadjusted = results_unadjusted["theta"][:16000, :]
-    gamma_unadjusted = results_unadjusted["gamma"][:16000, :]
+    theta_unadjusted = results_unadjusted["final_sample"][:16000, :78]
+    gamma_unadjusted = results_unadjusted["final_sample"][:16000, 78:]
     theta_adjusted_b0 = b0["final_sample"][:16000, :78]
     gamma_adjusted_b0 = b0["final_sample"][:16000, 78:]
     theta_adjusted_b15 = b15["final_sample"][:16000, :78]
