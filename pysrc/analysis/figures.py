@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
 
@@ -17,35 +18,34 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
     pe = [pee + bi for bi in b]
 
     # Get z_bar data
-    output_folder = str(get_path("output")) + "/figures"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    df_ori = pd.read_csv(str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv")
-    dfz_bar = df_ori[f"zbar_2017"]
-    dfz_bar_np = dfz_bar.to_numpy()
+    output_folder = get_path("output") / "figures"
+
+    # Load site data
+    (zbar, _, _) = load_site_data(num_sites)
 
     variable_dict = {}
     for j in range(5):
         order = j
-        result_folder = os.path.join(
-            str(get_path("output")),
-            "optimization",
-            model,
-            opt,
-            f"{num_sites}sites",
-            f"pa_{pa}",
-            f"pe_{pe[order]}",
+        results_dir = (
+            get_path("output")
+            / "optimization"
+            / model
+            / opt
+            / f"{num_sites}sites"
+            / f"pa_{pa}"
+            / f"pe_{pe[order]}"
         )
-        dfz = np.loadtxt(os.path.join(result_folder, "Z.txt"), delimiter=",")
-        dfx = np.sum(np.loadtxt(os.path.join(result_folder, "X.txt"), delimiter=","),axis=1)
-        
+
+        dfz = np.loadtxt(results_dir / "Z.txt", delimiter=",")
+        dfx = np.sum(np.loadtxt(results_dir / "X.txt", delimiter=","), axis=1)
+
         variable_dict[f"results_zper{j}"] = []
         variable_dict[f"results_xagg{j}"] = dfx[:51]
         for i in range(51):
-            result_zper = (np.sum(dfz[i]) / (np.sum(dfz_bar_np) / 1e9)) * 100
+            result_zper = (np.sum(dfz[i]) / np.sum(zbar)) * 100
             variable_dict[f"results_zper{j}"].append(result_zper)
 
-    time = list(range(0, len(variable_dict[f"results_zper{0}"])))
+    time = list(range(len(variable_dict[f"results_zper{0}"])))
     plt.figure(figsize=(10, 6))
     custom_labels = [
         "$p^{{ee}}$={0}       $b$".format(pee),
@@ -72,6 +72,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
                 linewidth=4,
                 color=color,
             )
+
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
     plt.xlim(0, max(time) + 2)
@@ -84,7 +85,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
         fontsize=16,
     )
     plt.savefig(
-        output_folder + f"/plotPrediction_zShare_{num_sites}Sites_det.png",
+        output_folder / f"pred_zshare_{num_sites}_sites_det.png",
         format="png",
         bbox_inches="tight",
     )
@@ -118,14 +119,14 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
         fontsize=18,
     )
     plt.savefig(
-        output_folder + f"/plotPrediction_x_{num_sites}Sites_det.png",
+        output_folder + f"/plot_pred_x_{num_sites}_sites_det.png",
         format="png",
         bbox_inches="tight",
     )
     plt.show()
 
 
-def density(pee=7.6, num_sites=78, opt="gurobi", pa=41.11, xi=1, model="det"):
+def density(pee=7.6, num_sites=78, opt="gurobi", pa=41.11, xi=1):
     output_folder = str(get_path("output")) + f"/figures/density/xi{xi}/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -327,11 +328,11 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
     return
 
 
-def plot_transfer_payments(results_15, results_25, kappa=2.094215255):
+def plot_transfers(results_15, results_25, kappa=2.094215255):
     for b, results in zip([15, 25], [results_15, results_25]):
         kappa = 2.094215255
-        X = results["X"]
-        Z = results["Z"]
+        X = results.X
+        Z = results.Z
 
         # Compute X_dot
         X_dot = np.diff(X, axis=0)
