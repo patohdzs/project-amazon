@@ -97,9 +97,6 @@ model_3 <- lm(
 )
 summary(model_3)
 
-# Save regression tables
-#stargazer(model_1, model_2, model_3, out = "plots/gamma_calib/1043_sites_reg_table.tex")
-#stargazer(model_1, model_2, model_3, out = "plots/gamma_calib/1043_sites_reg_table.txt")
 
 
 # Predict gammas
@@ -114,31 +111,5 @@ save(calib_df, file = "data/calibration/gamma_calibration_78_sites.Rdata")
 
 
 
-
-
-df <- calib_df %>%
-  mutate(
-    X1 = 1,
-    log_hist_precip = log(hist_precip),
-    log_hist_temp = log(hist_temp),
-    latlon = lat * lon,
-    log_co2e_ha_2017 = log(co2e)
-  ) %>%
-  select(
-    X1,
-    log_hist_precip,
-    log_hist_temp,
-    lat,
-    lon,
-    latlon,
-    log_co2e_ha_2017
-  ) 
-
-# Output municipality-level regression data
-st_write(df,
-         "data/calibration/hmc/gamma_data_site_78.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE
-)
 
 
