@@ -10,7 +10,7 @@ from pysrc.services.file_service import get_path
 data_dir = get_path("data", "calibration", "hmc")
 
 theta_reg = gpd.read_file(
-    "/project/lhansen/HMC_re/project-amazon/data/calibration/hmc/theta_reg.geojson"
+    data_dir/"theta_reg.geojson"
 )
 
 X = theta_reg.iloc[:, 0:8].values  # Columns 1 to 6 as X
@@ -227,7 +227,7 @@ V = np.random.normal(
 
 mean_pa_2017 = 44.97362
 theta_fit_df_78 = gpd.read_file(
-    "/project/lhansen/HMC_re/project-amazon/data/calibration/hmc/theta_fit_78.geojson"
+    data_dir/"theta_fit_78.geojson"
 )
 X_fit = theta_adj_reg_data(78, theta_fit_df_78)["X_theta"]
 weights = theta_adj_reg_data(78, theta_fit_df_78)["SG_theta"]

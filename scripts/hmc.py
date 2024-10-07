@@ -2,9 +2,9 @@ import os
 import pickle
 
 from pysrc.analysis import value_decomposition
-from pysrc.optimization.gams import solve_planner_problem
+from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import adjusted
-from pysrc.services.data_service import load_site_data
+from pysrc.services.data_service import load_site_data,load_reg_data,load_productivity_params
 from pysrc.services.file_service import get_path
 
 # ## Model scenario
@@ -28,7 +28,7 @@ for pe in pe_values:
         weight=0.25,
         num_sites=num_sites,
         T=200,
-        optimizer=opt,
+        # optimizer=opt,
         max_iter=100,
         final_sample_size=5_000,
         iter_sampling=1000,
@@ -55,7 +55,7 @@ for pe in pe_values:
         print(f"Results saved to {outfile_path}")
 
 # Load site data
-(zbar_2017, z_2017, forest_area_2017,_,_,_,_) = load_site_data(num_sites)
+(zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
 # Read ambiguity-adjusted parameters
 result_folder = os.path.join(
@@ -81,23 +81,22 @@ for pe in pe_values:
 
     b_val = pe - pee
     results = solve_planner_problem(
-        T=T,
         theta=theta_vals,
         gamma=gamma_vals,
         x0=x0_vals,
         zbar=zbar_2017,
         z0=z_2017,
-        pe=pe,
-        pa=pa,
+        price_emissions=pe,
+        price_cattle=pa,
     )
 
     print(
         "result",
         value_decomposition(
-            Z=results['Z'],
-            X=results['X'],
-            U=results['U'],
-            V=results['V'],
+            Z=results.Z,
+            X=results.X,
+            U=results.U,
+            V=results.V,
             T=T,
             pee=pee,
             pa=pa,

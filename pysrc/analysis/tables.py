@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from pysrc.sampling import baseline
+from pysrc.services.data_service import load_productivity_params
 from pysrc.services.file_service import get_path
 
 
@@ -13,40 +13,28 @@ def format_float(value):
 
 
 def read_theta(num_sites):
-    # baseline_fit = baseline.sample(
-    #     num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    # )
 
-    dft_np = pd.read_csv(get_path("data", "calibration", "hmc")/f"theta_fit_{num_sites}.csv").to_numpy()[:,].flatten()
-    return dft_np
+    (theta_vals, gamma_vals) = load_productivity_params(num_sites)
+    return theta_vals
 
 
 def read_file(result_directory):
-    dfz = pd.read_csv(result_directory + "/amazon_data_z.dat", delimiter="\t")
-    dfz = dfz.drop("T/R ", axis=1)
-    dfz_np = dfz.to_numpy()
+    
+    Z = np.loadtxt(os.path.join(result_directory, "Z.txt"), delimiter=",")
+    X = np.sum(np.loadtxt(os.path.join(result_directory, "X.txt"), delimiter=","),axis=1)
+    Xdot = np.diff(X, axis=0)
+    U = np.loadtxt(os.path.join(result_directory, "U.txt"), delimiter=",")
+    V = np.loadtxt(os.path.join(result_directory, "V.txt"), delimiter=",")
 
-    dfx = pd.read_csv(result_directory + "/amazon_data_x.dat", delimiter="\t")
-    dfx = dfx.drop("T   ", axis=1)
-    dfx_np = dfx.to_numpy()
-    dfxdot = np.diff(dfx_np, axis=0)
-
-    dfu = pd.read_csv(result_directory + "/amazon_data_u.dat", delimiter="\t")
-    dfu = dfu.drop("T/R ", axis=1)
-    dfu_np = dfu.to_numpy()
-
-    dfv = pd.read_csv(result_directory + "/amazon_data_v.dat", delimiter="\t")
-    dfv = dfv.drop("T/R ", axis=1)
-    dfv_np = dfv.to_numpy()
-
-    return (dfz_np / 1e2, dfxdot / 1e2, dfu_np / 1e2, dfv_np / 1e2)
+    return (Z / 1e2, Xdot / 1e2, U / 1e2, V / 1e2)
 
 
-def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
+def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     output_folder = str(get_path("output")) + "/tables/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -109,8 +97,12 @@ def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)
