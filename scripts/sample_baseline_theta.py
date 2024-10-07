@@ -9,9 +9,7 @@ from pysrc.services.file_service import get_path
 
 data_dir = get_path("data", "calibration", "hmc")
 
-theta_reg = gpd.read_file(
-    data_dir/"theta_reg.geojson"
-)
+theta_reg = gpd.read_file(data_dir / "theta_reg.geojson")
 
 X = theta_reg.iloc[:, 0:8].values  # Columns 1 to 6 as X
 Y = theta_reg.iloc[:, 8].values  # Column 7 as Y
@@ -226,9 +224,7 @@ V = np.random.normal(
 
 
 mean_pa_2017 = 44.97362
-theta_fit_df_78 = gpd.read_file(
-    data_dir/"theta_fit_78.geojson"
-)
+theta_fit_df_78 = gpd.read_file(data_dir / "theta_fit_78.geojson")
 X_fit = theta_adj_reg_data(78, theta_fit_df_78)["X_theta"]
 weights = theta_adj_reg_data(78, theta_fit_df_78)["SG_theta"]
 fit_ids = theta_fit_df_78["group_id"].values - 1  # Column 8 as site_ids
@@ -238,9 +234,7 @@ theta_78 = weights @ site_theta / 44.97362
 theta_78_df = pd.DataFrame(theta_78, columns=["theta_fit"])
 theta_78_df.to_csv(data_dir / "theta_fit_78.csv", index=False)
 
-theta_fit_df_1043 = gpd.read_file(
-    data_dir/"theta_fit_1043.geojson"
-)
+theta_fit_df_1043 = gpd.read_file(data_dir / "theta_fit_1043.geojson")
 X_fit = theta_adj_reg_data(1043, theta_fit_df_1043)["X_theta"]
 weights = theta_adj_reg_data(1043, theta_fit_df_1043)["SG_theta"]
 fit_ids = theta_fit_df_1043["group_id"].values - 1  # Column 8 as site_ids
