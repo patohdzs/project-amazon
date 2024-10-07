@@ -42,30 +42,3 @@ def get_sampling(opt="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
             print(f"Results saved to {outfile_path}")
 
     return
-
-
-# def get_prior(num_sites=78):
-#     baseline_fit = baseline.sample(
-#         num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-#     )
-
-#     theta = baseline_fit.stan_variable("theta")
-#     gamma = baseline_fit.stan_variable("gamma")
-
-#     results_dir = os.path.join(
-#         str(get_path("output")), "sampling", "prior", f"{num_sites}sites"
-#     )
-#     if not os.path.exists(results_dir):
-#         os.makedirs(results_dir)
-
-#     filename = "prior.pcl"
-#     file_path = os.path.join(results_dir, filename)
-
-#     data = {"theta": theta, "gamma": gamma}
-
-#     with open(file_path, "wb") as f:
-#         pickle.dump(data, f)
-
-#     print(f"Results (theta and gamma) saved to {file_path}")
-
-#     return
