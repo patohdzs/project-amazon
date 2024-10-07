@@ -1,8 +1,8 @@
 import numpy as np
 
-from pysrc.optimization import gams, gurobi
+from pysrc.optimization import solve_planner_problem,gams
 from pysrc.sampling import adjusted
-from pysrc.services.data_service import load_site_data_1995
+from pysrc.services.data_service import load_site_data_1995,load_price_data
 
 
 def shadow_price_opt(
@@ -13,56 +13,45 @@ def shadow_price_opt(
     theta,
     gamma,
     sitenum=78,
-    opt="gams",
+    opt="gurobi",
     timehzn=200,
     pa=41.11,
     pe=7.1,
     model="det",
 ):
+    
+    pa_list = load_price_data()
+    price_cattle = np.concatenate((pa_list, np.full(200 - len(pa_list), pa)))
+    
     # Computing carbon absorbed in start period
     x0_vals_1995 = gamma * forest_area_1995
 
-    # Choose optimizer
-    if opt == "gurobi":
-        solve_planner_problem = gurobi.solve_planner_problem
-
-    elif opt == "gams":
-        solve_planner_problem = gams.solve_planner_problem
-
-    else:
-        raise ValueError("Optimizer must be one of ['gurobi', 'gams']")
-
-    if model == "mpc":
-        solve_planner_problem = gams.mpc_shadow_price
+    # if model == "mpc":
+    #     solve_planner_problem = gams.mpc_shadow_price
 
     results = solve_planner_problem(
-        T=timehzn,
         theta=theta,
         gamma=gamma,
         x0=x0_vals_1995,
         zbar=zbar_1995,
         z0=z_1995,
-        pe=pe,
-        pa=pa,
-        model="shadow_price",
+        price_emissions=pe,
+        price_cattle=price_cattle,
+        solver=opt,
     )
-    Z = results["Z"]
+    Z = results.Z
     z_2008_agg = np.sum(z_2008) / 1e9
     ratio = np.abs((np.sum(Z[13]) - z_2008_agg) / z_2008_agg)
 
     return ratio
 
 
-def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
+def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
     if model == "det":
         (
             zbar_1995,
             z_1995,
             forest_area_1995,
-            _,
-            _,
-            _,
-            _,
             z_2008,
             theta,
             gamma,
@@ -94,16 +83,12 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
             zbar_1995,
             z_1995,
             forest_area_1995,
-            _,
-            _,
-            _,
-            _,
             z_2008,
             theta,
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(4, 5, 0.1)
+        pe_values = np.arange(2.2, 2.21, 0.1)
         results = []
         for pe in pe_values:
             samples = adjusted.sample(
@@ -186,15 +171,15 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gams", model="det", xi=1):
 
 
 ## det 1043 sites
-# min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
-# print("min_result",min_result,"min_pe",det_1043_pe)
+min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
+print("min_result",min_result,"min_pe",det_1043_pe)
 # min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
-## hmc 78 sites
-min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=1)
-print("min_result", min_result, "min_pe", hmc_78_pe)
+# hmc 78 sites
+# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=3)
+# print("min_result", min_result, "min_pe", hmc_78_pe)
 
 # ## mpc 78 sites
 # min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
