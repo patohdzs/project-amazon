@@ -15,8 +15,7 @@ df <- calib_1043 %>%
     log_co2e_ha_2017 = log(co2e),
   ) %>%
   filter(!is.na(log_co2e_ha_2017))
-# Assuming 'df1' and 'df2' are your two datasets, and you want to scale the variables:
-# log_hist_precip, log_hist_temp, lat, and lon
+
 
 # Step 1: Calculate the mean and standard deviation from the first dataset
 scaling_params <- df %>%
@@ -85,7 +84,7 @@ df2_scaled <- df2 %>%
   ) 
 
 
-# Now both datasets 'df_scaled' and 'df2_scaled' are scaled in the same way
+
 
 
 
