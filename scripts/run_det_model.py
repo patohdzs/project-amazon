@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+from pysrc.services.data_service import load_productivity_params
 from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import baseline
 from pysrc.services.data_service import load_site_data
@@ -8,7 +8,7 @@ from pysrc.services.data_service import load_site_data
 solver = "gurobi"
 pee = 7.6
 pa = 41.11
-num_sites = 1043
+num_sites = 78
 T = 200
 
 # Load site data
@@ -22,9 +22,7 @@ baseline_fit = baseline.sample(
     seed=1,
 )
 
-theta = baseline_fit.stan_variable("theta").mean(axis=0)
-gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
-
+(theta, gamma) = load_productivity_params(num_sites)
 # Computing carbon absorbed in start period
 x_2017 = gamma * forest_area_2017
 
