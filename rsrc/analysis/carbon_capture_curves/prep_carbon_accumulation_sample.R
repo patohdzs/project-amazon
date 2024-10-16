@@ -95,7 +95,7 @@ df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
 
 # Rename some columns
 df <- df |>
-  rename(agb = !!names(df)[ncol(df) - 6]) |>
+  rename(agb = !!names(df)[ncol(df) - 8]) |>
   rename(
     site = id,
     gamma = site_reg_gamma,
