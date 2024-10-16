@@ -47,6 +47,9 @@ pq_rst <- rast(
 # Load percipitation data
 precip_rsts <- rast("data/clean/precipitation.tif")
 
+# Load GHI data
+ghi_rsts <- rast("data/raw/GHI.tif")
+
 # Combine AGB zonal rasters into a single raster
 agb_rst <- do.call(merge, agb_rst)
 
@@ -84,9 +87,10 @@ agb <- extract(agb_rst, sec_veg_age[, c("x", "y")])
 gamma <- extract(gamma_rst, sec_veg_age[, c("x", "y")])
 site <- extract(site_rst, sec_veg_age[, c("x", "y")])
 mean_precip <- extract(mean_precip_rst, sec_veg_age[, c("x", "y")])
+ghi <- extract(ghi_rst, sec_veg_age[, c("x", "y")])
 
 # Combine the extracted values
-df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip) |>
+df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
   as_tibble()
 
 # Rename some columns
@@ -96,7 +100,8 @@ df <- df |>
     site = id,
     gamma = site_reg_gamma,
     age = sec_veg_age_2017,
-    percip = mean
+    percip = mean,
+    ghi = GHI
   ) |>
   select(-matches("^ID"))
 
