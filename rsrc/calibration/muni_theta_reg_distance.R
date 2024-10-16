@@ -25,14 +25,6 @@ map_basin <- st_read(
 )
 
 
-map_basin2 <- st_read(
-  dsn = "data/raw/mapbiomas/basin",
-  layer = "GEOFT_PNRH_SUB2"
-)
-
-
-map_basin2 <- map_basin2 %>%
-  mutate(FEATURE_ID = row_number())
 
 
 
