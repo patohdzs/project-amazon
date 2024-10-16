@@ -48,7 +48,7 @@ pq_rst <- rast(
 precip_rsts <- rast("data/clean/precipitation.tif")
 
 # Load GHI data
-ghi_rsts <- rast("data/raw/GHI.tif")
+ghi_rst <- rast("data/raw/GHI.tif")
 
 # Combine AGB zonal rasters into a single raster
 agb_rst <- do.call(merge, agb_rst)
