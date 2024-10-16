@@ -13,7 +13,7 @@ def shadow_price_opt(
     theta,
     gamma,
     sitenum=78,
-    opt="gurobi",
+    solver="gurobi",
     timehzn=200,
     pa=41.11,
     pe=7.1,
@@ -26,27 +26,39 @@ def shadow_price_opt(
     # Computing carbon absorbed in start period
     x0_vals_1995 = gamma * forest_area_1995
 
-    # if model == "mpc":
-    #     solve_planner_problem = gams.mpc_shadow_price
-
-    results = solve_planner_problem(
+    if model == "mpc":
+        results = gams.mpc_shadow_price(
+        T=200,
         theta=theta,
         gamma=gamma,
         x0=x0_vals_1995,
         zbar=zbar_1995,
         z0=z_1995,
-        price_emissions=pe,
-        price_cattle=price_cattle,
-        solver=opt,
-    )
-    Z = results.Z
+        pe=pe,
+        pa=price_cattle,
+        )
+        Z = results["Z"]
+       
+        
+    else:
+        results = solve_planner_problem(
+            theta=theta,
+            gamma=gamma,
+            x0=x0_vals_1995,
+            zbar=zbar_1995,
+            z0=z_1995,
+            price_emissions=pe,
+            price_cattle=price_cattle,
+            solver=solver,
+        )
+        Z = results.Z
     z_2008_agg = np.sum(z_2008) / 1e9
-    ratio = np.abs((np.sum(Z[13]) - z_2008_agg) / z_2008_agg)
+    ratio = (np.sum(Z[13]) - z_2008_agg) / z_2008_agg
 
     return ratio
 
 
-def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
+def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_low=5, pe_high=8):
     if model == "det":
         (
             zbar_1995,
@@ -57,7 +69,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(5, 8, 0.1)
+        pe_values = np.arange(pe_low, pe_high, 0.1)
 
         results = np.array(
             [
@@ -69,7 +81,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
                     theta,
                     gamma,
                     sitenum=sitenum,
-                    opt=opt,
+                    solver=solver,
                     timehzn=200,
                     pa=pa,
                     pe=pe,
@@ -88,7 +100,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(2.2, 2.21, 0.1)
+        pe_values = np.arange(pe_low, pe_high, 0.1)
         results = []
         for pe in pe_values:
             samples = adjusted.sample(
@@ -98,7 +110,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
                 weight=0.25,
                 num_sites=sitenum,
                 T=200,
-                solver=opt,
+                solver=solver,
                 max_iter=100,
                 final_sample_size=5_000,
                 iter_sampling=1000,
@@ -108,8 +120,8 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
                 inits=0.2,
             )
 
-            theta = np.mean(samples["final_sample"][:, :78], axis=0)
-            gamma = np.mean(samples["final_sample"][:, 78:], axis=0)
+            theta = np.mean(samples["final_sample"][:, :sitenum], axis=0)
+            gamma = np.mean(samples["final_sample"][:, sitenum:], axis=0)
             result = shadow_price_opt(
                 zbar_1995,
                 z_1995,
@@ -118,7 +130,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
                 theta,
                 gamma,
                 sitenum=sitenum,
-                opt=opt,
+                solver=solver,
                 timehzn=200,
                 pa=pa,
                 pe=pe,
@@ -131,16 +143,12 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
             zbar_1995,
             z_1995,
             forest_area_1995,
-            _,
-            _,
-            _,
-            _,
             z_2008,
             theta,
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(6.5, 7.1, 0.05)
+        pe_values = np.arange(pe_low, pe_high, 0.1)
 
         results = []
         for pe in pe_values:
@@ -152,7 +160,7 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
                 theta,
                 gamma,
                 sitenum=sitenum,
-                opt=opt,
+                solver=solver,
                 timehzn=200,
                 pa=pa,
                 pe=pe,
@@ -171,16 +179,23 @@ def shadow_price_cal(sitenum=78, pa=41.11, opt="gurobi", model="det", xi=2):
 
 
 ## det 1043 sites
-min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
-print("min_result",min_result,"min_pe",det_1043_pe)
+# min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
+# print("min_result",min_result,"min_pe",det_1043_pe)
 # min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
 # hmc 78 sites
-# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=3)
+# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=10)
+# print("min_result", min_result, "min_pe", hmc_78_pe)
+
+# min_result, hmc_78_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=5,solver='gams',pe_low=4.3, pe_high=4.31)
 # print("min_result", min_result, "min_pe", hmc_78_pe)
 
 # ## mpc 78 sites
-# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
+# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc',solver='gams',pe_low=4.5, pe_high=6.2)
 # print("min_result",min_result,"min_pe",mpc_78_pe)
+
+
+min_result,mpc_78_pe=shadow_price_cal(sitenum=1043,model='mpc',solver='gams',pe_low=4.5, pe_high=4.51)
+print("min_result",min_result,"min_pe",mpc_78_pe)

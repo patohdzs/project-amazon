@@ -66,7 +66,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
             )
             with open(theta_folder + f"/pe_{pe[order]}/results.pcl", "rb") as f:
                 para_file = pickle.load(f)
-            dft_np = para_file["final_sample"][:, :78].mean(axis=0)
+            dft_np = para_file["final_sample"][:, :num_sites].mean(axis=0)
 
         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
 
@@ -225,7 +225,7 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="de
     return
 
 
-def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11, xi=1):
+def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41.11, xi=1):
     kappa = 2.094215255
     zeta_u = 1.66e-4 * 1e11
     zeta_v = 1.00e-4 * 1e11
@@ -244,7 +244,7 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11
             str(get_path("output")),
             "optimization",
             "det",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"pe_{pe[order]}",
@@ -309,8 +309,9 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11
             str(get_path("output")),
             "optimization",
             "hmc",
-            opt,
+            solver,
             f"{num_sites}sites",
+            f"xi_{xi}",
             f"pa_{pa}",
             f"pe_{pe[order]}",
         )
@@ -318,14 +319,14 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11
         theta_folder = os.path.join(
             str(get_path("output")),
             "sampling",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"xi_{xi}",
         )
         with open(theta_folder + f"/pe_{pe[order]}/results.pcl", "rb") as f:
             para_file = pickle.load(f)
-        dft_np = para_file["final_sample"][:16000, :78].mean(axis=0)
+        dft_np = para_file["final_sample"][:16000, :num_sites].mean(axis=0)
 
         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
 
@@ -409,9 +410,10 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gurobi", pa=41.11
 def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=0):
     pe = pee + b
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     dft_np = read_theta(num_sites)
-    df_ori = pd.read_csv(str(get_path("data")) + "/hmc/hmc_78SitesModel.csv")
+    df_ori = pd.read_csv(str(get_path("data")) + "/calibration/hmc/calibration_78_sites.csv")
     x0 = df_ori["x_2017_78Sites"].to_numpy()
 
     output_folder = str(get_path("output")) + "/tables/"
@@ -528,8 +530,12 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
             results_AC = []
             for i in range(200):
                 result_AC = (
-                    (zeta / 2)
-                    * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                    ((zeta_u / 2)
+                    * (np.sum(dfu_np[i]) ) ** 2
+                    +
+                    (zeta_v / 2)
+                    * (np.sum(dfv_np[i]) ) ** 2
+                    )
                     / ((1 + 0.02) ** (i))
                 )
                 results_AC.append(result_AC)

@@ -11,7 +11,8 @@ from ..services.data_service import (
     load_site_data,
 )
 from ..services.file_service import get_path
-
+import pickle
+import os
 
 def sample(
     xi,
@@ -36,11 +37,29 @@ def sample(
     **stan_kwargs,
 ):
     # Instantiate stan sampler
-    sampler = CmdStanModel(
-        stan_file=get_path("stan_model") / "adjusted.stan",
-        cpp_options={"STAN_THREADS": "true"},
-        force_compile=True,
-    )
+    # sampler = CmdStanModel(
+    #     stan_file=get_path("stan_model") / "adjusted.stan",
+    #     cpp_options={"STAN_THREADS": "true"},
+    #     force_compile=True,
+    # )
+    
+    pickle_file = 'stan_model/compiled_model.pkl'
+
+    if os.path.exists(pickle_file):
+        # Load the model from the pickle file
+        sampler = pickle.load(open(pickle_file, 'rb'))
+        print("Loaded model from pickle.")
+    else:
+        # Compile the Stan model and save it to the pickle file
+        sampler = CmdStanModel(
+            stan_file=get_path("stan_model") / "adjusted.stan",
+            cpp_options={"STAN_THREADS": "true"},
+            force_compile=True,
+        )
+        with open(pickle_file, 'wb') as f:
+            pickle.dump(sampler, f)
+        print("Compiled model and saved to pickle.")
+
 
     # Load site data
     (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)

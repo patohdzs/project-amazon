@@ -4,9 +4,9 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from pysrc.sampling import baseline, mpc_estimation
+from pysrc.sampling import mpc_estimation
 
-from ..services.data_service import load_site_data
+from ..services.data_service import load_site_data,load_productivity_params
 
 
 def mc_samples_constrained(location):
@@ -140,18 +140,11 @@ def gdx_files(location, num_sites=78):
         zbar_2017,
         z_2017,
         forest_area_2017,
-        _,
-        _,
-        _,
-        _,
     ) = load_site_data(num_sites)
 
-    baseline_fit = baseline.sample(
-        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    )
 
-    theta = baseline_fit.stan_variable("theta").mean(axis=0)
-    gamma = baseline_fit.stan_variable("gamma").mean(axis=0)
+    (theta, gamma) = load_productivity_params(num_sites)
+
 
     scale = 1e9
     # Computing carbon absorbed in start period
