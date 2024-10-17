@@ -5,7 +5,7 @@ from pysrc.sampling import adjusted
 from pysrc.services.file_service import get_path
 
 
-def get_sampling(opt="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
+def get_sampling(solver="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
     b = [0, 10, 15, 20, 25]
     pe_values = [pee + bi for bi in b]
     for pe in pe_values:
@@ -16,7 +16,7 @@ def get_sampling(opt="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
             weight=0.25,
             num_sites=num_sites,
             T=200,
-            solver=opt,
+            solver=solver,
             max_iter=100,
             final_sample_size=5_000,
             iter_sampling=1000,
@@ -28,7 +28,7 @@ def get_sampling(opt="gurobi", num_sites=78, pa=41.11, pee=5, xi=1):
         output_base_path = os.path.join(
             str(get_path("output")),
             "sampling",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"xi_{xi}",

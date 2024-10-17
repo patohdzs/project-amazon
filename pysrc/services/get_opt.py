@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-
+import os
 import numpy as np
 
 from pysrc.optimization import PlannerSolution, solve_planner_problem
@@ -42,6 +42,7 @@ def get_optimization(
                 z0=z_2017,
                 price_emissions=pe,
                 price_cattle=pa,
+                solver=solver,
             )
 
             print("Results for pe = ", pe)
@@ -58,7 +59,7 @@ def get_optimization(
             save_planner_solution(results, output_folder)
 
     if model == "hmc":
-        results_dir = (
+        results_dir = os.path.join(
             get_path("output")
             / "sampling"
             / solver
@@ -72,12 +73,12 @@ def get_optimization(
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
             # Load ambiguity-adjusted params
-            with open(results_dir / f"/pe_{pe}/results.pcl", "rb") as f:
+            with open(results_dir + f"/pe_{pe}/results.pcl", "rb") as f:
                 b = pickle.load(f)
 
             # Take sample
-            theta_vals = b["final_sample"][:16000, :78].mean(axis=0)
-            gamma_vals = b["final_sample"][:16000, 78:].mean(axis=0)
+            theta_vals = b["final_sample"][:16000, :num_sites].mean(axis=0)
+            gamma_vals = b["final_sample"][:16000, num_sites:].mean(axis=0)
 
             # Compute carbon stock
             x0_vals = gamma_vals * forest_area_2017
@@ -91,6 +92,7 @@ def get_optimization(
                 z0=z_2017,
                 price_emissions=pe,
                 price_cattle=pa,
+                solver=solver,
             )
             print("Results for pe = ", pe)
 
@@ -100,15 +102,21 @@ def get_optimization(
                 / model
                 / solver
                 / f"{num_sites}sites"
+                / f"xi_{xi}"
                 / f"pa_{pa}"
                 / f"pe_{pe}"
             )
+            
 
             save_planner_solution(results, output_folder)
     return
 
 
 def save_planner_solution(results: PlannerSolution, output_dir: Path):
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+                
     np.savetxt(output_dir / "Z.txt", results.Z, delimiter=",")
     np.savetxt(output_dir / "X.txt", results.X, delimiter=",")
     np.savetxt(output_dir / "U.txt", results.U, delimiter=",")
