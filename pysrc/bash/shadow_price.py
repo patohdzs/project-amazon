@@ -3,7 +3,15 @@ import numpy as np
 from pysrc.optimization import solve_planner_problem,gams
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data_1995,load_price_data
+import argparse
 
+parser = argparse.ArgumentParser(description="shadow price calculation")
+parser.add_argument("--id",type=int,default=400)
+parser.add_argument("--xi",type=int,default=5)
+args = parser.parse_args()
+seed = args.id
+seed_i = seed/10
+xi=args.xi
 
 def shadow_price_opt(
     zbar_1995,
@@ -26,32 +34,20 @@ def shadow_price_opt(
     # Computing carbon absorbed in start period
     x0_vals_1995 = gamma * forest_area_1995
 
-    if model == "mpc":
-        results = gams.mpc_shadow_price(
-        T=200,
+    # if model == "mpc":
+    #     solve_planner_problem = gams.mpc_shadow_price
+
+    results = solve_planner_problem(
         theta=theta,
         gamma=gamma,
         x0=x0_vals_1995,
         zbar=zbar_1995,
         z0=z_1995,
-        pe=pe,
-        pa=price_cattle,
-        )
-        Z = results["Z"]
-       
-        
-    else:
-        results = solve_planner_problem(
-            theta=theta,
-            gamma=gamma,
-            x0=x0_vals_1995,
-            zbar=zbar_1995,
-            z0=z_1995,
-            price_emissions=pe,
-            price_cattle=price_cattle,
-            solver=solver,
-        )
-        Z = results.Z
+        price_emissions=pe,
+        price_cattle=price_cattle,
+        solver=solver,
+    )
+    Z = results.Z
     z_2008_agg = np.sum(z_2008) / 1e9
     ratio = (np.sum(Z[13]) - z_2008_agg) / z_2008_agg
 
@@ -143,12 +139,16 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
             zbar_1995,
             z_1995,
             forest_area_1995,
+            _,
+            _,
+            _,
+            _,
             z_2008,
             theta,
             gamma,
         ) = load_site_data_1995(sitenum)
 
-        pe_values = np.arange(pe_low, pe_high, 0.1)
+        pe_values = np.arange(pe_low, pe_high, 0.05)
 
         results = []
         for pe in pe_values:
@@ -189,13 +189,9 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
 # min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=10)
 # print("min_result", min_result, "min_pe", hmc_78_pe)
 
-# min_result, hmc_78_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=5,solver='gams',pe_low=4.3, pe_high=4.31)
-# print("min_result", min_result, "min_pe", hmc_78_pe)
+min_result, hmc_1043_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=xi,solver='gams',pe_low=seed_i, pe_high=(seed_i+0.01))
+print("min_result", min_result, "min_pe", hmc_1043_pe)
 
 # ## mpc 78 sites
-# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc',solver='gams',pe_low=4.5, pe_high=6.2)
+# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
 # print("min_result",min_result,"min_pe",mpc_78_pe)
-
-
-min_result,mpc_78_pe=shadow_price_cal(sitenum=1043,model='mpc',solver='gams',pe_low=4.5, pe_high=4.51)
-print("min_result",min_result,"min_pe",mpc_78_pe)

@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
 
-def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
+def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det", xi=1):
     # Set transfer levels
     b = [0, 10, 15, 20, 25]
 
@@ -17,36 +18,60 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
     pe = [pee + bi for bi in b]
 
     # Get z_bar data
-    output_folder = str(get_path("output")) + "/figures"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    df_ori = pd.read_csv(str(get_path("data")) + f"/hmc/hmc_{num_sites}SitesModel.csv")
-    dfz_bar = df_ori[f"zbar_2017_{num_sites}Sites"]
-    dfz_bar_np = dfz_bar.to_numpy()
+    output_folder = get_path("output") / "figures"
+
+    # Load site data
+    (zbar, _, _) = load_site_data(num_sites)
 
     variable_dict = {}
     for j in range(5):
         order = j
-        result_folder = os.path.join(
-            str(get_path("output")),
-            "optimization",
-            model,
-            opt,
-            f"{num_sites}sites",
-            f"pa_{pa}",
-            f"pe_{pe[order]}",
+        results_dir = (
+            get_path("output")
+            / "optimization"
+            / model
+            / opt
+            / f"{num_sites}sites"
+            / f"pa_{pa}"
+            / f"pe_{pe[order]}"
         )
-        dfz = pd.read_csv(result_folder + "/amazon_data_z.dat", delimiter="\t")
-        dfz = dfz.drop("T/R ", axis=1).to_numpy()
-        dfx = pd.read_csv(result_folder + "/amazon_data_x.dat", delimiter="\t")
-        dfx = dfx.drop("T   ", axis=1).to_numpy()
+
+        dfz = np.loadtxt(results_dir / "Z.txt", delimiter=",")
+        dfx = np.sum(np.loadtxt(results_dir / "X.txt", delimiter=","), axis=1)
+
+        if model == "det":
+            result_folder = os.path.join(
+                str(get_path("output")),
+                "optimization",
+                model,
+                opt,
+                f"{num_sites}sites",
+                f"pa_{pa}",
+                f"pe_{pe[order]}",
+            )
+        elif model == "hmc":
+            result_folder = os.path.join(
+                str(get_path("output")),
+                "optimization",
+                model,
+                opt,
+                f"{num_sites}sites",
+                f"xi_{xi}",
+                f"pa_{pa}",
+                f"pe_{pe[order]}",
+            )
+        dfz = np.loadtxt(os.path.join(result_folder, "Z.txt"), delimiter=",")
+        dfx = np.sum(
+            np.loadtxt(os.path.join(result_folder, "X.txt"), delimiter=","), axis=1
+        )
+
         variable_dict[f"results_zper{j}"] = []
         variable_dict[f"results_xagg{j}"] = dfx[:51]
         for i in range(51):
-            result_zper = (np.sum(dfz[i]) / (np.sum(dfz_bar_np) / 1e9)) * 100
+            result_zper = (np.sum(dfz[i]) / np.sum(zbar)) * 100
             variable_dict[f"results_zper{j}"].append(result_zper)
 
-    time = list(range(0, len(variable_dict[f"results_zper{0}"])))
+    time = list(range(len(variable_dict[f"results_zper{0}"])))
     plt.figure(figsize=(10, 6))
     custom_labels = [
         "$p^{{ee}}$={0}       $b$".format(pee),
@@ -73,6 +98,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
                 linewidth=4,
                 color=color,
             )
+
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
     plt.xlim(0, max(time) + 2)
@@ -85,7 +111,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
         fontsize=16,
     )
     plt.savefig(
-        output_folder + f"/plotPrediction_zShare_{num_sites}Sites_det.png",
+        output_folder / f"pred_zshare_{num_sites}_sites_det.png",
         format="png",
         bbox_inches="tight",
     )
@@ -119,28 +145,35 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gams", pa=41.11, model="det"):
         fontsize=18,
     )
     plt.savefig(
-        output_folder + f"/plotPrediction_x_{num_sites}Sites_det.png",
+        output_folder + f"/plot_pred_x_{num_sites}_sites_det.png",
         format="png",
         bbox_inches="tight",
     )
     plt.show()
 
 
-def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
-    output_folder = str(get_path("output")) + f"/figures/density/xi{xi}/"
+def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det"):
+    output_folder = (
+        str(get_path("output")) + f"/figures/density/site_{num_sites}/xi{xi}/"
+    )
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     result_folder = os.path.join(
         str(get_path("output")),
         "sampling",
-        opt,
+        solver,
         f"{num_sites}sites",
         f"pa_{pa}",
         f"xi_{xi}",
     )
     prior_folder = os.path.join(
-        str(get_path("output")), "sampling", "prior", f"{num_sites}sites"
+        str(get_path("output")),
+        "sampling",
+        solver,
+        f"{num_sites}sites",
+        f"pa_{pa}",
+        "xi_10000",
     )
 
     with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
@@ -149,15 +182,15 @@ def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
     with open(result_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         b15 = pickle.load(f)
 
-    with open(prior_folder + "/prior.pcl", "rb") as f:
+    with open(prior_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         results_unadjusted = pickle.load(f)
 
-    theta_unadjusted = results_unadjusted["theta"][:16000, :]
-    gamma_unadjusted = results_unadjusted["gamma"][:16000, :]
-    theta_adjusted_b0 = b0["final_sample"][:16000, :78]
-    gamma_adjusted_b0 = b0["final_sample"][:16000, 78:]
-    theta_adjusted_b15 = b15["final_sample"][:16000, :78]
-    gamma_adjusted_b15 = b15["final_sample"][:16000, 78:]
+    theta_unadjusted = results_unadjusted["final_sample"][:16000, :num_sites]
+    gamma_unadjusted = results_unadjusted["final_sample"][:16000, num_sites:]
+    theta_adjusted_b0 = b0["final_sample"][:16000, :num_sites]
+    gamma_adjusted_b0 = b0["final_sample"][:16000, num_sites:]
+    theta_adjusted_b15 = b15["final_sample"][:16000, :num_sites]
+    gamma_adjusted_b15 = b15["final_sample"][:16000, num_sites:]
 
     for idx in range(num_sites):
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -259,7 +292,9 @@ def density(pee=7.6, num_sites=78, opt="gams", pa=41.11, xi=1, model="det"):
     return
 
 
-def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41.11):
+def trajectory_diff(
+    num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, solver="gams", pa=41.11, xi=1
+):
     pe_hmc += b
     pe_det += b
 
@@ -267,20 +302,24 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
     output_folder = str(get_path("output")) + "/figures"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    df_ori = pd.read_csv(str(get_path("data")) + f"/hmc/hmc_{num_sites}SitesModel.csv")
-    dfz_bar = df_ori[f"zbar_2017_{num_sites}Sites"]
+    df_ori = pd.read_csv(
+        str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv"
+    )
+    dfz_bar = df_ori["zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
 
-    dfz_hmc = pd.read_csv(
-        result_folder
-        + "/hmc/"
-        + opt
-        + f"/78sites/pa_{pa}/"
-        + f"pe_{pe_hmc}/amazon_data_z.dat",
-        delimiter="\t",
+    dfz_hmc = np.loadtxt(
+        os.path.join(
+            result_folder
+            + "/hmc/"
+            + solver
+            + f"/{num_sites}sites/xi_{xi}/pa_{pa}/pe_{pe_hmc}/",
+            "Z.txt",
+        ),
+        delimiter=",",
     )
-    dfz_hmc = dfz_hmc.drop("T/R ", axis=1)
-    dfz_zeronp_hmc = dfz_hmc.to_numpy()
+
+    dfz_zeronp_hmc = dfz_hmc
     result_zper_hmc = np.zeros((51, 1))
     result_zper_hmc = result_zper_hmc[:, 0]
     for i in range(51):
@@ -288,16 +327,18 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
             np.sum(dfz_zeronp_hmc[i]) / (np.sum(dfz_bar_np) / 1e9)
         ) * 100
 
-    dfz_det = pd.read_csv(
-        result_folder
-        + "/det/"
-        + opt
-        + f"/78sites/pa_{pa}/"
-        + f"pe_{pe_det}/amazon_data_z.dat",
-        delimiter="\t",
+    dfz_det = np.loadtxt(
+        os.path.join(
+            result_folder
+            + "/det/"
+            + solver
+            + f"/{num_sites}sites/pa_{pa}/pe_{pe_det}/",
+            "Z.txt",
+        ),
+        delimiter=",",
     )
-    dfz_det = dfz_det.drop("T/R ", axis=1)
-    dfz_zeronp_det = dfz_det.to_numpy()
+
+    dfz_zeronp_det = dfz_det
     result_zper_det = np.zeros((51, 1))
     result_zper_det = result_zper_det[:, 0]
     for i in range(51):
@@ -308,7 +349,7 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
     time = list(range(0, len(result_zper_hmc)))
     plt.figure(figsize=(10, 6))
 
-    plt.plot(time, result_zper_hmc, label=r"$\xi$=1", linewidth=4, color="blue")
+    plt.plot(time, result_zper_hmc, label=rf"$\xi$={xi}", linewidth=4, color="blue")
     plt.plot(time, result_zper_det, label=r"$\xi=\infty$", linewidth=4, color="red")
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
@@ -323,11 +364,11 @@ def trajectory_diff(num_sites=78, pe_hmc=7.1, pe_det=5.3, b=0, opt="gams", pa=41
     return
 
 
-def plot_transfer_payments(results_15, results_25, kappa=2.094215255):
+def plot_transfers(results_15, results_25, kappa=2.094215255):
     for b, results in zip([15, 25], [results_15, results_25]):
         kappa = 2.094215255
-        X = results["X"]
-        Z = results["Z"]
+        X = results.X
+        Z = results.Z
 
         # Compute X_dot
         X_dot = np.diff(X, axis=0)
