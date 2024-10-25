@@ -90,11 +90,11 @@ mean_precip <- extract(mean_precip_rst, sec_veg_age[, c("x", "y")])
 ghi <- extract(ghi_rst, sec_veg_age[, c("x", "y")])
 
 # Combine the extracted values
-data_frame <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
+df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
   as_tibble()
 
 # Rename some columns
-data_frame <- data_frame |>
+df <- df |>
   rename(agb = !!names(df)[ncol(df) - 8]) |>
   rename(
     site = id,
@@ -106,7 +106,7 @@ data_frame <- data_frame |>
   select(-matches("^ID"))
 
 # Get last pasture quality
-data_frame <- data_frame |>
+df <- df |>
   mutate(last_year_pasture = 2017 - age) |>
   mutate(last_pq = case_when(
     last_year_pasture == 2000 ~ pasture_quality_2000,
@@ -130,7 +130,7 @@ data_frame <- data_frame |>
   ))
 
 # Convert AGB -> CO2e and get accumulation ratio
-data_frame <- data_frame |>
+df <- df |>
   mutate(co2e = (agb / 2) * (44 / 12)) |>
   mutate(ratio = co2e / gamma)
 
