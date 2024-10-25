@@ -4,7 +4,6 @@ library(terra)
 library(tidyverse)
 library(conflicted)
 library(sjlabelled)
-install.packages("rdata")
 
 # Resolve conflicts
 conflicts_prefer(dplyr::filter)
@@ -14,8 +13,6 @@ conflicts_prefer(terra::extract)
 tic(msg = "merge_agb_sec_veg.R script", log = TRUE)
 
 # Load calibrated gamma
-#geojson_data <- st_read("data/calibration/hmc/gamma_reg_1043_sites_data.geojson")
-#save(geojson_data, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
 
 # Load clean mapbiomas raster
