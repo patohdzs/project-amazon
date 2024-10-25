@@ -3,6 +3,7 @@ library(stargazer)
 library(ggplot2)
 library(broom)
 library(fixest)
+library(dplyr)
 
 load("data/calibration/carbon_accumulation.Rdata")
 
@@ -52,7 +53,43 @@ model_7 <- df %>%
 stargazer(model_5, model_6, model_7, out = "plots/gamma_alpha/table_4.tex")
 stargazer(model_5, model_6, model_7, out = "plots/gamma_alpha/table_4.txt")
 
-fs <- df %>%
-  lm(gamma ~ percip + ghi, data = .)
 
-df <- df |> mutate(res = fs$residuals)
+# Drop rows with NAs
+df <- df %>%
+  filter(!is.na(ghi) & !is.na(percip) & !is.na(gamma))
+
+# GHI and Precip
+
+# Regress gamma on ghi and percip
+gamma_from_ghi_percip <- df %>%
+  lm(gamma ~ ghi + percip, data = .)
+
+# Get the residuals of regressing gamma on ghi and percip
+df <- df %>%
+  mutate(
+    residuals_model_ghi_percip = residuals(gamma_from_ghi_percip)
+  )
+# Compute the ratio co2e from the residuals above
+df <- df %>%
+  mutate(ratio_co2e_residuals = co2e / residuals_model_ghi_percip)
+
+# Run full regression model with the ratio co2e from above and percip, ghi, factor(age)
+full_model_residual <- lm(ratio_co2e_residuals ~ percip + ghi + factor(age), data = df)
+
+# Get the predictions of regressing gamma on ghi and percip
+df <- df %>%
+  mutate(predicted_gamma = predict(gamma_from_ghi_percip))
+
+# Compute the ratio co2e from the prediction above
+df <- df %>%
+  mutate(ratio_co2e_predicted = co2e / predicted_gamma)
+
+# Run full regression model with the ratio co2e from above and percip, ghi, factor(age)
+full_model_predicted <- lm(ratio_co2e_predicted ~ percip + ghi + factor(age), data = df)
+
+stargazer(gamma_from_ghi_percip, out = "plots/gamma_alpha/table_gamma_ghi_percip.tex")
+stargazer(gamma_from_ghi_percip, out = "plots/gamma_alpha/table_gamma_ghi_percip.txt")
+stargazer(full_model_residual, out = "plots/gamma_alpha/table_full_model_residual_gamma.txt")
+stargazer(full_model_residual, out = "plots/gamma_alpha/table_full_model_residual_gamma.tex")
+stargazer(full_model_predicted, out = "plots/gamma_alpha/table_full_model_predicted_gamma.tex")
+stargazer(full_model_predicted, out = "plots/gamma_alpha/table_full_model_predicted_gamma.txt")

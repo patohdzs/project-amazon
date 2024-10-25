@@ -4,6 +4,7 @@ library(terra)
 library(tidyverse)
 library(conflicted)
 library(sjlabelled)
+install.packages("rdata")
 
 # Resolve conflicts
 conflicts_prefer(dplyr::filter)
@@ -13,6 +14,8 @@ conflicts_prefer(terra::extract)
 tic(msg = "merge_agb_sec_veg.R script", log = TRUE)
 
 # Load calibrated gamma
+#geojson_data <- st_read("data/calibration/hmc/gamma_reg_1043_sites_data.geojson")
+#save(geojson_data, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
 
 # Load clean mapbiomas raster
@@ -90,11 +93,11 @@ mean_precip <- extract(mean_precip_rst, sec_veg_age[, c("x", "y")])
 ghi <- extract(ghi_rst, sec_veg_age[, c("x", "y")])
 
 # Combine the extracted values
-df <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
+data_frame <- data.frame(sec_veg_age, pq, agb, gamma, site, mean_precip, ghi) |>
   as_tibble()
 
 # Rename some columns
-df <- df |>
+data_frame <- data_frame |>
   rename(agb = !!names(df)[ncol(df) - 8]) |>
   rename(
     site = id,
@@ -106,7 +109,7 @@ df <- df |>
   select(-matches("^ID"))
 
 # Get last pasture quality
-df <- df |>
+data_frame <- data_frame |>
   mutate(last_year_pasture = 2017 - age) |>
   mutate(last_pq = case_when(
     last_year_pasture == 2000 ~ pasture_quality_2000,
@@ -130,7 +133,7 @@ df <- df |>
   ))
 
 # Convert AGB -> CO2e and get accumulation ratio
-df <- df |>
+data_frame <- data_frame |>
   mutate(co2e = (agb / 2) * (44 / 12)) |>
   mutate(ratio = co2e / gamma)
 
