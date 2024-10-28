@@ -15,8 +15,8 @@ model_2 <- df %>%
   filter(last_pq != 0) %>%
   lm(ratio ~ 0 + factor(age):factor(last_pq), data = .)
 
-stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.tex")
-stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.txt")
+stargazer(model_1, model_2, out = "plots/carbon_capture/table_1.tex")
+stargazer(model_1, model_2, out = "plots/carbon_capture/table_1.txt")
 
 # Fit regression on theoretical law of motion
 df <- df %>%
@@ -24,8 +24,8 @@ df <- df %>%
 
 model_2 <- lm(ratio ~ 0 + Tp, data = df)
 model_3 <- lm(ratio ~ Tp, data = df)
-stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.tex")
-stargazer(model_2, model_3, out = "plots/gamma_alpha/table_2.txt")
+stargazer(model_2, model_3, out = "plots/carbon_capture/table_2.tex")
+stargazer(model_2, model_3, out = "plots/carbon_capture/table_2.txt")
 
 # Fit regression interacting with precipitation and GHI
 model_4 <- df %>%
@@ -44,8 +44,8 @@ model_7 <- df %>%
   filter(!(ratio == 0)) %>%
   lm(log(ratio) ~ 0 + percip + ghi + factor(age), data = .)
 
-stargazer(model_4, model_5, model_6, model_7, out = "plots/gamma_alpha/table_4.tex")
-stargazer(model_4, model_5, model_6, model_7, out = "plots/gamma_alpha/table_4.txt")
+stargazer(model_4, model_5, model_6, model_7, out = "plots/carbon_capture/table_4.tex")
+stargazer(model_4, model_5, model_6, model_7, out = "plots/carbon_capture/table_4.txt")
 
 
 # Drop rows with NAs
@@ -65,5 +65,5 @@ full_model_res <- df %>%
   filter(!(co2e == 0)) %>%
   lm(log(co2e) - res ~ percip + ghi + factor(age), data = .)
 
-stargazer(first_stage, full_model_res, out = "plots/gamma_alpha/table_5.txt")
-stargazer(first_stage, full_model_res, out = "plots/gamma_alpha/table_5.tex")
+stargazer(first_stage, full_model_res, out = "plots/carbon_capture/table_5.txt")
+stargazer(first_stage, full_model_res, out = "plots/carbon_capture/table_5.tex")
