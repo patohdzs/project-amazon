@@ -82,6 +82,13 @@ model_2 <- lm(
   na.action = na.exclude
 )
 
+model_3 <- glm(
+  tree_richness_ha ~
+    lat + lon + (lat * lon) + log(precip) + log(temp),
+  family = poisson(link = "log"),
+  data = calib_df
+)
+
 # Save regression tables
 stargazer(model_1, model_2, out = "plots/beta_calib/beta_reg_table.tex")
 stargazer(model_1, model_2, out = "plots/beta_calib/beta_reg_table.txt")
@@ -102,3 +109,12 @@ ggsave("plots/beta_calib/beta_fitted.pdf", width = 8, height = 6)
 # Calibrate growth rate using Rozendaal et al. (2019)
 calib_df <- calib_df %>%
   mutate(lambda = 1 - (1 - 0.90)^(1 / 32))
+
+# Save calibration data
+save(calib_df, file = "data/calibration/beta_1043_sites.Rdata")
+
+# Save calibration data CSV
+calib_df %>%
+  select(beta = site_reg_beta, lambda) %>%
+  st_drop_geometry() %>%
+  write_csv(file = "data/calibration/beta_1043_sites.csv")
