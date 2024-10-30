@@ -26,6 +26,18 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     return (zbar_2017, z_2017, forest_area_2017)
 
 
+def load_beta(num_sites: int):
+    # Set data directory
+    data_dir = get_path("data", "calibration")
+
+    # Read data file
+    file_path = data_dir / f"beta_{num_sites}_sites.csv"
+    df = pd.read_csv(file_path)
+
+    # Extract information
+    return df["beta"].to_numpy()
+
+
 def load_productivity_reg_data(num_sites: int):
     # Set data directory
     data_dir = get_path("data", "calibration", "hmc")
