@@ -2,6 +2,8 @@
 library(raster)
 library(sp)
 
+# Data Source: https://figshare.com/articles/dataset/_b_Mapping_density_diversity_and_species-richness_of_the_Amazon_tree_flora_b_/22786166
+
 # Tree species-richness (species/ha) Plot
 tree_richness <- raster("data/raw/tree_diversity/TreeRichness_ha.asc")
 
