@@ -47,7 +47,6 @@ model_7 <- df %>%
 stargazer(model_4, model_5, model_6, model_7, out = "plots/carbon_capture/table_4.tex")
 stargazer(model_4, model_5, model_6, model_7, out = "plots/carbon_capture/table_4.txt")
 
-
 # Drop rows with NAs
 df <- df %>%
   filter(!is.na(ghi) & !is.na(percip) & !is.na(gamma))
@@ -67,3 +66,35 @@ full_model_res <- df %>%
 
 stargazer(first_stage, full_model_res, out = "plots/carbon_capture/table_5.txt")
 stargazer(first_stage, full_model_res, out = "plots/carbon_capture/table_5.tex")
+
+# correlation matrix between ghi and x and y
+cor_matrix = cor(df[, c('ghi','x','y')])
+write.table(cor_matrix, file = "plots/gamma_alpha/correlation_matrix_ghi_coordinates.txt", sep = "\t", col.names = NA)
+latex_table <- xtable(cor_matrix)
+print(latex_table, file = "plots/gamma_alpha/correlation_matrix.tex", type = "latex")
+
+# Regression on only GHI without precip
+
+log_gamma_from_ghi <- df %>%
+  mutate(log_gamma = log(gamma)) %>%
+  lm(log_gamma ~ ghi , data = .)
+
+df <- df %>%
+  mutate(
+    residuals_model = residuals(log_gamma_from_ghi)
+  )
+
+df <- df %>%
+mutate(log_co2e = log(co2e))%>%
+  mutate(ratio_co2e_residuals = log_co2e - residuals_model)
+
+# eliminate zero and infinity in ratio_co2e_residuals
+df<- df[!is.na(df$ratio_co2e_residuals) & is.finite(df$ratio_co2e_residuals), ]
+
+log_model_residual_ghi_age <- lm(ratio_co2e_residuals ~ 0 + ghi + factor(age), data = df)
+
+stargazer(log_gamma_from_ghi, out = "plots/gamma_alpha/table_ghi.tex")
+stargazer(log_gamma_from_ghi, out = "plots/gamma_alpha/table_ghi.txt")
+
+stargazer(log_model_residual_ghi_age, out = "plots/gamma_alpha/table_co2e_ghi.tex")
+stargazer(log_model_residual_ghi_age, out = "plots/gamma_alpha/table_co2e_ghi.txt")
