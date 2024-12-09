@@ -9,17 +9,18 @@ from matplotlib.patches import Rectangle
 import pandas as pd
 from pysrc.services.file_service import get_path
 
-def spatial_allocation(opt='gams',
+def spatial_allocation(solver='gams',
                        pa=41.11,
                        pe_hmc=7.1,
                        pe_det=5.3,
-                       b=0):
+                       b=0,
+                       xi=1):
     pe_hmc+=b
     pe_det+=b
     num_sites=78
     # Load the data
-    clean_amazonBiome = gpd.read_file(str(get_path("data"))+'/hmc/map.geojson')
-    id=gpd.read_file(str(get_path("data"))+"/hmc/id_78.geojson").to_crs(epsg=4326)
+    clean_amazonBiome = gpd.read_file(str(get_path("data"))+'/calibration/hmc/map.geojson')
+    id=gpd.read_file(str(get_path("data"))+"/calibration/hmc/id_78.geojson").to_crs(epsg=4326)
     id_hmc = id.copy()
     id_det = id.copy()
     id_hmc_half=id.copy()
@@ -31,21 +32,22 @@ def spatial_allocation(opt='gams',
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    z_hmc= pd.read_csv(result_folder+'/hmc/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_hmc}/amazon_data_z.dat", delimiter='\t')
-    z_hmc=z_hmc.drop('T/R ', axis=1).to_numpy().T*1e9
-    z_det= pd.read_csv(result_folder+'/det/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_det}/amazon_data_z.dat", delimiter='\t')
-    z_det=z_det.drop('T/R ', axis=1).to_numpy().T*1e9
+    z_hmc= np.loadtxt(os.path.join(result_folder+ "/hmc/"+solver+f"/78sites/xi_{xi}/pa_{pa}/pe_{pe_hmc}/", "Z.txt"), delimiter=",")
+    z_hmc=z_hmc.T*1e9
+    z_det= np.loadtxt(os.path.join(result_folder+ "/det/"+solver+f"/78sites/pa_{pa}/pe_{pe_det}/", "Z.txt"), delimiter=",")
+    z_det=z_det.T*1e9
 
 
-    u_hmc= pd.read_csv(result_folder+'/hmc/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_hmc}/amazon_data_u.dat", delimiter='\t')
-    u_hmc=u_hmc.drop('T/R ', axis=1).to_numpy().T[:,:50]*1e9
-    v_hmc= pd.read_csv(result_folder+'/hmc/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_hmc}/amazon_data_v.dat", delimiter='\t')
-    v_hmc=v_hmc.drop('T/R ', axis=1).to_numpy().T[:,:50]*1e9
+    u_hmc= np.loadtxt(os.path.join(result_folder+ "/hmc/"+solver+f"/78sites/xi_{xi}/pa_{pa}/pe_{pe_hmc}/", "U.txt"), delimiter=",")
+    u_hmc=u_hmc.T[:,:50]*1e9
+    v_hmc= np.loadtxt(os.path.join(result_folder+ "/hmc/"+solver+f"/78sites/xi_{xi}/pa_{pa}/pe_{pe_hmc}/", "V.txt"), delimiter=",")
+    v_hmc=v_hmc.T[:,:50]*1e9
 
-    u_det= pd.read_csv(result_folder+'/det/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_det}/amazon_data_u.dat", delimiter='\t')
-    u_det=u_det.drop('T/R ', axis=1).to_numpy().T[:,:50]*1e9
-    v_det= pd.read_csv(result_folder+'/det/'+opt+f"/78sites/pa_{pa}/"+f"pe_{pe_det}/amazon_data_v.dat", delimiter='\t')
-    v_det=v_det.drop('T/R ', axis=1).to_numpy().T[:,:50]*1e9
+    u_det= np.loadtxt(os.path.join(result_folder+ "/det/"+solver+f"/78sites/pa_{pa}/pe_{pe_det}/", "U.txt"), delimiter=",")
+    u_det=u_det.T[:,:50]*1e9
+    v_det= np.loadtxt(os.path.join(result_folder+ "/det/"+solver+f"/78sites/pa_{pa}/pe_{pe_det}/", "V.txt"), delimiter=",")
+    v_det=v_det.T[:,:50]*1e9
+    
     hmc_max = np.maximum(np.abs(u_hmc), np.abs(v_hmc))
     det_max = np.maximum(np.abs(u_det), np.abs(v_det))
     
@@ -122,9 +124,9 @@ def spatial_allocation(opt='gams',
             
         ax.text(x, y, str(hmc_id), fontsize=14, ha='center', va='center', fontweight='bold', color=color)
 
-    for x, y in shaded_areas:
-        rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
-        ax.add_patch(rect)
+    # for x, y in shaded_areas:
+    #     rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
+    #     ax.add_patch(rect)
 
     ax.axis('off') 
 
@@ -150,9 +152,9 @@ def spatial_allocation(opt='gams',
 
         ax.text(x, y, str(det_id), fontsize=14, ha='center', va='center', fontweight='bold', color=color)
 
-    for x, y in shaded_areas:
-        rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
-        ax.add_patch(rect)
+    # for x, y in shaded_areas:
+    #     rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
+    #     ax.add_patch(rect)
 
     ax.axis('off') 
 

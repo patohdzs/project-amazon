@@ -11,7 +11,7 @@ def est(s_low=0.5,s_high=0.5,var='uncon'):
 
     
     # need to input initial state prob s_low and s_high
-    data_folder = os.getcwd()+"/data/hmc/"
+    data_folder = os.getcwd()+"/data/calibration/hmc/"
     
     # read data
     df = pd.read_csv(data_folder+"seriesPriceCattle_prepared.csv")

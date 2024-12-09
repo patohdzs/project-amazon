@@ -38,7 +38,7 @@ load("data/processed/cattle_price_index.Rdata")
 raster_variables <- rast(
   list.files(
     "data/processed/",
-    pattern = ".tif",
+    pattern = "amazon",
     full.names = TRUE
   )
 )
@@ -79,18 +79,6 @@ calib_df <- calib_df %>%
     zbar_2008 = area_forest_2008 + z_2008,
     zbar_2017 = area_forest_2017 + z_2017,
   )
-
-# Compute bad pasture quality shares
-calib_df <- calib_df %>%
-  mutate(
-    area_pasture_2017 = area_pasture_quality_1_2017 +
-      area_pasture_quality_2_2017 +
-      area_pasture_quality_3_2017
-  ) %>%
-  mutate(
-    share_low_pq = area_pasture_quality_1_2017 / area_pasture_2017,
-  ) %>%
-  select(id, contains("area"), contains("z"), contains("pq"))
 
 # Convert biomass to CO2 equivalent
 muni_data <- muni_data %>%

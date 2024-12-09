@@ -3,14 +3,16 @@ import time
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from pysrc.sampling import baseline
-
 from ..optimization import solve_planner_problem, vectorize_trajectories
-from ..sampling import gamma_adj_reg_data, theta_adj_reg_data
-from ..sampling.baseline import baseline_hyperparams
-from ..services.data_service import load_productivity_reg_data, load_site_data
+from ..sampling import baseline_hyperparams, gamma_adj_reg_data, theta_adj_reg_data
+from ..services.data_service import (
+    load_productivity_params,
+    load_reg_data,
+    load_site_data,
+)
 from ..services.file_service import get_path
-
+import pickle
+import os
 
 def sample(
     xi,
@@ -20,42 +22,53 @@ def sample(
     num_sites,
     # Model parameters
     T,
-    dt=1,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
-    zeta=1.66e-4 * 1e9,  # use the same normalization factor
+    zeta_u=1.66e-4 * 1e9,
+    zeta_v=1.00e-4 * 1e9,
     pa_2017=44.9736197781184,
     # Optimizer
     solver="gurobi",
     # Sampling params
     max_iter=20000,
-    tol=0.001,
+    tol=0.005,
     final_sample_size=5_000,
     **stan_kwargs,
 ):
     # Instantiate stan sampler
-    sampler = CmdStanModel(
-        stan_file=get_path("stan_model") / "adjusted.stan",
-        cpp_options={"STAN_THREADS": "true"},
-        force_compile=True,
-    )
+    # sampler = CmdStanModel(
+    #     stan_file=get_path("stan_model") / "adjusted.stan",
+    #     cpp_options={"STAN_THREADS": "true"},
+    #     force_compile=True,
+    # )
+    
+    pickle_file = 'stan_model/compiled_model.pkl'
+
+    if os.path.exists(pickle_file):
+        # Load the model from the pickle file
+        sampler = pickle.load(open(pickle_file, 'rb'))
+        print("Loaded model from pickle.")
+    else:
+        # Compile the Stan model and save it to the pickle file
+        sampler = CmdStanModel(
+            stan_file=get_path("stan_model") / "adjusted.stan",
+            cpp_options={"STAN_THREADS": "true"},
+            force_compile=True,
+        )
+        with open(pickle_file, 'wb') as f:
+            pickle.dump(sampler, f)
+        print("Compiled model and saved to pickle.")
+
 
     # Load site data
     (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
     # Load parameter regression data
-    (
-        site_theta_df,
-        site_gamma_df,
-        municipal_theta_df,
-        municipal_gamma_df,
-    ) = load_productivity_reg_data(num_sites)
+    (site_theta_df, site_gamma_df) = load_reg_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
-    baseline_fit = baseline.sample(num_sites=num_sites, **stan_kwargs)
-    theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
-    gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
+    (theta_vals, gamma_vals) = load_productivity_params(num_sites)
 
     # Save starting params
     uncertain_vals = np.concatenate((theta_vals, gamma_vals)).copy()
@@ -78,15 +91,12 @@ def sample(
         num_sites=num_sites,
         tol=tol,
         T=T,
-        dt=dt,
         delta_t=delta,
         alpha=alpha,
         kappa=kappa,
         pf=pe,
         pa=pa,
         xi=xi,
-        zeta=zeta,
-        baseline_fit=baseline_fit,
         final_sample_size=final_sample_size,
         weight=weight,
     )
@@ -121,13 +131,13 @@ def sample(
             x0=x0_vals,
             z0=z_2017,
             zbar=zbar_2017,
-            dt=dt,
             price_emissions=pe,
             price_cattle=pa,
             alpha=alpha,
             delta=delta,
             kappa=kappa,
-            zeta=zeta,
+            zeta_u=zeta_u,
+            zeta_v=zeta_v,
             solver=solver,
         )
 
@@ -142,18 +152,19 @@ def sample(
             alpha=alpha,
             zbar_2017=zbar_2017,
             forest_area_2017=forest_area_2017,
-            zeta=zeta,
+            zeta_u=zeta_u,
+            zeta_v=zeta_v,
             xi=xi,
             kappa=kappa,
             pa=pa,
             pa_2017=pa_2017,
-            pf=pe,
+            pe=pe,
             **vectorize_trajectories(planner_solution),
-            **_dynamics_matrices(T, dt, alpha, delta),
+            **_dynamics_matrices(T, alpha, delta),
             **theta_adj_reg_data(num_sites, site_theta_df),
             **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **baseline_hyperparams(municipal_theta_df, "theta"),
-            **baseline_hyperparams(municipal_gamma_df, "gamma"),
+            **baseline_hyperparams("gamma"),
+            **baseline_hyperparams("theta"),
         )
 
         # Sampling from adjusted distribution
@@ -220,7 +231,7 @@ def sample(
             """
         )
 
-        # Exchange parameter values (for future weighting/update & error evaluation)
+        # Exchange parameter values
         uncertain_vals_old = uncertain_vals
 
         # Increase the counter
@@ -254,6 +265,10 @@ def sample(
     gamma_adj_samples = fit.stan_variable("gamma")
     theta_coe_adj_samples = fit.stan_variable("beta_theta")
     gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+    # eta_samples = fit.stan_variable("eta")
+    # nu_samples = fit.stan_variable("nu")
+    V_gamma_samples = fit.stan_variable("Vj_gamma")
+    V_theta_samples = fit.stan_variable("Vj_theta")
 
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
@@ -263,10 +278,15 @@ def sample(
     results.update({"final_sample": final_samples})
     results.update({"final_sample_coe": final_samples_coe})
 
+    # results.update({"eta_sample": eta_samples})
+    # results.update({"nu_sample": nu_samples})
+    results.update({"V_gamma_sample": V_gamma_samples})
+    results.update({"V_theta_sample": V_theta_samples})
+
     return results
 
 
-def _dynamics_matrices(T, dt, alpha, delta):
+def _dynamics_matrices(T, alpha, delta, dt=1):
     # Create dynamics matrices
     arr = np.cumsum(
         np.triu(np.ones((T, T))),
@@ -278,6 +298,6 @@ def _dynamics_matrices(T, dt, alpha, delta):
     alpha_p_Adym = np.power(1 - alpha, Adym)
 
     # Other placeholders!
-    ds_vect = np.exp(-delta * np.arange(T + 1) * dt)
+    ds_vect = np.exp(-delta * np.arange(T) * dt)
     ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
     return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}

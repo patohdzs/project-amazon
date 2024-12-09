@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from pysrc.sampling import baseline
+from pysrc.services.data_service import load_productivity_params
 from pysrc.services.file_service import get_path
 
 
@@ -13,40 +13,28 @@ def format_float(value):
 
 
 def read_theta(num_sites):
-    baseline_fit = baseline.sample(
-        num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-    )
 
-    dft_np = baseline_fit.stan_variable("theta").mean(axis=0)
-    return dft_np
+    (theta_vals, gamma_vals) = load_productivity_params(num_sites)
+    return theta_vals
 
 
 def read_file(result_directory):
-    dfz = pd.read_csv(result_directory + "/amazon_data_z.dat", delimiter="\t")
-    dfz = dfz.drop("T/R ", axis=1)
-    dfz_np = dfz.to_numpy()
+    
+    Z = np.loadtxt(os.path.join(result_directory, "Z.txt"), delimiter=",")
+    X = np.sum(np.loadtxt(os.path.join(result_directory, "X.txt"), delimiter=","),axis=1)
+    Xdot = np.diff(X, axis=0)
+    U = np.loadtxt(os.path.join(result_directory, "U.txt"), delimiter=",")
+    V = np.loadtxt(os.path.join(result_directory, "V.txt"), delimiter=",")
 
-    dfx = pd.read_csv(result_directory + "/amazon_data_x.dat", delimiter="\t")
-    dfx = dfx.drop("T   ", axis=1)
-    dfx_np = dfx.to_numpy()
-    dfxdot = np.diff(dfx_np, axis=0)
-
-    dfu = pd.read_csv(result_directory + "/amazon_data_u.dat", delimiter="\t")
-    dfu = dfu.drop("T/R ", axis=1)
-    dfu_np = dfu.to_numpy()
-
-    dfv = pd.read_csv(result_directory + "/amazon_data_v.dat", delimiter="\t")
-    dfv = dfv.drop("T/R ", axis=1)
-    dfv_np = dfv.to_numpy()
-
-    return (dfz_np / 1e2, dfxdot / 1e2, dfu_np / 1e2, dfv_np / 1e2)
+    return (Z / 1e2, Xdot / 1e2, U / 1e2, V / 1e2)
 
 
-def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
+def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     output_folder = str(get_path("output")) + "/tables/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -78,7 +66,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
             )
             with open(theta_folder + f"/pe_{pe[order]}/results.pcl", "rb") as f:
                 para_file = pickle.load(f)
-            dft_np = para_file["final_sample"][:, :78].mean(axis=0)
+            dft_np = para_file["final_sample"][:, :num_sites].mean(axis=0)
 
         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
 
@@ -109,8 +97,12 @@ def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)
@@ -148,7 +140,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gams", pa=41.11, model="det", xi=1):
     return
 
 
-def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"):
+def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="det"):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
 
@@ -166,14 +158,8 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    dfz = pd.read_csv(baseline_folder + "/amazon_data_z.dat", delimiter="\t")
-    dfz = dfz.drop("T/R ", axis=1)
-    dfz_np = dfz.to_numpy() / 1e2
-
-    dfx = pd.read_csv(baseline_folder + "/amazon_data_x.dat", delimiter="\t")
-    dfx = dfx.drop("T   ", axis=1)
-    dfx_np = dfx.to_numpy()
-    dfxdot = np.diff(dfx_np, axis=0) / 1e2
+    
+    (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(baseline_folder)
 
     results_NCE_base = []
     for i in range(y):
@@ -239,9 +225,10 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gams", pa=41.11, y=30, model="det"
     return
 
 
-def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, xi=1):
+def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41.11, xi=1):
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     output_folder = str(get_path("output")) + "/tables/"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -257,7 +244,7 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
             str(get_path("output")),
             "optimization",
             "det",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"pe_{pe[order]}",
@@ -292,8 +279,12 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)
@@ -318,8 +309,9 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
             str(get_path("output")),
             "optimization",
             "hmc",
-            opt,
+            solver,
             f"{num_sites}sites",
+            f"xi_{xi}",
             f"pa_{pa}",
             f"pe_{pe[order]}",
         )
@@ -327,14 +319,14 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
         theta_folder = os.path.join(
             str(get_path("output")),
             "sampling",
-            opt,
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"xi_{xi}",
         )
         with open(theta_folder + f"/pe_{pe[order]}/results.pcl", "rb") as f:
             para_file = pickle.load(f)
-        dft_np = para_file["final_sample"][:16000, :78].mean(axis=0)
+        dft_np = para_file["final_sample"][:16000, :num_sites].mean(axis=0)
 
         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
 
@@ -365,8 +357,12 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
         results_AC = []
         for i in range(200):
             result_AC = (
-                (zeta / 2)
-                * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                ((zeta_u / 2)
+                * (np.sum(dfu_np[i]) ) ** 2
+                +
+                (zeta_v / 2)
+                * (np.sum(dfv_np[i]) ) ** 2
+                )
                 / ((1 + 0.02) ** (i))
             )
             results_AC.append(result_AC)
@@ -414,9 +410,10 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, opt="gams", pa=41.11, 
 def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=0):
     pe = pee + b
     kappa = 2.094215255
-    zeta = 1.66e-4 * 1e11
+    zeta_u = 1.66e-4 * 1e11
+    zeta_v = 1.00e-4 * 1e11
     dft_np = read_theta(num_sites)
-    df_ori = pd.read_csv(str(get_path("data")) + "/hmc/hmc_78SitesModel.csv")
+    df_ori = pd.read_csv(str(get_path("data")) + "/calibration/hmc/calibration_78_sites.csv")
     x0 = df_ori["x_2017_78Sites"].to_numpy()
 
     output_folder = str(get_path("output")) + "/tables/"
@@ -533,8 +530,12 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
             results_AC = []
             for i in range(200):
                 result_AC = (
-                    (zeta / 2)
-                    * (np.sum(dfu_np[i]) + np.sum(dfv_np[i])) ** 2
+                    ((zeta_u / 2)
+                    * (np.sum(dfu_np[i]) ) ** 2
+                    +
+                    (zeta_v / 2)
+                    * (np.sum(dfv_np[i]) ) ** 2
+                    )
                     / ((1 + 0.02) ** (i))
                 )
                 results_AC.append(result_AC)

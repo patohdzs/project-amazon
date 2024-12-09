@@ -122,20 +122,13 @@ def solve_planner_problem(
 
 
 def vectorize_trajectories(traj: PlannerSolution):
-    X_agg = traj.X.sum(axis=1)
-    X_agg = X_agg.reshape(X_agg.size, 1)
-
-    sol_val_Ua = (traj.w[:-1] ** 2).T.flatten()
-    sol_val_X = np.concatenate((traj.Z.T, X_agg.T, np.ones((1, traj.Z.T.shape[1]))))
-    sol_val_Up = traj.U[:-1, :].T
-    sol_val_Um = traj.V[:-1, :].T
-    sol_val_Z = sol_val_Up - sol_val_Um
+    Z = traj.Z.T
+    U = traj.U[:-1, :].T
+    V = traj.V[:-1, :].T
     return {
-        "sol_val_X": sol_val_X,
-        "sol_val_Up": sol_val_Up,
-        "sol_val_Um": sol_val_Um,
-        "sol_val_Z": sol_val_Z,
-        "sol_val_Ua": sol_val_Ua,
+        "Z": Z,
+        "U": U,
+        "V": V,
     }
 
 

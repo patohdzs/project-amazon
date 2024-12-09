@@ -1,10 +1,10 @@
-import os
 import pickle
-import shutil
+from pathlib import Path
+import os
+import numpy as np
 
-from pysrc.optimization import solve_planner_problem
-from pysrc.sampling import baseline
-from pysrc.services.data_service import load_site_data
+from pysrc.optimization import PlannerSolution, solve_planner_problem
+from pysrc.services.data_service import load_productivity_params, load_site_data
 from pysrc.services.file_service import get_path
 
 
@@ -20,25 +20,20 @@ def get_optimization(
         zbar_2017,
         z_2017,
         forest_area_2017,
-        _,
-        _,
-        _,
-        _,
     ) = load_site_data(num_sites)
 
     if model == "det":
-        # Set initial theta & gamma using baseline mean
-        baseline_fit = baseline.sample(
-            num_sites=num_sites, iter_sampling=10**4, chains=5, seed=1
-        )
-        theta_vals = baseline_fit.stan_variable("theta").mean(axis=0)
-        gamma_vals = baseline_fit.stan_variable("gamma").mean(axis=0)
+        # Load baseline productivity params
+        (theta_vals, gamma_vals) = load_productivity_params(num_sites)
+
+        # Compute initial carbon stock
         x0_vals = gamma_vals * forest_area_2017
 
+        # Solve for all transfer levels
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
-            solve_planner_problem(
+            results = solve_planner_problem(
                 time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
@@ -47,54 +42,48 @@ def get_optimization(
                 z0=z_2017,
                 price_emissions=pe,
                 price_cattle=pa,
+                solver=solver,
             )
+
             print("Results for pe = ", pe)
-            output_base_path = str(get_path("output"))
-            gams_working_directory = str(get_path("gams_file")) + f"/{num_sites}sites/"
-            subfolder_path = os.path.join(
-                output_base_path,
-                "optimization",
-                model,
-                solver,
-                f"{num_sites}sites",
-                f"pa_{pa}",
-                f"pe_{pe}",
+            output_folder = (
+                get_path("output")
+                / "optimization"
+                / model
+                / solver
+                / f"{num_sites}sites"
+                / f"pa_{pa}"
+                / f"pe_{pe}"
             )
 
-            if not os.path.exists(subfolder_path):
-                os.makedirs(subfolder_path)
-
-            file_names = [
-                "amazon_data_z.dat",
-                "amazon_data_x.dat",
-                "amazon_data_u.dat",
-                "amazon_data_v.dat",
-                "amazon_data_w.dat",
-            ]
-            for file_name in file_names:
-                source_file = os.path.join(gams_working_directory, file_name)
-                destination_file = os.path.join(subfolder_path, file_name)
-                shutil.copy(source_file, destination_file)
+            save_planner_solution(results, output_folder)
 
     if model == "hmc":
-        result_folder = os.path.join(
-            str(get_path("output")),
-            "sampling",
-            solver,
-            f"{num_sites}sites",
-            f"pa_{pa}",
-            f"xi_{xi}",
+        results_dir = os.path.join(
+            get_path("output")
+            / "sampling"
+            / solver
+            / f"{num_sites}sites"
+            / f"pa_{pa}"
+            / f"xi_{xi}"
         )
+
+        # Solve model for all transfer values
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
         for pe in pe_values:
-            with open(result_folder + f"/pe_{pe}/results.pcl", "rb") as f:
+            # Load ambiguity-adjusted params
+            with open(results_dir + f"/pe_{pe}/results.pcl", "rb") as f:
                 b = pickle.load(f)
-            theta_vals = b["final_sample"][:16000, :78].mean(axis=0)
-            gamma_vals = b["final_sample"][:16000, 78:].mean(axis=0)
+
+            # Take sample
+            theta_vals = b["final_sample"][:16000, :num_sites].mean(axis=0)
+            gamma_vals = b["final_sample"][:16000, num_sites:].mean(axis=0)
+
+            # Compute carbon stock
             x0_vals = gamma_vals * forest_area_2017
 
-            solve_planner_problem(
+            results = solve_planner_problem(
                 time_horizon=200,
                 theta=theta_vals,
                 gamma=gamma_vals,
@@ -103,32 +92,32 @@ def get_optimization(
                 z0=z_2017,
                 price_emissions=pe,
                 price_cattle=pa,
+                solver=solver,
             )
             print("Results for pe = ", pe)
-            output_base_path = str(get_path("output"))
-            gams_working_directory = str(get_path("gams_file")) + f"/{num_sites}sites/"
-            subfolder_path = os.path.join(
-                output_base_path,
-                "optimization",
-                model,
-                solver,
-                f"{num_sites}sites",
-                f"pa_{pa}",
-                f"pe_{pe}",
+
+            output_folder = (
+                get_path("output")
+                / "optimization"
+                / model
+                / solver
+                / f"{num_sites}sites"
+                / f"xi_{xi}"
+                / f"pa_{pa}"
+                / f"pe_{pe}"
             )
+            
 
-            if not os.path.exists(subfolder_path):
-                os.makedirs(subfolder_path)
-
-            file_names = [
-                "amazon_data_z.dat",
-                "amazon_data_x.dat",
-                "amazon_data_u.dat",
-                "amazon_data_v.dat",
-                "amazon_data_w.dat",
-            ]
-            for file_name in file_names:
-                source_file = os.path.join(gams_working_directory, file_name)
-                destination_file = os.path.join(subfolder_path, file_name)
-                shutil.copy(source_file, destination_file)
+            save_planner_solution(results, output_folder)
     return
+
+
+def save_planner_solution(results: PlannerSolution, output_dir: Path):
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+                
+    np.savetxt(output_dir / "Z.txt", results.Z, delimiter=",")
+    np.savetxt(output_dir / "X.txt", results.X, delimiter=",")
+    np.savetxt(output_dir / "U.txt", results.U, delimiter=",")
+    np.savetxt(output_dir / "V.txt", results.V, delimiter=",")

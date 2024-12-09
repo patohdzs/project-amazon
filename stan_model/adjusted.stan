@@ -1,41 +1,48 @@
 functions {
-  real log_value(vector gamma, vector theta, int T, int S,
-                            real alpha, matrix sol_val_X, vector sol_val_Ua,
-                            matrix sol_val_Up, vector zbar_2017,
-                            vector forest_area_2017, vector alpha_p_Adym,
-                            matrix Bdym, vector ds_vect, real zeta, real xi,
-                            real kappa, real pa, real pf) {
+  real log_value(vector gamma, vector theta, int T, int S, real alpha,
+                 matrix Z, matrix U, matrix V, vector zbar_2017,
+                 vector forest_area_2017, vector alpha_p_Adym, matrix Bdym,
+                 vector ds_vect, real zeta_u, real zeta_v, real xi,
+                 real kappa, real pa, real pe) {
     // Carbon captured at time zero
     real x0 = (gamma' * forest_area_2017);
+
+    // Compute forest area in each time period
+    matrix[S, T] forest_area;
+    for (t in 1 : T) {
+      forest_area[ : , t] = zbar_2017 - Z[1 : S, t];
+    }
 
     // Aggregate carbon captured
     vector[T] X_zero = x0 * rep_vector(1.0, T);
 
-    matrix[S, T] shifted_X;
-    for (j in 1 : T) {
-      shifted_X[ : , j] = zbar_2017 - sol_val_X[1 : S, j];
-    }
-    row_vector[T] omega = gamma' * ((alpha * shifted_X) - sol_val_Up);
+    // Compute stock of carbon (X)
+    row_vector[T] omega = gamma' * ((alpha * forest_area) - U);
+    vector[T + 1] X;
+    X[1] = x0;
+    X[2 : (T + 1)] = alpha_p_Adym .* X_zero + Bdym * omega';
 
-    vector[T + 1] X_dym;
-    X_dym[1] = x0;
-    X_dym[2 : (T + 1)] = alpha_p_Adym .* X_zero + Bdym * omega';
+    // Compute aggregate X dot
+    vector[T] Xdot_agg = (X[2 : (T + 1)] - X[1 : T]);
 
-    matrix[S, T ] z_shifted_X;
-    vector[S] scl = pa * theta - pf * kappa;
-    for (j in 1 : (T )) {
-      z_shifted_X[ : , j] = sol_val_X[1 : S, j+1] .* scl;
-    }
-
-    // Adjustment costs
-    real term_1 = -sum(ds_vect[1 : T] .* sol_val_Ua) * zeta / 2.0;
+    // Compute aggregate Z
+    vector[T] Z_agg = (rep_row_vector(1.0, S) * Z[ : , 2 : T + 1])';
 
     // Value of emissions absorbed
-    real term_2 = sum(ds_vect[1 : T] .* (X_dym[2 : (T + 1)] - X_dym[1 : T]))
-                  * pf;
+    real term_1 = -pe * sum(ds_vect .* (kappa * Z_agg - Xdot_agg));
 
-    // Value of cattle output minus cost of emissions
-    real term_3 = sum(ds_vect[1 : T] .* (rep_row_vector(1.0, S) * z_shifted_X)');
+    // Value of agricultural output
+    vector[T + 1] agri_output = pa * (theta' * Z)';
+    real term_2 = sum(ds_vect .* agri_output[2 : T + 1]);
+
+    // Value of adjustment costs
+    vector[T] U_agg = (rep_row_vector(1.0, S) * U)';
+    vector[T] V_agg = (rep_row_vector(1.0, S) * V)';
+
+    vector[T] w = zeta_u / 2.0 * (U_agg .* U_agg)
+                  + zeta_v / 2.0 * (V_agg .* V_agg);
+
+    real term_3 = -sum(ds_vect .* w);
 
     // Overall objective value
     real obj_val = term_1 + term_2 + term_3;
@@ -45,75 +52,93 @@ functions {
   }
 }
 data {
+  // Planner problem
   int<lower=0> T; // Time horizon
   int<lower=0> S; // Number of sites
-  real<lower=0> alpha; // Mean reversion coefficient
-  matrix[S + 2, T + 1] sol_val_X; // Sate trajectories
-  vector[T] sol_val_Ua; // Squared total control adjustments; dimensions T x 1
-  matrix[S, T] sol_val_Up; // U control
+  matrix[S, T + 1] Z; // Agricultural area state
+  matrix[S, T] U; // U control
+  matrix[S, T] V; // V control
   vector[S] zbar_2017; // z_bar in 2017
-  vector[S] forest_area_2017; // forrest area in 2017
+  vector[S] forest_area_2017; // forest area in 2017
   vector[T] alpha_p_Adym;
   matrix[T, T] Bdym;
-  vector[T + 1] ds_vect; // Time discounting vector
-  real zeta; // Penalty on adjustment costs
+  vector[T] ds_vect; // Time discounting vector
+  real<lower=0> alpha; // Mean-reversion coefficient
+  real zeta_u; // Penalty on adjustment costs
+  real zeta_v; // Penalty on adjustment costs
   real xi; // Penalty on prior-posterior KL div
   real kappa; // Effect of cattle farming on emissions
   real<lower=0> pa; // Price of cattle output
-  real<lower=0> pf; // Price of carbon emission transfers
+  real<lower=0> pe; // Price of carbon emission transfers
 
-  int<lower=0> N_theta;
-  int<lower=0> N_gamma;
+  // Theta parameters
+  int<lower=0> N_theta; // Number of observations on theta
   int<lower=0> K_theta; // Number of coefficients on theta
-  int<lower=0> K_gamma; // Number of coefficients on gamma
-
+  int<lower=0> M_theta; // Number of large groups
   matrix[N_theta, K_theta] X_theta; // Design matrix for regressors on theta
-  matrix[S, N_theta] G_theta; // Groups for theta
-  matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
-  matrix[S, N_gamma] G_gamma; // Groups for gamma
+  matrix[S, N_theta] SG_theta; // Site Groups for theta
+
+  vector[K_theta] beta_theta_mean; // Baseline distribution
+  cov_matrix[K_theta] beta_theta_vcov;
+  vector[M_theta] V_theta_mean;
+  vector[M_theta] V_theta_var;
+  array[N_theta] int G_theta; // Large group indicator
+
   real<lower=0> pa_2017; // Price of cattle in 2017
 
-  // Prior hyperparams
-  cov_matrix[K_theta] inv_Q_theta;
-  vector[K_theta] m_theta;
-  real<lower=0> a_theta;
-  real<lower=0> b_theta;
+  // Gamma parameters
+  int<lower=0> N_gamma; // Number of observations on gamma
+  int<lower=0> K_gamma; // Number of coefficients on gamma
+  int<lower=0> M_gamma; // Number of large groups
+  matrix[N_gamma, K_gamma] X_gamma; // Design matrix for regressors on gamma
 
-  cov_matrix[K_gamma] inv_Q_gamma;
-  vector[K_gamma] m_gamma;
-  real<lower=0> a_gamma;
-  real<lower=0> b_gamma;
+  vector[K_gamma] beta_gamma_mean; // Baseline distribution
+  cov_matrix[K_gamma] beta_gamma_vcov;
+  vector[M_gamma] V_gamma_mean;
+  vector[M_gamma] V_gamma_var;
+  array[N_gamma] int G_gamma; // Large group indicator
 }
 transformed data {
-  matrix[K_theta, K_theta] L_theta = cholesky_decompose(inv_Q_theta);
-  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(inv_Q_gamma);
+  matrix[K_theta, K_theta] L_theta = cholesky_decompose(beta_theta_vcov);
+  matrix[K_gamma, K_gamma] L_gamma = cholesky_decompose(beta_gamma_vcov);
 }
 parameters {
-  real<lower=0> sigma_sq_theta; // Variance of log_theta
   vector[K_theta] alpha_theta;
+  vector[M_theta] Vj_theta;
 
-  real<lower=0> sigma_sq_gamma; // Variance of log_gamma
   vector[K_gamma] alpha_gamma;
+  vector[M_gamma] Vj_gamma;
 }
 transformed parameters {
   // Coefs
-  vector[K_theta] beta_theta = m_theta + sqrt(sigma_sq_theta) * L_theta * alpha_theta;
-  vector[K_gamma] beta_gamma = m_gamma + sqrt(sigma_sq_gamma) * L_gamma * alpha_gamma;
+  vector[K_theta] beta_theta = beta_theta_mean + L_theta * alpha_theta;
+
+  vector[K_gamma] beta_gamma = beta_gamma_mean + L_gamma * alpha_gamma;
 
   // Grouped average
-  vector<lower=0>[S] theta = (G_theta * exp(X_theta * beta_theta)) / pa_2017;
-  vector<lower=0>[S] gamma = G_gamma * exp(X_gamma * beta_gamma);
+  vector<lower=0>[S] theta = (SG_theta
+                              * exp(X_theta * beta_theta + Vj_theta[G_theta]))
+                             / pa_2017;
+
+  vector<lower=0>[S] gamma = exp(X_gamma * beta_gamma + Vj_gamma[G_gamma]);
 }
 model {
   // Hierarchical priors
-  sigma_sq_theta ~ inv_gamma(a_theta, b_theta);
-  sigma_sq_gamma ~ inv_gamma(a_gamma, b_gamma);
 
   alpha_theta ~ std_normal();
+
+  for (j in 1 : M_theta) {
+    Vj_theta[j] ~ normal(V_theta_mean[j], sqrt(V_theta_var[j]));
+  }
+
   alpha_gamma ~ std_normal();
+
+  for (j in 1 : M_gamma) {
+    Vj_gamma[j] ~ normal(V_gamma_mean[j], sqrt(V_gamma_var[j]));
+  }
+
   // Value function
-  target += log_value(gamma, theta, T, S, alpha, sol_val_X,
-                                 sol_val_Ua, sol_val_Up, zbar_2017,
-                                 forest_area_2017, alpha_p_Adym, Bdym,
-                                 ds_vect, zeta, xi, kappa, pa, pf);
+  target += log_value(gamma, theta, T, S, alpha, Z, U, V, zbar_2017,
+                      forest_area_2017, alpha_p_Adym, Bdym, ds_vect, zeta_u,
+                      zeta_v, xi, kappa, pa, pe);
 }

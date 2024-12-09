@@ -1,40 +1,41 @@
 import numpy as np
 
+from pysrc.optimization import PlannerSolution
+
 
 def value_decomposition(
-    Z,
-    X,
-    U,
-    V,
-    T,
-    pee,
-    pa,
-    b,
-    theta,
-    low_pq,
-    delta=0.02,
-    kappa=2.094215255,
-    zeta_1=1.66e-4 * 1e9,
-    zeta_2=0.1473979 * 1e9,
-    zeta_3=0.00010203 * 1e9,
+    T: int,
+    pee: float,
+    pa: float,
+    b: float,
+    theta: np.ndarray,
+    solution: PlannerSolution,
+    delta: float = 0.02,
+    kappa: float = 2.094215255,
+    zeta_u: float = 1.66e-4 * 1e9,
+    zeta_v: float = 1.00e-4 * 1e9,
 ):
     # Compute change in X
-    X_dot = np.diff(X, axis=0)
+    X_dot = np.diff(solution.X, axis=0)
 
     # Compute agricultural output
-    results_AO = [pa * np.dot(Z[t + 1], theta) / ((1 + delta) ** t) for t in range(T)]
+    results_AO = [
+        pa * np.dot(solution.Z[t + 1], theta) / ((1 + delta) ** t) for t in range(T)
+    ]
     total_AO = np.sum(results_AO)
 
     # Compute net transfers
     results_NT = [
-        (-b * (kappa * np.sum(Z[t + 1]) - np.sum(X_dot[t])) / ((1 + delta) ** t))
+        -b * (kappa * np.sum(solution.Z[t + 1]) - np.sum(X_dot[t])) / ((1 + delta) ** t)
         for t in range(T)
     ]
     total_NT = np.sum(results_NT)
 
     # Compute forest services
     results_FS = [
-        -pee * (kappa * np.sum(Z[t + 1]) - np.sum(X_dot[t])) / ((1 + delta) ** t)
+        -pee
+        * (kappa * np.sum(solution.Z[t + 1]) - np.sum(X_dot[t]))
+        / ((1 + delta) ** t)
         for t in range(T)
     ]
     total_FS = np.sum(results_FS)
@@ -42,9 +43,8 @@ def value_decomposition(
     # Compute adjustment costs
     results_AC = [
         (
-            (zeta_1 / 2) * (U[t].sum() ** 2)
-            + (zeta_2 / 2) * ((low_pq * V[t]).sum() ** 2)
-            + (zeta_3 / 2) * ((1 - low_pq * V[t]).sum() ** 2)
+            (zeta_u / 2) * (np.sum(solution.U[t])) ** 2
+            + (zeta_v / 2) * (np.sum(solution.V[t])) ** 2
         )
         / ((1 + delta) ** t)
         for t in range(T)
