@@ -15,7 +15,7 @@ num_sites = 78
 T = 200
 b = [0, 10, 15, 20, 25]
 pe_values = [pee + bi for bi in b]
-xi = 1
+xi = 10
 
 
 # conduct hmc sampling, details see adjusted.py
@@ -93,10 +93,7 @@ for pe in pe_values:
     print(
         "result",
         value_decomposition(
-            Z=results.Z,
-            X=results.X,
-            U=results.U,
-            V=results.V,
+            solution=results,
             T=T,
             pee=pee,
             pa=pa,
