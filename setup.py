@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="project_amazon",
+    name="project-amazon",
     version="0.1",
-    packages=find_packages(),  # Automatically discovers all submodules, including pysrc
+    packages=find_packages(include=["pysrc", "pysrc.*"]),  # Includes 'pysrc' and its submodules
     install_requires=[],
 )
