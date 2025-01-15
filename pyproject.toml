@@ -7,7 +7,7 @@ packages = ["pysrc", "pysrc.services", "pysrc.optimization", "pysrc.sampling"]
 
 [project]
 name = "project-amazon"
-version = "0.2.0"
+version = "0.2.1"
 requires-python = ">=3.9,<3.12"
 dependencies = [
     "numpy == 1.25.2",
