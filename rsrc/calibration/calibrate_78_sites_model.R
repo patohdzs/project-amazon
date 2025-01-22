@@ -59,14 +59,14 @@ rsts$area_other_1995 <-
 rsts$area_forest_2017 <-
   rsts$share_forest_2017 * rsts$pixel_area_ha
 
-rsts$area_pasture_quality_1_2017 <-
-  rsts$share_pasture_quality_1_2017 * rsts$pixel_area_ha
+# rsts$area_pasture_quality_1_2017 <-
+#   rsts$share_pasture_quality_1_2017 * rsts$pixel_area_ha
 
-rsts$area_pasture_quality_2_2017 <-
-  rsts$share_pasture_quality_2_2017 * rsts$pixel_area_ha
+# rsts$area_pasture_quality_2_2017 <-
+#   rsts$share_pasture_quality_2_2017 * rsts$pixel_area_ha
 
-rsts$area_pasture_quality_3_2017 <-
-  rsts$share_pasture_quality_3_2017 * rsts$pixel_area_ha
+# rsts$area_pasture_quality_3_2017 <-
+#   rsts$share_pasture_quality_3_2017 * rsts$pixel_area_ha
 
 rsts$area_agricultural_use_2017 <-
   rsts$share_agricultural_use_2017 * rsts$pixel_area_ha
@@ -115,17 +115,17 @@ calib_df <- calib_df %>%
     zbar_2017 = area_forest_2017 + z_2017,
   )
 
-# Compute bad pasture quality shares
-calib_df <- calib_df %>%
-  mutate(
-    area_pasture_2017 = area_pasture_quality_1_2017 +
-      area_pasture_quality_2_2017 +
-      area_pasture_quality_3_2017
-  ) %>%
-  mutate(
-    share_low_pq = area_pasture_quality_1_2017 / area_pasture_2017,
-  ) %>%
-  select(id, contains("area"), contains("z"), contains("pq"))
+# # Compute bad pasture quality shares
+# calib_df <- calib_df %>%
+#   mutate(
+#     area_pasture_2017 = area_pasture_quality_1_2017 +
+#       area_pasture_quality_2_2017 +
+#       area_pasture_quality_3_2017
+#   ) %>%
+#   mutate(
+#     share_low_pq = area_pasture_quality_1_2017 / area_pasture_2017,
+#   ) %>%
+#   select(id, contains("area"), contains("z"), contains("pq"))
 
 # Convert biomass to CO2 equivalent
 muni_data <- muni_data %>%
