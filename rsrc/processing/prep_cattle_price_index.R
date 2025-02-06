@@ -47,6 +47,13 @@ set_label(cattle_price_index$year) <- "calendar year"
 set_label(cattle_price_index$month) <- "month indicator"
 set_label(cattle_price_index$price_real_mon_cattle) <- "real average monthly price, cattle (R$ per @, constant 01/2017)"
 
+
+cattle_price_index_subset <- 
+  cattle_price_index %>%
+  dplyr::filter(year >= 1995 & year <= 2017) 
+
+write_csv(cattle_price_index_subset, file = "data/calibration/hmc/seriesPriceCattle_prepared.csv")
+
 # Save data set
 save(cattle_price_index, file = "data/processed/cattle_price_index.Rdata")
 

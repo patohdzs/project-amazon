@@ -11,7 +11,9 @@
 
 # SETUP
 
-
+library(sf)
+library(dplyr)
+library(ggplot2)
 
 # START TIMER
 tictoc::tic(msg = "mapsCalibration_78SitesModel.R script", log = T)
