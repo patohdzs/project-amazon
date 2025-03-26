@@ -10,7 +10,7 @@ from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
 
-def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det", xi=1):
+def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="det", xi=1):
     # Set transfer levels
     b = [0, 10, 15, 20, 25]
 
@@ -19,7 +19,8 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
 
     # Get z_bar data
     output_folder = get_path("output") / "figures"
-
+    os.makedirs(output_folder, exist_ok=True)
+    
     # Load site data
     (zbar, _, _) = load_site_data(num_sites)
 
@@ -30,7 +31,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
             get_path("output")
             / "optimization"
             / model
-            / opt
+            / solver
             / f"{num_sites}sites"
             / f"pa_{pa}"
             / f"pe_{pe[order]}"
@@ -44,7 +45,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
                 str(get_path("output")),
                 "optimization",
                 model,
-                opt,
+                solver,
                 f"{num_sites}sites",
                 f"pa_{pa}",
                 f"pe_{pe[order]}",
@@ -54,7 +55,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
                 str(get_path("output")),
                 "optimization",
                 model,
-                opt,
+                solver,
                 f"{num_sites}sites",
                 f"xi_{xi}",
                 f"pa_{pa}",
@@ -145,7 +146,7 @@ def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det"
         fontsize=18,
     )
     plt.savefig(
-        output_folder + f"/plot_pred_x_{num_sites}_sites_det.png",
+        str(output_folder) + f"/plot_pred_x_{num_sites}_sites_det.png",
         format="png",
         bbox_inches="tight",
     )
@@ -194,20 +195,7 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
 
     for idx in range(num_sites):
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        num_bins = 100
-
-        global_min = min(
-            gamma_unadjusted[:, idx].min(),
-            gamma_adjusted_b0[:, idx].min(),
-            gamma_adjusted_b15[:, idx].min(),
-        )
-        global_max = max(
-            gamma_unadjusted[:, idx].max(),
-            gamma_adjusted_b0[:, idx].max(),
-            gamma_adjusted_b15[:, idx].max(),
-        )
-        np.linspace(global_min, global_max, num_bins + 1)
-
+        
         sns.kdeplot(
             gamma_unadjusted[:, idx],
             label="baseline",
@@ -219,11 +207,33 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
         sns.kdeplot(
             gamma_adjusted_b0[:, idx],
             label="b=0",
-            color="red",
+            color="blue",
             fill=True,
             alpha=0.6,
             linewidth=4,
         )  # Bright red
+        plt.title(rf"Probability density for $\gamma$ and site {idx+1}", fontsize=16)
+        plt.xlabel("parameter value", fontsize=16)
+        plt.ylabel("density", fontsize=16)
+        plt.legend(fontsize=16)
+        plt.xlim(300,600)
+        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b0.png")
+        fig.savefig(file_name, format="png")
+        plt.close()
+        
+        
+        
+        
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+        
+        sns.kdeplot(
+            gamma_unadjusted[:, idx],
+            label="baseline",
+            color="black",
+            fill=False,
+            alpha=0.6,
+            linewidth=4,
+        )  # Bright blue
         sns.kdeplot(
             gamma_adjusted_b15[:, idx],
             label="b=15",
@@ -237,25 +247,14 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}.png")
+        plt.xlim(300,600)
+        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b15.png")
         fig.savefig(file_name, format="png")
         plt.close()
 
-    for idx in range(num_sites):
+    for idx in range(num_sites): 
+        print("site",idx)
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
-        num_bins = 100
-
-        global_min = min(
-            theta_unadjusted[:, idx].min(),
-            theta_adjusted_b0[:, idx].min(),
-            theta_adjusted_b15[:, idx].min(),
-        )
-        global_max = max(
-            theta_unadjusted[:, idx].max(),
-            theta_adjusted_b0[:, idx].max(),
-            theta_adjusted_b15[:, idx].max(),
-        )
-        np.linspace(global_min, global_max, num_bins + 1)
 
         sns.kdeplot(
             theta_unadjusted[:, idx],
@@ -273,10 +272,32 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
             alpha=0.6,
             linewidth=4,
         )  # Bright red
+        
+        plt.title(rf"Probability density for $\Theta$ and site {idx+1}", fontsize=16)
+        plt.xlabel("parameter value", fontsize=16)
+        plt.ylabel("density", fontsize=16)
+        plt.legend(fontsize=16)
+        plt.xlim(0,6)
+        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b0.png")
+        fig.savefig(file_name, format="png")
+        plt.close()
+        
+        
+        
+        fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+
+        sns.kdeplot(
+            theta_unadjusted[:, idx],
+            label="baseline",
+            color="black",
+            fill=False,
+            alpha=0.6,
+            linewidth=4,
+        )  # Bright blue
         sns.kdeplot(
             theta_adjusted_b15[:, idx],
             label="b=15",
-            color="blue",
+            color="red",
             fill=True,
             alpha=0.6,
             linewidth=4,
@@ -286,10 +307,12 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}.png")
+        plt.xlim(0,6)
+        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b15.png")
         fig.savefig(file_name, format="png")
         plt.close()
     return
+
 
 
 def trajectory_diff(
@@ -303,7 +326,7 @@ def trajectory_diff(
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     df_ori = pd.read_csv(
-        str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv"
+        str(get_path("data")) + f"/calibration/calibration_{num_sites}_sites.csv"
     )
     dfz_bar = df_ori["zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
@@ -349,11 +372,13 @@ def trajectory_diff(
     time = list(range(0, len(result_zper_hmc)))
     plt.figure(figsize=(10, 6))
 
-    plt.plot(time, result_zper_hmc, label=rf"$\xi$={xi}", linewidth=4, color="blue")
-    plt.plot(time, result_zper_det, label=r"$\xi=\infty$", linewidth=4, color="red")
+    plt.plot(time, result_zper_hmc, label=rf"$\xi^a$={xi}", linewidth=4, color="blue")
+    plt.plot(time, result_zper_det, label=r"$\xi^a=\infty$", linewidth=4, color="red")
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
     plt.xlim(0, max(time) + 2)
+    if b==0:
+        plt.ylim(12,24)
     plt.legend(loc="upper left", ncol=5, frameon=False, fontsize=16)
     plt.savefig(
         output_folder

@@ -29,7 +29,7 @@ def read_file(result_directory):
     return (Z / 1e2, Xdot / 1e2, U / 1e2, V / 1e2)
 
 
-def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1):
+def value_decom(pee=7.1, num_sites=78, solver="gurobi", pa=41.11, model="det", xi=1):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
     kappa = 2.094215255
@@ -48,8 +48,8 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
         result_folder = os.path.join(
             str(get_path("output")),
             "optimization",
-            model,
-            opt,
+            "det",
+            solver,
             f"{num_sites}sites",
             f"pa_{pa}",
             f"pe_{pe[order]}",
@@ -59,7 +59,7 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
             theta_folder = os.path.join(
                 str(get_path("output")),
                 "sampling",
-                opt,
+                solver,
                 f"{num_sites}sites",
                 f"pa_{pa}",
                 f"xi_{xi}",
@@ -140,19 +140,36 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
     return
 
 
-def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="det"):
+def transfer_cost(pee=7.1, num_sites=78, solver="gurobi", pa=41.11, y=30, model="det",xi=5.0):
     b = [0, 10, 15, 20, 25]
     pe = [pee + bi for bi in b]
 
-    baseline_folder = os.path.join(
-        str(get_path("output")),
-        "optimization",
-        model,
-        opt,
-        f"{num_sites}sites",
-        f"pa_{pa}",
-        f"pe_{pe[0]}",
-    )
+
+
+    if model=="det":
+        baseline_folder = os.path.join(
+            str(get_path("output")),
+            "optimization",
+            model,
+            solver,
+            f"{num_sites}sites",
+            f"pa_{pa}",
+            f"pe_{pe[0]}",
+        )
+        
+    elif model=="hmc":
+        baseline_folder = os.path.join(
+            str(get_path("output")),
+            "optimization",
+            model,
+            solver,
+            f"{num_sites}sites",
+            f"xi_{xi}",
+            f"pa_{pa}",
+            f"pe_{pe[0]}",
+        )  
+        
+        
     kappa = 2.094215255
     output_folder = str(get_path("output")) + "/tables/"
     if not os.path.exists(output_folder):
@@ -171,17 +188,29 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="de
     for j in range(5):
         order = j
 
-        result_folder = os.path.join(
-            str(get_path("output")),
-            "optimization",
-            model,
-            opt,
-            f"{num_sites}sites",
-            f"pa_{pa}",
-            f"pe_{pe[order]}",
-        )
+        if model=="hmc":
+            result_folder = os.path.join(
+                str(get_path("output")),
+                "optimization",
+                model,
+                solver,
+                f"{num_sites}sites",
+                f"xi_{xi}",
+                f"pa_{pa}",
+                f"pe_{pe[order]}",
+            )
+        elif model=="det":
+                result_folder = os.path.join(
+                str(get_path("output")),
+                "optimization",
+                model,
+                solver,
+                f"{num_sites}sites",
+                f"pa_{pa}",
+                f"pe_{pe[order]}",
+            )
 
-        (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(result_folder)
+        (dfz_np, dfxdot, _, _) = read_file(result_folder)
 
         results_NCE = []
         for i in range(y):
@@ -218,10 +247,19 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="de
     results_df = pd.DataFrame(results_table)
     latex_code = results_df.to_latex(index=False)
 
-    with open(
-        output_folder + f"transfer_cost_{num_sites}site_{pa}pa_{y}year_{model}.tex", "w"
-    ) as file:
-        file.write(latex_code)
+
+    if model =="det":
+        with open(
+            output_folder + f"transfer_cost_{num_sites}site_{pa}pa_{y}year_{model}.tex", "w"
+        ) as file:
+            file.write(latex_code)
+    elif model =="hmc":
+        with open(
+            output_folder + f"transfer_cost_{num_sites}site_{pa}pa_{y}year_{model}_xi_{xi}.tex", "w"
+        ) as file:
+            file.write(latex_code)            
+        
+        
     return
 
 
@@ -291,6 +329,12 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
         total_AC = np.sum(results_AC)
 
         total_PV = total_AO + total_NT + total_CS - total_AC
+        
+        total_AO = total_AO.round(2)
+        total_NT = total_NT.round(2)
+        total_CS = total_CS.round(2)
+        total_AC = total_AC.round(2)
+        total_PV = total_PV.round(2)
 
         results_det.append(
             {"b": round(b[order]), "total_AO": total_AO, "total_PV": total_PV}
@@ -369,6 +413,11 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
         total_AC = np.sum(results_AC)
 
         total_PV = total_AO + total_NT + total_CS - total_AC
+        total_AO = total_AO.round(2)
+        total_NT = total_NT.round(2)
+        total_CS = total_CS.round(2)
+        total_AC = total_AC.round(2)
+        total_PV = total_PV.round(2)
 
         results_hmc.append(
             {"b": round(b[order]), "total_AO": total_AO, "total_PV": total_PV}
@@ -387,17 +436,19 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
     )
 
     # Calculate the percentage change for AO and PV
-    combined_df["% Change AO"] = (
+    combined_df["% Change AO"] = ((
         (combined_df["AO_hmc"] - combined_df["AO_det"]) / combined_df["AO_det"]
-    ) * 100
-    combined_df["% Change PV"] = (
+    ) * 100).round(2)
+    combined_df["% Change PV"] =((
         (combined_df["PV_hmc"] - combined_df["PV_det"]) / combined_df["PV_det"]
-    ) * 100
+    ) * 100).round(2)
+
+    combined_df = combined_df[["b","AO_det", "AO_hmc", "% Change AO", "PV_det", "PV_hmc", "% Change PV"]]
 
     # Display the final DataFrame
     print(combined_df)
 
-    latex_code = combined_df.to_latex(index=False)
+    latex_code = combined_df.applymap(lambda x: f"{x:.2f}").to_latex(index=False)
 
     with open(
         output_folder + "present_value_site_ambiguity_comparison.tex", "w"
@@ -407,7 +458,7 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
     return
 
 
-def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=0):
+def value_decom_mpc(pee=6.9, num_sites=78, solver="gams", model="unconstrained", b=0):
     pe = pee + b
     kappa = 2.094215255
     zeta_u = 1.66e-4 * 1e11
@@ -420,7 +471,7 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    if opt == "gams":
+    if solver == "gams":
 
         def gams_read_dat_file(filename):
             data_dict = {}

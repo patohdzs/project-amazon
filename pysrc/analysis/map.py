@@ -20,7 +20,7 @@ def spatial_allocation(solver='gams',
     num_sites=78
     # Load the data
     clean_amazonBiome = gpd.read_file(str(get_path("data"))+'/calibration/hmc/map.geojson')
-    id=gpd.read_file(str(get_path("data"))+"/calibration/hmc/id_78.geojson").to_crs(epsg=4326)
+    id=gpd.read_file(str(get_path("data"))+"/calibration/grid_78_sites.geojson").to_crs(epsg=4326)
     id_hmc = id.copy()
     id_det = id.copy()
     id_hmc_half=id.copy()
@@ -101,20 +101,21 @@ def spatial_allocation(solver='gams',
         positions_index.append(i)
     id_index['id']=positions_index
 
-
-
+    if b ==0:
+        shaded_ids = [67, 73]
+    elif b==15:
+        shaded_ids = [76, 77]
+    
     fig, ax = plt.subplots()
 
     id_hmc.boundary.plot(edgecolor='black', facecolor='none', linewidth=0.5, ax=ax)
     clean_amazonBiome.boundary.plot(color="black", linewidth=1.2, ax=ax)
 
-    shaded_areas = [
-        (-53.366934735915706, -12.921187383718369),
-        (-60.64328853728383, -12.921187383718369)
-    ]
 
+    tag=0
     for x, y, hmc_id, det_id,indicator in zip(id_hmc.geometry.centroid.x, id_hmc.geometry.centroid.y, id_hmc['id'], id_det['id'],indicator_hmc):
 
+        tag+=1
         if indicator ==0:
             color = 'red'
         elif indicator==1:
@@ -124,9 +125,9 @@ def spatial_allocation(solver='gams',
             
         ax.text(x, y, str(hmc_id), fontsize=14, ha='center', va='center', fontweight='bold', color=color)
 
-    # for x, y in shaded_areas:
-    #     rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
-    #     ax.add_patch(rect)
+        if tag in shaded_ids:  
+            rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
+            ax.add_patch(rect)
 
     ax.axis('off') 
 
@@ -142,7 +143,10 @@ def spatial_allocation(solver='gams',
 
     clean_amazonBiome.boundary.plot(color="black", linewidth=1.2, ax=ax)
 
+    tag=0
     for x, y, hmc_id, det_id,indicator in zip(id_det.geometry.centroid.x, id_det.geometry.centroid.y, id_hmc['id'], id_det['id'],indicator_det):
+        tag+=1
+        
         if indicator ==0:
             color = 'red'
         elif indicator==1:
@@ -152,9 +156,10 @@ def spatial_allocation(solver='gams',
 
         ax.text(x, y, str(det_id), fontsize=14, ha='center', va='center', fontweight='bold', color=color)
 
-    # for x, y in shaded_areas:
-    #     rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
-    #     ax.add_patch(rect)
+
+        if tag in shaded_ids:  
+            rect = Rectangle((x - 1.2, y - 1.2), 2.4, 2.4, color='grey', alpha=0.3, linewidth=0, fill=True)
+            ax.add_patch(rect)
 
     ax.axis('off') 
 

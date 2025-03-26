@@ -2,6 +2,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from scipy.stats import gamma
+from tqdm import tqdm
+
 
 from pysrc.services.file_service import get_path
 
@@ -49,7 +51,7 @@ def gibbs_sampling_with_data(
     V_current = np.zeros(n_sites) + 0.01
 
     # Gibbs sampler
-    for i in range(n_iterations):
+    for i in tqdm(range(n_iterations), desc="Gibbs Sampling Progress"):
         # Step i: Draw beta conditioned on V, eta, and data
         precision_beta = eta_current * (X.T @ X)
         mean_beta = np.linalg.inv(precision_beta) @ (

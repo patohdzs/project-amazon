@@ -9,3 +9,6 @@ from pysrc.analysis.map import spatial_allocation
 # density(num_sites=1043,pee=5.3,xi=10.0,solver="gams")
 
 density(num_sites=1043,pee=4.5,xi=5.0,solver="gams")
+
+
+# density(num_sites=1043,pee=2.2,xi=1.0,solver="gams")

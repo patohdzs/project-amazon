@@ -24,7 +24,7 @@ pee=args.pee
 xi=args.xi
 num_sites=args.sites
 
-solver="gams"
+solver="gurobi"
 pa=41.11
 
 
@@ -57,12 +57,12 @@ with open(prior_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
     
     
     
-theta_unadjusted = results_unadjusted["final_sample"][:16000, :num_sites]
-gamma_unadjusted = results_unadjusted["final_sample"][:16000, num_sites:]
-theta_adjusted_b0 = b0["final_sample"][:16000, :num_sites]
-gamma_adjusted_b0 = b0["final_sample"][:16000, num_sites:]
-theta_adjusted_b15 = b15["final_sample"][:16000, :num_sites]
-gamma_adjusted_b15 = b15["final_sample"][:16000, num_sites:]
+theta_unadjusted = results_unadjusted["final_sample"][:, :num_sites]
+gamma_unadjusted = results_unadjusted["final_sample"][:, num_sites:]
+theta_adjusted_b0 = b0["final_sample"][:, :num_sites]
+gamma_adjusted_b0 = b0["final_sample"][:, num_sites:]
+theta_adjusted_b15 = b15["final_sample"][:, :num_sites]
+gamma_adjusted_b15 = b15["final_sample"][:, num_sites:]
 
 
 
