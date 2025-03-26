@@ -290,12 +290,12 @@ calib_df %>%
   )
 
 # Save calibration data
-save(calib_df, file = "data/calibration/calibration_1043_sites.Rdata")
+save(calib_df, file = "data/calibration/hmc/calibration_1043_sites.Rdata")
 
 # Save calibration data CSV
 calib_df %>%
   st_drop_geometry() %>%
-  write_csv(file = "data/calibration/calibration_1043_sites.csv")
+  write_csv(file = "data/calibration/hmc/calibration_1043_sites.csv")
 
 # End timer
 toc(log = TRUE)

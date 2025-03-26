@@ -10,6 +10,11 @@
 # 1: -
 
 # SETUP
+library(sf)
+library(ggplot2)
+library(readr)
+library(dplyr)
+
 
 
 
@@ -145,8 +150,8 @@ amazon_biome <- sf::st_transform(amazon_biome, sf::st_crs(prediction.1043SitesMo
 z_2017_1043Sites <-
   ggplot2::ggplot(data = prediction.1043SitesModel %>%
     dplyr::filter(time == 0, p_e == 21.6) %>%
-    dplyr::mutate(z_t = cut(round(z_t, 1),
-      breaks = c(0, 0.5, 20, 40, 60, 80, 105),
+    dplyr::mutate(z_t = cut(z_t,
+      breaks = c(0, 0.000001, 20, 40, 60, 80, 105),
       include.lowest = T,
       dig.lab = 3,
       labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
@@ -225,7 +230,7 @@ for (price in aux.prices) {
         dig.lab = 3,
         labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
       ))) +
-    ggplot2::geom_sf(aes(fill = z_t)) +
+    ggplot2::geom_sf(aes(fill = z_t),show.legend = T) +
     ggplot2::scale_fill_manual(name = expr(paste("Z"[2047]^"i", ~"(%), ", "b", "=", !!transfer)), values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
     ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
     ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
@@ -297,7 +302,7 @@ for (p in seq_along(aux.prices)) {
           dig.lab = 3,
           labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
         ))) +
-      ggplot2::geom_sf(aes(fill = z_t)) +
+      ggplot2::geom_sf(aes(fill = z_t),show.legend = T) +
       ggplot2::scale_fill_manual(name = expr(paste("Z"[!!aux.years[y]]^"i", ~"(%), ", "b", "=", !!transfer)), values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
       ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
       ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
