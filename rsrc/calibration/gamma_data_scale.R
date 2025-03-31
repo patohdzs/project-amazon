@@ -4,7 +4,7 @@ library(tidyverse)
 
 
 # Load variables at the muni level to calibrate gamma
-load("data/calibration/gamma_calibration_1043_sites.Rdata")
+load("data/calibration/hmc/gamma_calibration_1043_sites.Rdata")
 
 # Convert biomass into CO2e, add column of ones, take logs, and scale
 df <- calib_1043 %>%
@@ -51,7 +51,7 @@ df_scaled <- df %>%
   )
 
 
-load("data/calibration/gamma_calibration_78_sites.Rdata")
+load("data/calibration/hmc/gamma_calibration_78_sites.Rdata")
 
 df2 <- calib_df %>%
   mutate(

@@ -16,7 +16,7 @@ load("data/processed/muni_data.Rdata")
 load("data/processed/cattle_price_index.Rdata")
 
 # Load calibration data set
-load("data/calibration/calibration_78_sites.Rdata")
+load("data/calibration/hmc/calibration_78_sites.Rdata")
 
 # load basin geo data
 map_basin <- st_read(
@@ -189,7 +189,7 @@ calib_df <- calib_df %>%
 
 
 
-save(calib_df, file = "data/calibration/theta_calibration_78_sites.Rdata")
+save(calib_df, file = "data/calibration/hmc/theta_calibration_78_sites.Rdata")
 
 
 muni_data <- muni_data %>%
@@ -308,7 +308,7 @@ st_write(
 
 
 
-load("data/calibration/gamma_calibration_1043_sites.Rdata")
+load("data/calibration/hmc/gamma_calibration_1043_sites.Rdata")
 calib_1043<-calib_1043 %>%
   mutate(id=id.x)
 

@@ -18,7 +18,7 @@ precip_rst <- rast("data/clean/precipitation.tif")
 load("data/processed/pixel_biomass_2017.Rdata")
 
 # Load calibration data set
-load("data/calibration/calibration_78_sites.Rdata")
+load("data/calibration/hmc/calibration_78_sites.Rdata")
 
 # Convert and filter biomass -> CO2e
 pixel_biomass_2017 <- pixel_biomass_2017 %>%
@@ -65,7 +65,7 @@ calib_df$lon <- centroids[, "X"]
 calib_df$lat <- centroids[, "Y"]
 
 
-save(calib_df, file = "data/calibration/gamma_calibration_78_sites.Rdata")
+save(calib_df, file = "data/calibration/hmc/gamma_calibration_78_sites.Rdata")
 
 
 

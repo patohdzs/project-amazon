@@ -18,7 +18,7 @@ precip_rst <- rast("data/clean/precipitation.tif")
 load("data/processed/pixel_biomass_2017.Rdata")
 
 # Load calibration data set
-load("data/calibration/calibration_1043_sites.Rdata")
+load("data/calibration/hmc/calibration_1043_sites.Rdata")
 
 # Convert and filter biomass -> CO2e
 pixel_biomass_2017 <- pixel_biomass_2017 %>%
@@ -67,7 +67,7 @@ calib_df$lat <- centroids[, "Y"]
 
 
 calib_1043 <-calib_df
-load("data/calibration/calibration_78_sites.Rdata")
+load("data/calibration/hmc/calibration_78_sites.Rdata")
 
 calib_1043 <- st_transform(calib_1043, st_crs(calib_df))
 
@@ -81,7 +81,7 @@ intersections <- intersections %>%
 
 
 calib_1043 <- intersections
-save(calib_1043, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
+save(calib_1043, file = "data/calibration/hmc/gamma_calibration_1043_sites.Rdata")
 
 
 #gamma <- read.csv("gamma_fit_1043.csv")
