@@ -27,7 +27,7 @@ map_basin <- st_read(
 
 
 # 78 SITES MODEL CALIBRATION VARIABLES
-load(here::here("data/calibration/", "calibration_78_sites.Rdata"))
+load(here::here("data/calibration/hmc", "calibration_78_sites.Rdata"))
 
 # AMAZON BIOME VECTOR DATA
 load(here::here("data/clean/amazon_biome.Rdata"))
