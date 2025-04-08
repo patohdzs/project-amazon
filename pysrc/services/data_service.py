@@ -5,7 +5,7 @@ import pandas as pd
 from ..services.file_service import get_path
 
 
-def load_site_data(num_sites: int, norm_fac: float = 1e9):
+def load_site_data(num_sites: int, year: int = 2017, norm_fac: float = 1e9):
     # Set data directory
     data_dir = get_path("data", "calibration", "hmc")
 
@@ -15,16 +15,16 @@ def load_site_data(num_sites: int, norm_fac: float = 1e9):
     df = pd.read_csv(file_path)
 
     # Extract information
-    z_2017 = df["z_2017"].to_numpy()
-    zbar_2017 = df["zbar_2017"].to_numpy()
-    forest_area_2017 = df["area_forest_2017"].to_numpy()
+    z = df[f"z_{year}"].to_numpy()
+    zbar = df["zbar_2017"].to_numpy()
+    forest_area = df[f"area_forest_{year}"].to_numpy()
 
     # Normalize Z and forest data
-    zbar_2017 /= norm_fac
-    z_2017 /= norm_fac
-    forest_area_2017 /= norm_fac
+    z /= norm_fac
+    zbar /= norm_fac
+    forest_area /= norm_fac
 
-    return (zbar_2017, z_2017, forest_area_2017)
+    return (zbar, z, forest_area)
 
 
 def load_productivity_params(num_sites: int):
@@ -84,7 +84,6 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     zbar_1995 /= norm_fac
     z_1995 /= norm_fac
     forest_area_1995 /= norm_fac
-
 
     theta = (
         pd.read_csv(
